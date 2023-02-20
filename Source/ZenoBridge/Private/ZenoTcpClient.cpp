@@ -2,6 +2,8 @@
 
 #include "Helper.h"
 #include "Common/TcpSocketBuilder.h"
+#include "3rd/msgpack.h"
+#include "model/transform.h"
 
 bool UZenoTcpClient::Init()
 {
@@ -52,6 +54,8 @@ uint32 UZenoTcpClient::Run()
 			int32 ReadCnt;
 			CurrentSocket->Recv(ReceiveBuffer.GetData(), DataSize, ReadCnt);
 			// TODO: darc split packets
+			const auto Test = msgpack::unpack<Translation>(ReceiveBuffer.GetData(), ReadCnt);
+			UE_LOG(LogZeno, Warning, TEXT("x(%f) y(%f) z(%f)"), Test.x, Test.y, Test.z);
 		}
 
 		if (nullptr != CurrentSocket)

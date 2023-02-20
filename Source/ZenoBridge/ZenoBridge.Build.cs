@@ -38,6 +38,7 @@ public class ZenoBridge : ModuleRules
 				"Engine",
 				"Networking",
 				"Sockets",
+				"ZenoLibrary",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
@@ -49,5 +50,6 @@ public class ZenoBridge : ModuleRules
 				// ... add any modules that your module loads dynamically here ...
 			}
 			);
+
 	}
 }
