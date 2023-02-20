@@ -1,0 +1,34 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "0.1.0",
+	"FriendlyName": "ZenoBridge",
+	"Description": "",
+	"Category": "Tools",
+	"CreatedBy": "ZenusTech,DarcJC",
+	"CreatedByURL": "https://zenustech.com",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "https://zenustech.com",
+	"CanContainContent": true,
+	"IsBetaVersion": true,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "ZenoBridge",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "ZenoLiveLink",
+			"Type": "Runtime",
+			"LoadingPhase": "PostConfigInit"
+		},
+		{
+			"Name": "ZenoLibrary",
+			"Type": "Runtime",
+			"LoadingPhase": "None"
+		}
+	]
+}
