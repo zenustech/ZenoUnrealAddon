@@ -42,4 +42,6 @@ private:
 	std::atomic<bool> bIsThreadStop;
 
 	TArray<uint8> ReceiveBuffer;
+
+	TSet<FName> EncounteredSubjects;
 };

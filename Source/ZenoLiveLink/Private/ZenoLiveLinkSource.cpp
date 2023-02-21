@@ -4,6 +4,10 @@
 
 #include "ZenoLiveLinkSource.h"
 
+#include "ILiveLinkClient.h"
+#include "Role/LiveLinkTranslationRole.h"
+#include "Role/ZenoLiveLinkTypes.h"
+
 FZenoLiveLinkSource::FZenoLiveLinkSource(const FZenoLiveLinkSetting InConnectionSettings)
 {
 	SourceStatus = LOCTEXT("SourceStatus_NoData", "No data");
@@ -33,6 +37,19 @@ bool FZenoLiveLinkSource::RequestSourceShutdown()
 
 void FZenoLiveLinkSource::Update()
 {
+	FName SubjectName("Translation 1");
+	
+	FLiveLinkStaticDataStruct StaticData(FLiveLinkTranslationStaticData::StaticStruct());
+	FLiveLinkTranslationStaticData& TranslationStaticData = *StaticData.Cast<FLiveLinkTranslationStaticData>();
+	TranslationStaticData.bIsInterpolation = true;
+	Client->PushSubjectStaticData_AnyThread({ SourceGuid, SubjectName }, ULiveLinkTranslationRole::StaticClass(), MoveTemp(StaticData));
+
+	FLiveLinkFrameDataStruct FrameData(FLiveLinkTranslationFrameData::StaticStruct());
+	FLiveLinkTranslationFrameData* TranslationFrameData = FrameData.Cast<FLiveLinkTranslationFrameData>();
+	TranslationFrameData->Offset = { 1.f, 1.f, 1.f };
+	TranslationFrameData->Transform = FTransform::Identity;
+
+	Client->PushSubjectFrameData_AnyThread({SourceGuid, SubjectName}, MoveTemp(FrameData));
 }
 
 #undef LOCTEXT_NAMESPACE

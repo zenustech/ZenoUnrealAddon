@@ -10,7 +10,6 @@ public class ZenoLiveLink : ModuleRules
             new string[]
             {
                 "Core",
-                "LiveLinkInterface",
             }
         );
 
@@ -22,6 +21,8 @@ public class ZenoLiveLink : ModuleRules
                 "Slate",
                 "SlateCore",
                 "PropertyEditor",
+                "LiveLinkInterface",
+                "ZenoBridge",
             }
         );
         

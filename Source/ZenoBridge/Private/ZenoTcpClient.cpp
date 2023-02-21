@@ -54,8 +54,8 @@ uint32 UZenoTcpClient::Run()
 			int32 ReadCnt;
 			CurrentSocket->Recv(ReceiveBuffer.GetData(), DataSize, ReadCnt);
 			// TODO: darc split packets
-			const auto Test = msgpack::unpack<Translation>(ReceiveBuffer.GetData(), ReadCnt);
-			UE_LOG(LogZeno, Warning, TEXT("x(%f) y(%f) z(%f)"), Test.x, Test.y, Test.z);
+			const auto [x, y, z] = msgpack::unpack<Translation>(ReceiveBuffer.GetData(), ReadCnt);
+			UE_LOG(LogZeno, Warning, TEXT("x(%f) y(%f) z(%f)"), x, y, z);
 		}
 
 		if (nullptr != CurrentSocket)
@@ -78,6 +78,11 @@ void UZenoTcpClient::Stop()
 
 void UZenoTcpClient::Exit()
 {
+	if (nullptr != CurrentSocket)
+	{
+		CurrentSocket->Close();
+		FUnrealSocketHelper::DestroySocket(CurrentSocket);
+	}
 }
 
 void UZenoTcpClient::StartClient()
