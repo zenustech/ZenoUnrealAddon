@@ -3,8 +3,9 @@
 DECLARE_LOG_CATEGORY_EXTERN(LogZeno, Log, All);
 
 #include "SocketSubsystem.h"
+#include <string>
 
-struct FUnrealSocketHelper
+struct ZENOBRIDGE_API FUnrealSocketHelper
 {
 	static ISocketSubsystem* GetSocketSubsystem()
 	{
@@ -54,4 +55,6 @@ struct FUnrealSocketHelper
 	{
 		GetSocketSubsystem()->DestroySocket(Socket);
 	}
+
+	static inline TOptional<std::string> AuthToken {};
 };

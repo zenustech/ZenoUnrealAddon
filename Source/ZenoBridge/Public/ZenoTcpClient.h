@@ -1,10 +1,11 @@
 ﻿#pragma once
 
-#define DEFAULT_RECEIVE_BUFFER_SIZE 1024
+#define DEFAULT_RECEIVE_BUFFER_SIZE 1440
 #define DEFAULT_SEND_BUFFER_SIZE 2048
 
 #include "CoreMinimal.h"
 #include "Interfaces/IPv4/IPv4Endpoint.h"
+#include "model/bytebuffer.h"
 #include "ZenoTcpClient.generated.h"
 
 const auto GTextZenoSocketName = TEXT("ZenoTcpSocket");
@@ -19,6 +20,8 @@ class UZenoTcpClient : public UObject, public FRunnable
 	GENERATED_BODY()
 	
 public:
+	using FByteBuffer = ByteBuffer<4096>;
+	
 	// ~start FRunnable interface
 	virtual bool Init() override;
 	virtual uint32 Run() override;
@@ -29,6 +32,10 @@ public:
 	void StartClient();
 	void Setup(const FIPv4Endpoint& InBindingAddr);
 
+private:
+	void ReadPacketToBuffer();
+	bool SendPacket(const ZBTControlPacketType PacketType, const uint8* Data, const uint16 Size) const;
+	
 public:
 	FClientLostConnectionDelegate LostConnectionDelegate;
 
@@ -41,7 +48,8 @@ private:
 
 	std::atomic<bool> bIsThreadStop;
 
-	TArray<uint8> ReceiveBuffer;
-
 	TSet<FName> EncounteredSubjects;
+
+	FByteBuffer ByteBuffer;
+
 };

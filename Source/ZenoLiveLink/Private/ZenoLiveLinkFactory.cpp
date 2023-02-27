@@ -3,6 +3,8 @@
 
 #include "ZenoLiveLinkFactory.h"
 
+#include "Helper.h"
+#include "ZenoBridge.h"
 #include "ZenoLiveLinkSource.h"
 #include "UI/SZenoLiveLinkSourceFactory.h"
 
@@ -28,6 +30,7 @@ TSharedPtr<ILiveLinkSource> UZenoLiveLinkFactory::OnSourceCreationPanelClosed(bo
 
 TSharedPtr<ILiveLinkSource> UZenoLiveLinkFactory::CreateSource(const FString& ConnectionString) const
 {
+	// FZenoLiveLinkSetting::StaticStruct()->ImportText(*ConnectionString, );
 	return nullptr;
 }
 
@@ -44,8 +47,17 @@ void UZenoLiveLinkFactory::CreateSourceFromSettings(
 	FString ConnectionString;
 	FZenoLiveLinkSetting::StaticStruct()->ExportText(ConnectionString, &InSettings, nullptr, nullptr, PPF_None, nullptr);
 
-	const TSharedPtr<FZenoLiveLinkSource> SourcePtr = MakeShared<FZenoLiveLinkSource>(InSettings);
-	OnSourceCreated.ExecuteIfBound(SourcePtr, MoveTemp(ConnectionString));
+	FUnrealSocketHelper::AuthToken = TCHAR_TO_UTF8(*InSettings.Token);
+	FZenoBridgeModule& ZenoBridge = FModuleManager::Get().GetModuleChecked<FZenoBridgeModule>("ZenoBridge");
+	if (ZenoBridge.StartClient(FString::Printf(TEXT("%ls:%d"), *InSettings.IPAddress, InSettings.TCPPortNumber)))
+	{
+		const TSharedPtr<FZenoLiveLinkSource> SourcePtr = MakeShared<FZenoLiveLinkSource>(InSettings);
+		OnSourceCreated.ExecuteIfBound(SourcePtr, MoveTemp(ConnectionString));
+	}
+	else
+	{
+		// TODO: darc show error dialog
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

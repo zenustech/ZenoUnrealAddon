@@ -25,7 +25,7 @@ public class ZenoBridge : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core",
+				"Core", "ZenoLibrary",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);

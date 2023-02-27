@@ -14,7 +14,11 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Connection Settings")
 	FString IPAddress = TEXT("127.0.0.1");
 
-	/** UDP port number */
+	/** TCP port number */
 	UPROPERTY(EditAnywhere, Category = "Connection Settings")
-	uint16 UDPPortNumber = 12345;
+	uint16 TCPPortNumber = 23343;
+
+	/** Auth token */
+	UPROPERTY(EditAnywhere, Category = "Connection Settings")
+	FString Token = TEXT("123456");
 };

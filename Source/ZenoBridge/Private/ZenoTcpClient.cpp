@@ -3,7 +3,8 @@
 #include "Helper.h"
 #include "Common/TcpSocketBuilder.h"
 #include "3rd/msgpack.h"
-#include "model/transform.h"
+#include "Handler/Handlers.h"
+#include "model/packethandler.h"
 
 bool UZenoTcpClient::Init()
 {
@@ -29,6 +30,7 @@ bool UZenoTcpClient::Init()
 		return false;
 	}
 
+	UE_LOG(LogZeno, Warning, TEXT("Connected to %ls"), *BindingAddr.ToString());
 	return true;
 }
 
@@ -37,32 +39,34 @@ uint32 UZenoTcpClient::Run()
 	while (!bIsThreadStop.load() && nullptr != CurrentSocket)
 	{
 		// blocking read socket status for up to 5s
-		bool bDisconnected = false;
-		CurrentSocket->HasPendingConnection(bDisconnected);
-		CurrentSocket->Wait(ESocketWaitConditions::WaitForReadOrWrite, FTimespan(0, 0, 5));
-		if (bDisconnected)
+		if (CurrentSocket->GetConnectionState() != SCS_Connected)
 		{
-			UE_LOG(LogZeno, Warning, TEXT("Previous connection has lost, stopping tcp client."));
+			UE_LOG(LogZeno, Error, TEXT("Connection lost, Stopping client."));
 			Stop();
-			LostConnectionDelegate.Broadcast(this);
 			continue;
 		}
+		CurrentSocket->Wait(ESocketWaitConditions::WaitForReadOrWrite, FTimespan(0, 0, 5));
 
-		if (uint32 DataSize; nullptr != CurrentSocket && CurrentSocket->HasPendingData(DataSize))
-		{
-			ReceiveBuffer.Init(0, DataSize);
-			int32 ReadCnt;
-			CurrentSocket->Recv(ReceiveBuffer.GetData(), DataSize, ReadCnt);
-			// TODO: darc split packets
-			const auto [x, y, z] = msgpack::unpack<Translation>(ReceiveBuffer.GetData(), ReadCnt);
-			UE_LOG(LogZeno, Warning, TEXT("x(%f) y(%f) z(%f)"), x, y, z);
-		}
+		ReadPacketToBuffer();
 
-		if (nullptr != CurrentSocket)
+		if (const int16_t PacketSize = ByteBuffer.getNextPacketSize(); PacketSize != -1 && PacketSize > sizeof(ZBTPacketHeader))
 		{
-			constexpr uint8 Data = 0x10;
-			int32 Size;
-			CurrentSocket->Send(&Data, 1, Size);
+			TArray<uint8> TmpBuf;
+			TmpBuf.Reserve(PacketSize);
+			ByteBuffer.readSinglePacket(TmpBuf.GetData());
+			const ZBTPacketHeader* PacketHeader = reinterpret_cast<const ZBTPacketHeader*>(TmpBuf.GetData());
+
+			bool bHasRespond = false;
+			ZBTControlPacketType RespondPacketType = ZBTControlPacketType::Start;
+			OutPacketBufferType RespondData;
+			uint16 RespondSize = 0;
+
+			PacketHandlerMap::get().tryCall(PacketHeader->type, TmpBuf.GetData(), bHasRespond, RespondPacketType, RespondData, RespondSize);
+
+			if (bHasRespond && RespondData.has_value())
+			{
+				SendPacket(RespondPacketType, RespondData->data(), RespondData->size());
+			}
 		}
 	}
 	return 0;
@@ -93,4 +97,55 @@ void UZenoTcpClient::StartClient()
 void UZenoTcpClient::Setup(const FIPv4Endpoint& InBindingAddr)
 {
 	BindingAddr = InBindingAddr;
+}
+
+void UZenoTcpClient::ReadPacketToBuffer()
+{
+	if (uint32 DataSize; nullptr != CurrentSocket && CurrentSocket->HasPendingData(DataSize) && ByteBuffer.moveCursor(DataSize))
+	{
+		int32 ReadCnt;
+		CurrentSocket->Recv(*ByteBuffer, DataSize, ReadCnt);
+	}
+}
+
+bool UZenoTcpClient::SendPacket(const ZBTControlPacketType PacketType, const uint8* Data, const uint16 Size) const
+{
+    static std::atomic<uint16_t> CurrentPacketIndex = 0;
+
+#ifdef PLATFORM_LITTLE_ENDIAN
+    ZBTPacketHeader PacketHeader {
+        CurrentPacketIndex.fetch_add(1),
+        Size,
+        PacketType,
+    };
+#else // PLATFORM_BIG_ENDIAN
+    ZBTPacketHeader PacketHeader {
+        ByteSwap(CurrentPacketIndex.fetch_add(1)),
+        ByteSwap(Size),
+        ByteSwap(PacketType),
+    };
+#endif // PLATFORM_LITTLE_ENDIAN
+
+	if (nullptr != CurrentSocket && CurrentSocket->GetConnectionState() == SCS_Connected)
+	{
+		if (Size != 0 && nullptr == Data) return false;
+
+		int32 ByteSent;
+		CurrentSocket->Send(reinterpret_cast<const uint8*>(&PacketHeader), sizeof(PacketHeader), ByteSent);
+		if (Size != 0)
+		{
+			CurrentSocket->Send(Data, Size, ByteSent);
+		}
+#ifdef PLATFORM_LITTLE_ENDIAN
+		decltype(g_packetSplit)& PacketSplit = g_packetSplit;
+#else // PLATFORM_BIG_ENDIAN
+		decltype(g_packetSplit) PacketSplit;
+		std::reverse_copy(g_packetSplit.begin(), g_packetSplit.end(), PacketSplit.begin());
+#endif // PLATFORM_LITTLE_ENDIAN
+		CurrentSocket->Send(PacketSplit.data(), PacketSplit.size(), ByteSent);
+		
+		return true;
+	}
+
+	return false;
 }
