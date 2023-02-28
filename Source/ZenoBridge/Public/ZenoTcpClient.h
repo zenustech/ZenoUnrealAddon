@@ -31,10 +31,15 @@ public:
 
 	void StartClient();
 	void Setup(const FIPv4Endpoint& InBindingAddr);
+	
+	bool CreateRandomUDPSocket(FInternetAddr& OutEndpoint);
+	bool IsRunning() const;
 
 private:
 	void ReadPacketToBuffer();
 	bool SendPacket(const ZBTControlPacketType PacketType, const uint8* Data, const uint16 Size) const;
+
+	void OnTcpDataReceived(const TArray<uint8>& Data, const FIPv4Endpoint& Sender);
 	
 public:
 	FClientLostConnectionDelegate LostConnectionDelegate;
@@ -44,7 +49,7 @@ private:
 
 	FCriticalSection CriticalSection;
 
-	class FSocket* CurrentSocket = nullptr;
+	FSocket* CurrentSocket = nullptr;
 
 	std::atomic<bool> bIsThreadStop;
 
@@ -52,4 +57,5 @@ private:
 
 	FByteBuffer ByteBuffer;
 
+	FSocket* UdpSocket = nullptr;
 };

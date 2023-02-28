@@ -36,7 +36,7 @@ bool UZenoTcpClient::Init()
 
 uint32 UZenoTcpClient::Run()
 {
-	while (!bIsThreadStop.load() && nullptr != CurrentSocket)
+	while (IsRunning())
 	{
 		// blocking read socket status for up to 5s
 		if (CurrentSocket->GetConnectionState() != SCS_Connected)
@@ -61,7 +61,7 @@ uint32 UZenoTcpClient::Run()
 			OutPacketBufferType RespondData;
 			uint16 RespondSize = 0;
 
-			PacketHandlerMap::get().tryCall(PacketHeader->type, TmpBuf.GetData(), bHasRespond, RespondPacketType, RespondData, RespondSize);
+			PacketHandlerMap::get().tryCall(PacketHeader->type, TmpBuf.GetData(), PacketHeader->length, bHasRespond, RespondPacketType, RespondData, RespondSize);
 
 			if (bHasRespond && RespondData.has_value())
 			{
@@ -78,6 +78,13 @@ void UZenoTcpClient::Stop()
 	CurrentSocket->Close();
 	FUnrealSocketHelper::DestroySocket(CurrentSocket);
 	CurrentSocket = nullptr;
+
+	if (nullptr != UdpSocket)
+	{
+		UdpSocket->Close();
+		FUnrealSocketHelper::DestroySocket(UdpSocket);
+		UdpSocket = nullptr;
+	}
 }
 
 void UZenoTcpClient::Exit()
@@ -86,6 +93,11 @@ void UZenoTcpClient::Exit()
 	{
 		CurrentSocket->Close();
 		FUnrealSocketHelper::DestroySocket(CurrentSocket);
+	}
+	if (nullptr != UdpSocket)
+	{
+		UdpSocket->Close();
+		FUnrealSocketHelper::DestroySocket(UdpSocket);
 	}
 }
 
@@ -148,4 +160,46 @@ bool UZenoTcpClient::SendPacket(const ZBTControlPacketType PacketType, const uin
 	}
 
 	return false;
+}
+
+void UZenoTcpClient::OnTcpDataReceived(const TArray<uint8>& Data, const FIPv4Endpoint& Sender)
+{
+}
+
+bool UZenoTcpClient::CreateRandomUDPSocket(FInternetAddr& OutEndpoint)
+{
+	if (nullptr == UdpSocket)
+	{
+		ISocketSubsystem* SocketSubsystem = FUnrealSocketHelper::GetSocketSubsystem();
+		if (nullptr == SocketSubsystem)
+		{
+			UE_LOG(LogZeno, Error, TEXT("Failed to get instance of SocketSubsystem."));
+			return false;
+		}
+
+		UdpSocket = SocketSubsystem->CreateSocket(NAME_DGram, TEXT("ZenoBridgeUdpSocket"), true);
+		if (nullptr == UdpSocket)
+		{
+			UE_LOG(LogZeno, Error, TEXT("Failed to create UdpSocket."));
+			return false;
+		}
+
+		const FIPv4Endpoint Endpoint { {0}, 0 };
+		if (!UdpSocket->Bind(*Endpoint.ToInternetAddr()))
+		{
+			UE_LOG(LogZeno, Error, TEXT("Failed to bind UdpSocket on %ls."), *Endpoint.ToString());
+			return false;
+		}
+	}
+	
+	UdpSocket->GetAddress(OutEndpoint);
+
+	UE_LOG(LogZeno, Verbose, TEXT("UDP Socket is listening on %ls."), *OutEndpoint.ToString(true));
+	
+	return true;
+}
+
+bool UZenoTcpClient::IsRunning() const
+{
+	return !bIsThreadStop.load() && nullptr != CurrentSocket;
 }

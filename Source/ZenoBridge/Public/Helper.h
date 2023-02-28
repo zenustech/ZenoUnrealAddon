@@ -57,4 +57,6 @@ struct ZENOBRIDGE_API FUnrealSocketHelper
 	}
 
 	static inline TOptional<std::string> AuthToken {};
+
+	static inline TOptional<std::string> SessionName {};
 };
