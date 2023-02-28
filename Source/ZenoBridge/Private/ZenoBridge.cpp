@@ -37,6 +37,7 @@ void FZenoBridgeModule::StopClient()
 	{
 		Client->Stop();
 		Client->RemoveFromRoot();
+		Client->MarkAsGarbage();
 		Client = nullptr;
 	}
 }

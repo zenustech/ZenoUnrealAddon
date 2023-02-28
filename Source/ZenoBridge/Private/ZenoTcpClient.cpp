@@ -3,6 +3,8 @@
 #include "Helper.h"
 #include "Common/TcpSocketBuilder.h"
 #include "3rd/msgpack.h"
+#include "Common/UdpSocketBuilder.h"
+#include "Common/UdpSocketReceiver.h"
 #include "Handler/Handlers.h"
 #include "model/packethandler.h"
 
@@ -38,47 +40,36 @@ uint32 UZenoTcpClient::Run()
 {
 	while (IsRunning())
 	{
-		// blocking read socket status for up to 5s
 		if (CurrentSocket->GetConnectionState() != SCS_Connected)
 		{
 			UE_LOG(LogZeno, Error, TEXT("Connection lost, Stopping client."));
 			Stop();
 			continue;
 		}
-		CurrentSocket->Wait(ESocketWaitConditions::WaitForReadOrWrite, FTimespan(0, 0, 5));
 
 		ReadPacketToBuffer();
+		ProcessTcpBuffer();
 
-		if (const int16_t PacketSize = ByteBuffer.getNextPacketSize(); PacketSize != -1 && PacketSize > sizeof(ZBTPacketHeader))
-		{
-			TArray<uint8> TmpBuf;
-			TmpBuf.Reserve(PacketSize);
-			ByteBuffer.readSinglePacket(TmpBuf.GetData());
-			const ZBTPacketHeader* PacketHeader = reinterpret_cast<const ZBTPacketHeader*>(TmpBuf.GetData());
-
-			bool bHasRespond = false;
-			ZBTControlPacketType RespondPacketType = ZBTControlPacketType::Start;
-			OutPacketBufferType RespondData;
-			uint16 RespondSize = 0;
-
-			PacketHandlerMap::get().tryCall(PacketHeader->type, TmpBuf.GetData(), PacketHeader->length, bHasRespond, RespondPacketType, RespondData, RespondSize);
-
-			if (bHasRespond && RespondData.has_value())
-			{
-				SendPacket(RespondPacketType, RespondData->data(), RespondData->size());
-			}
-		}
 	}
 	return 0;
 }
 
 void UZenoTcpClient::Stop()
 {
+	RemoveSessionFromZeno();
 	bIsThreadStop = true;
-	CurrentSocket->Close();
-	FUnrealSocketHelper::DestroySocket(CurrentSocket);
-	CurrentSocket = nullptr;
-
+	if (nullptr != CurrentSocket)
+	{
+		CurrentSocket->Close();
+		FUnrealSocketHelper::DestroySocket(CurrentSocket);
+		CurrentSocket = nullptr;
+	}
+	if (nullptr != UdpReceiver)
+	{
+		UdpReceiver->Stop();
+		delete UdpReceiver;
+		UdpReceiver = nullptr;
+	}
 	if (nullptr != UdpSocket)
 	{
 		UdpSocket->Close();
@@ -89,16 +80,21 @@ void UZenoTcpClient::Stop()
 
 void UZenoTcpClient::Exit()
 {
-	if (nullptr != CurrentSocket)
-	{
-		CurrentSocket->Close();
-		FUnrealSocketHelper::DestroySocket(CurrentSocket);
-	}
-	if (nullptr != UdpSocket)
-	{
-		UdpSocket->Close();
-		FUnrealSocketHelper::DestroySocket(UdpSocket);
-	}
+	// if (nullptr != CurrentSocket)
+	// {
+	// 	CurrentSocket->Close();
+	// 	FUnrealSocketHelper::DestroySocket(CurrentSocket);
+	// }
+	// if (nullptr != UdpReceiver)
+	// {
+	// 	UdpReceiver->Stop();
+	// 	delete UdpReceiver;
+	// }
+	// if (nullptr != UdpSocket)
+	// {
+	// 	UdpSocket->Close();
+	// 	FUnrealSocketHelper::DestroySocket(UdpSocket);
+	// }
 }
 
 void UZenoTcpClient::StartClient()
@@ -113,6 +109,8 @@ void UZenoTcpClient::Setup(const FIPv4Endpoint& InBindingAddr)
 
 void UZenoTcpClient::ReadPacketToBuffer()
 {
+	bool bHasPending;
+	CurrentSocket->WaitForPendingConnection(bHasPending, { 0, 0, 3});
 	if (uint32 DataSize; nullptr != CurrentSocket && CurrentSocket->HasPendingData(DataSize) && ByteBuffer.moveCursor(DataSize))
 	{
 		int32 ReadCnt;
@@ -162,8 +160,42 @@ bool UZenoTcpClient::SendPacket(const ZBTControlPacketType PacketType, const uin
 	return false;
 }
 
-void UZenoTcpClient::OnTcpDataReceived(const TArray<uint8>& Data, const FIPv4Endpoint& Sender)
+void UZenoTcpClient::ProcessTcpBuffer()
 {
+	if (const int16_t PacketSize = ByteBuffer.getNextPacketSize(); PacketSize != -1 && PacketSize > sizeof(ZBTPacketHeader))
+	{
+		TArray<uint8> TmpBuf;
+		TmpBuf.Reserve(PacketSize);
+		ByteBuffer.readSinglePacket(TmpBuf.GetData());
+		const ZBTPacketHeader* PacketHeader = reinterpret_cast<const ZBTPacketHeader*>(TmpBuf.GetData());
+
+		bool bHasRespond = false;
+		ZBTControlPacketType RespondPacketType = ZBTControlPacketType::Start;
+		OutPacketBufferType RespondData;
+		uint16 RespondSize = 0;
+
+		PacketHandlerMap::get().tryCall(PacketHeader->type, TmpBuf.GetData(), PacketHeader->length, bHasRespond, RespondPacketType, RespondData, RespondSize);
+
+		if (bHasRespond && RespondData.has_value())
+		{
+			 SendPacket(RespondPacketType, RespondData->data(), RespondData->size());
+		}
+	}
+}
+
+void UZenoTcpClient::OnUdpDataReceived(const FArrayReaderPtr& Data, const FIPv4Endpoint& Endpoint)
+{
+	UE_LOG(LogZeno, Warning, TEXT("%ls: %d"), *Endpoint.ToString(), Data->Num());
+}
+
+void UZenoTcpClient::RemoveSessionFromZeno()
+{
+	if (!FUnrealSocketHelper::SessionName.IsSet()) return;
+	ZPKRegisterSession Packet { FUnrealSocketHelper::SessionName.GetValue() };
+	const auto PacketData = msgpack::pack(Packet);
+	auto _ = SendPacket(ZBTControlPacketType::RemoveSession, PacketData.data(), PacketData.size());
+	FUnrealSocketHelper::SessionName.Reset();
+	CurrentSocket->Wait(ESocketWaitConditions::WaitForWrite, { 0, 0, 5 });
 }
 
 bool UZenoTcpClient::CreateRandomUDPSocket(FInternetAddr& OutEndpoint)
@@ -177,25 +209,27 @@ bool UZenoTcpClient::CreateRandomUDPSocket(FInternetAddr& OutEndpoint)
 			return false;
 		}
 
-		UdpSocket = SocketSubsystem->CreateSocket(NAME_DGram, TEXT("ZenoBridgeUdpSocket"), true);
+		const FIPv4Endpoint Endpoint { {0}, 0 };
+		UdpSocket = FUdpSocketBuilder(TEXT("ZenoBridgeUdpSocket"))
+		   .AsNonBlocking()
+		   .WithReceiveBufferSize(204800)
+		   .BoundToEndpoint(Endpoint)
+		;
 		if (nullptr == UdpSocket)
 		{
 			UE_LOG(LogZeno, Error, TEXT("Failed to create UdpSocket."));
-			return false;
-		}
-
-		const FIPv4Endpoint Endpoint { {0}, 0 };
-		if (!UdpSocket->Bind(*Endpoint.ToInternetAddr()))
-		{
-			UE_LOG(LogZeno, Error, TEXT("Failed to bind UdpSocket on %ls."), *Endpoint.ToString());
 			return false;
 		}
 	}
 	
 	UdpSocket->GetAddress(OutEndpoint);
 
-	UE_LOG(LogZeno, Verbose, TEXT("UDP Socket is listening on %ls."), *OutEndpoint.ToString(true));
-	
+	UE_LOG(LogZeno, Warning, TEXT("UDP Socket is listening on %ls."), *OutEndpoint.ToString(true));
+
+	UdpReceiver = new FUdpSocketReceiver(UdpSocket, FTimespan::Zero(), TEXT("ZenoBridgeUdpReceiver"));
+	UdpReceiver->OnDataReceived().BindUObject(this, &UZenoTcpClient::OnUdpDataReceived);
+	UdpReceiver->Start();
+
 	return true;
 }
 

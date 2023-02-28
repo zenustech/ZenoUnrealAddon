@@ -4,6 +4,7 @@
 #define DEFAULT_SEND_BUFFER_SIZE 2048
 
 #include "CoreMinimal.h"
+#include "Common/UdpSocketReceiver.h"
 #include "Interfaces/IPv4/IPv4Endpoint.h"
 #include "model/bytebuffer.h"
 #include "ZenoTcpClient.generated.h"
@@ -39,7 +40,11 @@ private:
 	void ReadPacketToBuffer();
 	bool SendPacket(const ZBTControlPacketType PacketType, const uint8* Data, const uint16 Size) const;
 
-	void OnTcpDataReceived(const TArray<uint8>& Data, const FIPv4Endpoint& Sender);
+	void ProcessTcpBuffer();
+
+	void OnUdpDataReceived(const FArrayReaderPtr& Data, const FIPv4Endpoint& Endpoint);
+
+	void RemoveSessionFromZeno();
 	
 public:
 	FClientLostConnectionDelegate LostConnectionDelegate;
@@ -58,4 +63,5 @@ private:
 	FByteBuffer ByteBuffer;
 
 	FSocket* UdpSocket = nullptr;
+	class FUdpSocketReceiver* UdpReceiver = nullptr;
 };

@@ -37,7 +37,7 @@ bool FZenoLiveLinkSource::RequestSourceShutdown()
 {
 	FZenoBridgeModule& ZenoBridge = FModuleManager::Get().GetModuleChecked<FZenoBridgeModule>("ZenoBridge");
 	ZenoBridge.StopClient();
-	return false;
+	return true;
 }
 
 void FZenoLiveLinkSource::Update()
