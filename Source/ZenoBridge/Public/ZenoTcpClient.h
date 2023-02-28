@@ -11,6 +11,8 @@
 
 const auto GTextZenoSocketName = TEXT("ZenoTcpSocket");
 
+DECLARE_MULTICAST_DELEGATE_TwoParams(FZenoClientNewFileNotify, const ZBFileType, const TArray<uint8>&);
+
 class UZenoTcpClient;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FClientLostConnectionDelegate, UZenoTcpClient*, Thread);
@@ -45,6 +47,8 @@ private:
 	void OnUdpDataReceived(const FArrayReaderPtr& Data, const FIPv4Endpoint& Endpoint);
 
 	void RemoveSessionFromZeno();
+
+	void TryMakeupFile(const uint32 FileId);
 	
 public:
 	FClientLostConnectionDelegate LostConnectionDelegate;
@@ -63,5 +67,9 @@ private:
 	FByteBuffer ByteBuffer;
 
 	FSocket* UdpSocket = nullptr;
-	class FUdpSocketReceiver* UdpReceiver = nullptr;
+	FUdpSocketReceiver* UdpReceiver = nullptr;
+
+	TArray<ZBUFileMessage> FileMessages;
+
+	FZenoClientNewFileNotify OnNewFileNotify;
 };

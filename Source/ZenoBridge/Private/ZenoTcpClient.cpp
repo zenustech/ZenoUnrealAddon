@@ -186,6 +186,43 @@ void UZenoTcpClient::ProcessTcpBuffer()
 void UZenoTcpClient::OnUdpDataReceived(const FArrayReaderPtr& Data, const FIPv4Endpoint& Endpoint)
 {
 	UE_LOG(LogZeno, Warning, TEXT("%ls: %d"), *Endpoint.ToString(), Data->Num());
+	unsigned char* RawData = Data->GetData();
+	const uint16 DataSize = Data->TotalSize();
+
+	if (DataSize < sizeof(ZBUFileMessageHeader))
+	{
+		return;
+	}
+
+#ifdef PLATFORM_LITTLE_ENDIAN
+	ZBFileType FileType = *reinterpret_cast<ZBFileType*>(RawData);
+#else // PLATFORM_BIG_ENDIAN
+	ZBFileType FileType = ByteSwap(*reinterpret_cast<ZBFileType*>(RawData));
+#endif // PLATFORM_LITTLE_ENDIAN
+	if (FileType > ZBFileType::End)
+	{
+		return;
+	}
+
+	ZBUFileMessageHeader* MessageHeader = reinterpret_cast<ZBUFileMessageHeader*>(RawData);
+#ifndef PLATFORM_LITTLE_ENDIAN
+	MessageHeader->type = ByteSwap(MessageHeader->type);
+	MessageHeader->total_part = ByteSwap(MessageHeader->total_part);
+	MessageHeader->size = ByteSwap(MessageHeader->size);
+	MessageHeader->part_id = ByteSwap(MessageHeader->part_id);
+	MessageHeader->file_id = ByteSwap(MessageHeader->file_id);
+#endif // !PLATFORM_LITTLE_ENDIAN
+	const uint32 FileId = MessageHeader->file_id;
+	std::vector<uint8> MessageData;
+	MessageData.resize(DataSize - sizeof(ZBUFileMessageHeader));
+	std::memmove(MessageData.data(), RawData + sizeof(ZBUFileMessageHeader), DataSize - sizeof(ZBUFileMessageHeader));
+	ZBUFileMessage Message {
+		*MessageHeader,
+		std::move(MessageData),
+	};
+	FileMessages.Push(MoveTemp(Message));
+
+	TryMakeupFile(FileId);
 }
 
 void UZenoTcpClient::RemoveSessionFromZeno()
@@ -196,6 +233,44 @@ void UZenoTcpClient::RemoveSessionFromZeno()
 	auto _ = SendPacket(ZBTControlPacketType::RemoveSession, PacketData.data(), PacketData.size());
 	FUnrealSocketHelper::SessionName.Reset();
 	CurrentSocket->Wait(ESocketWaitConditions::WaitForWrite, { 0, 0, 5 });
+}
+
+void UZenoTcpClient::TryMakeupFile(const uint32 FileId)
+{
+	TSet<uint16> PartSet;
+	int32 FileParts = -1;
+	ZBFileType FileType = ZBFileType::End;
+	TMap<uint16, size_t> PartIdx;
+	uint64 TotalSize = 0;
+	for (size_t Idx = 0; Idx < FileMessages.Num(); ++Idx)
+	{
+		const ZBUFileMessage& Item1 = FileMessages[Idx];
+		if (Item1.header.file_id == FileId)
+		{
+			FileParts = FMath::Max(static_cast<int32>(Item1.header.total_part), FileParts);
+			PartSet.Add(Item1.header.part_id);
+			FileType = Item1.header.type;
+			PartIdx.Add(Item1.header.part_id, Idx);
+			TotalSize += Item1.data.size();
+		}
+	}
+
+	if (-1 != FileParts && PartSet.Num() == FileParts)
+	{
+		TArray<uint8> Data;
+		Data.Reserve(TotalSize);
+
+		uint64 Offset = 0;
+
+		for (size_t Idx = 0; Idx < FileParts; ++Idx)
+		{
+			std::vector<uint8>& RawData = FileMessages[Idx].data;
+			std::memmove(Data.GetData() + Offset, RawData.data(), RawData.size());
+			Offset += RawData.size();
+		}
+		
+		OnNewFileNotify.Broadcast(FileType, Data);
+	}
 }
 
 bool UZenoTcpClient::CreateRandomUDPSocket(FInternetAddr& OutEndpoint)
