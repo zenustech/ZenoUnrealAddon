@@ -38,6 +38,11 @@ bool FZenoLiveLinkSource::IsSourceStillValid() const
 
 bool FZenoLiveLinkSource::RequestSourceShutdown()
 {
+	if (CurrentProviderInstance.Get() == this)
+	{
+		CurrentProviderInstance.Reset();
+	}
+	
 	FZenoBridgeModule& ZenoBridge = FModuleManager::Get().GetModuleChecked<FZenoBridgeModule>("ZenoBridge");
 	ZenoBridge.StopClient();
 	return true;
@@ -45,6 +50,13 @@ bool FZenoLiveLinkSource::RequestSourceShutdown()
 
 void FZenoLiveLinkSource::Update()
 {
+	if (const int32 Num = EncounteredSubjects.Num(); Num == 0)
+	{
+		SourceStatus = LOCTEXT("SourceStatus_NoData", "No data");
+	} else
+	{
+		SourceStatus = FText::Format(LOCTEXT("SourceStatus_Subject", "{0} Subjects"), Num);
+	}
 }
 
 void FZenoLiveLinkSource::OnReceivedNewFile(const ZBFileType FileType, const TArray<uint8>& RawData)

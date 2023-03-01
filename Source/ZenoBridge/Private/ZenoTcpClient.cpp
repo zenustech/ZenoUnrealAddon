@@ -262,11 +262,19 @@ void UZenoTcpClient::TryMakeupFile(const uint32 FileId)
 
 		uint64 Offset = 0;
 
-		for (size_t Idx = 0; Idx < FileParts; ++Idx)
+		for (int32 Index = 0; Index < FileParts; Index++)
 		{
-			std::vector<uint8>& RawData = FileMessages[Idx].data;
+			std::vector<uint8>& RawData = FileMessages[PartIdx[Index]].data;
 			std::memmove(Data.GetData() + Offset, RawData.data(), RawData.size());
 			Offset += RawData.size();
+		}
+
+		for (auto [Key, Value] : PartIdx)
+		{
+			if (Value < FileMessages.Num())
+			{
+				FileMessages.RemoveAt(0);
+			}
 		}
 
 		OnNewFileNotifyDelegate.Broadcast(FileType, Data);

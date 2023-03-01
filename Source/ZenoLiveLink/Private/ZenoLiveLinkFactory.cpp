@@ -44,6 +44,12 @@ void UZenoLiveLinkFactory::CreateSourceFromSettings(
 	FZenoLiveLinkSetting InSettings,
 	const FOnLiveLinkSourceCreated OnSourceCreated) const
 {
+	if (FZenoLiveLinkSource::CurrentProviderInstance.IsValid())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Only one zeno provider instance allowed at same time."));
+		return;
+	}
+	
 	FString ConnectionString;
 	FZenoLiveLinkSetting::StaticStruct()->ExportText(ConnectionString, &InSettings, nullptr, nullptr, PPF_None, nullptr);
 
@@ -52,6 +58,7 @@ void UZenoLiveLinkFactory::CreateSourceFromSettings(
 	if (ZenoBridge.StartClient(FString::Printf(TEXT("%ls:%d"), *InSettings.IPAddress, InSettings.TCPPortNumber)))
 	{
 		const TSharedPtr<FZenoLiveLinkSource> SourcePtr = MakeShared<FZenoLiveLinkSource>(InSettings);
+		FZenoLiveLinkSource::CurrentProviderInstance = SourcePtr;
 		OnSourceCreated.ExecuteIfBound(SourcePtr, MoveTemp(ConnectionString));
 		ZenoBridge.GetTcpClient()->OnNewFileNotifyDelegate.AddSP(SourcePtr.ToSharedRef(), &FZenoLiveLinkSource::OnReceivedNewFile);
 	}

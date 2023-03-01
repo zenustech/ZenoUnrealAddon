@@ -28,6 +28,9 @@ public:
 	// New file notify
 	void OnReceivedNewFile(const enum class ZBFileType FileType, const TArray<uint8>& RawData);
 
+public:
+	static inline TSharedPtr<FZenoLiveLinkSource> CurrentProviderInstance = nullptr;
+
 private:
 	FText SourceType;
 	FText SourceMachineName;
