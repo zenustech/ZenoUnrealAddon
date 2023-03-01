@@ -17,8 +17,8 @@
 	"Modules": [
 		{
 			"Name": "ZenoBridge",
-			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"Type": "RuntimeAndProgram",
+			"LoadingPhase": "PreLoadingScreen"
 		},
 		{
 			"Name": "ZenoLiveLink",

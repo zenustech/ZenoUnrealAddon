@@ -6,9 +6,12 @@
 
 #include "ILiveLinkClient.h"
 #include "ZenoBridge.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "Role/LiveLinkTranslationRole.h"
 #include "Role/ZenoLiveLinkTypes.h"
+#include "model/networktypes.h"
+#include "model/subject.h"
+#include "3rd/msgpack.h"
+#include "Role/LiveLinkTextureRole.h"
 
 FZenoLiveLinkSource::FZenoLiveLinkSource(const FZenoLiveLinkSetting InConnectionSettings)
 	: Client(nullptr)
@@ -42,24 +45,29 @@ bool FZenoLiveLinkSource::RequestSourceShutdown()
 
 void FZenoLiveLinkSource::Update()
 {
-	FName SubjectName("Translation 1");
-	
-	FLiveLinkStaticDataStruct StaticData(FLiveLinkTranslationStaticData::StaticStruct());
-	FLiveLinkTranslationStaticData& TranslationStaticData = *StaticData.Cast<FLiveLinkTranslationStaticData>();
-	TranslationStaticData.bIsLocationSupported = false;
-	TranslationStaticData.bIsRotationSupported = false;
-	TranslationStaticData.bIsScaleSupported = true;
-	TranslationStaticData.bIsInterpolation = true;
-	Client->PushSubjectStaticData_AnyThread({ SourceGuid, SubjectName }, ULiveLinkTranslationRole::StaticClass(), MoveTemp(StaticData));
+}
 
-	FLiveLinkFrameDataStruct FrameData(FLiveLinkTranslationFrameData::StaticStruct());
-	FLiveLinkTranslationFrameData* TranslationFrameData = FrameData.Cast<FLiveLinkTranslationFrameData>();
-	TranslationFrameData->Offset = { 1.f, 1.f, 1.f };
-	static double Cnt = 1.0;
-	TranslationFrameData->Transform = FTransform::Identity;
-	TranslationFrameData->Transform.ScaleTranslation(Cnt + 0.001);
-
-	Client->PushSubjectFrameData_AnyThread({SourceGuid, SubjectName}, MoveTemp(FrameData));
+void FZenoLiveLinkSource::OnReceivedNewFile(const ZBFileType FileType, const TArray<uint8>& RawData)
+{
+	if (FileType == ZBFileType::HeightField)
+	{
+		std::error_code Error;
+		const UnrealHeightFieldSubject Subject = msgpack::unpack<UnrealHeightFieldSubject>(RawData.GetData(), RawData.Num(), Error);
+		if (Error)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Unable to unpack file: %hs"), Error.message().c_str());
+			return;
+		}
+		const FName SubjectName(Subject.m_name.c_str());
+		EncounteredSubjects.Add(SubjectName);
+		
+		FLiveLinkStaticDataStruct StaticData(FLiveLinkHeightFieldStaticData::StaticStruct());
+		FLiveLinkHeightFieldStaticData& HeightFieldStaticData = *StaticData.Cast<FLiveLinkHeightFieldStaticData>();
+		HeightFieldStaticData.Size = Subject.m_resolution;
+		HeightFieldStaticData.Data.SetNumUninitialized(Subject.m_height.size());
+		std::memmove(HeightFieldStaticData.Data.GetData(), Subject.m_height.data(), Subject.m_height.size());
+		Client->PushSubjectStaticData_AnyThread({ SourceGuid, SubjectName }, ULiveLinkHeightFieldRole::StaticClass(), MoveTemp(StaticData));
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -28,7 +28,8 @@ public class ZenoBridge : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core", "ZenoLibrary",
+				"Core",
+				"ZenoLibrary",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -41,7 +42,6 @@ public class ZenoBridge : ModuleRules
 				"Engine",
 				"Networking",
 				"Sockets",
-				"ZenoLibrary",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

@@ -52,6 +52,7 @@ private:
 	
 public:
 	FClientLostConnectionDelegate LostConnectionDelegate;
+	FZenoClientNewFileNotify OnNewFileNotifyDelegate;
 
 private:
 	FIPv4Endpoint BindingAddr;
@@ -70,6 +71,4 @@ private:
 	FUdpSocketReceiver* UdpReceiver = nullptr;
 
 	TArray<ZBUFileMessage> FileMessages;
-
-	FZenoClientNewFileNotify OnNewFileNotify;
 };

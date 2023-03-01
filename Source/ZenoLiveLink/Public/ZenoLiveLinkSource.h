@@ -3,6 +3,7 @@
 
 #include "ILiveLinkSource.h"
 #include "ZenoLiveLinkSetting.h"
+#include "model/networktypes.h"
 
 class ZENOLIVELINK_API FZenoLiveLinkSource : public ILiveLinkSource, public TSharedFromThis<FZenoLiveLinkSource>
 {
@@ -24,6 +25,9 @@ public:
 	virtual FText GetSourceStatus() const override { return SourceStatus; }
 	// ~end impl ILiveLinkSource
 
+	// New file notify
+	void OnReceivedNewFile(const enum class ZBFileType FileType, const TArray<uint8>& RawData);
+
 private:
 	FText SourceType;
 	FText SourceMachineName;
@@ -31,4 +35,6 @@ private:
 	
 	ILiveLinkClient* Client;
 	FGuid SourceGuid;
+
+	TSet<FName> EncounteredSubjects;
 };

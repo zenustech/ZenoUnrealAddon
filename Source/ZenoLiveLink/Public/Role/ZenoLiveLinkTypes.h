@@ -6,6 +6,31 @@
 #include "Roles/LiveLinkTransformTypes.h"
 #include "ZenoLiveLinkTypes.generated.h"
 
+USTRUCT()
+struct ZENOLIVELINK_API FLiveLinkHeightFieldStaticData : public FLiveLinkBaseStaticData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LiveLink")
+	int64 Size;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LiveLink")
+	TArray<float> Data;
+	
+};
+
+USTRUCT(BlueprintType)
+struct FLiveLinkHeightFieldBlueprintData : public  FLiveLinkBaseBlueprintData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LiveLink")
+	FLiveLinkHeightFieldStaticData StaticData;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "LiveLink")
+	FLiveLinkBaseFrameData FrameData;
+};
+
 USTRUCT(BlueprintType)
 struct ZENOLIVELINK_API FLiveLinkTranslationStaticData : public FLiveLinkTransformStaticData
 {

@@ -1,7 +1,6 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "ZenoBridge.h"
 
 class FZenoLiveLinkModule : public IModuleInterface, public FTickableGameObject
 {
@@ -18,5 +17,4 @@ public:
 	// ~End override FTickableGameObject members
 
 private:
-	FZenoBridgeModule* Module = nullptr;
 };

@@ -185,7 +185,6 @@ void UZenoTcpClient::ProcessTcpBuffer()
 
 void UZenoTcpClient::OnUdpDataReceived(const FArrayReaderPtr& Data, const FIPv4Endpoint& Endpoint)
 {
-	UE_LOG(LogZeno, Warning, TEXT("%ls: %d"), *Endpoint.ToString(), Data->Num());
 	unsigned char* RawData = Data->GetData();
 	const uint16 DataSize = Data->TotalSize();
 
@@ -213,6 +212,7 @@ void UZenoTcpClient::OnUdpDataReceived(const FArrayReaderPtr& Data, const FIPv4E
 	MessageHeader->file_id = ByteSwap(MessageHeader->file_id);
 #endif // !PLATFORM_LITTLE_ENDIAN
 	const uint32 FileId = MessageHeader->file_id;
+	UE_LOG(LogZeno, Warning, TEXT("UDP File Transfer from '%ls'. FileID %d, PartID %d, Size %d."), *Endpoint.ToString(), FileId, MessageHeader->part_id, Data->Num());
 	std::vector<uint8> MessageData;
 	MessageData.resize(DataSize - sizeof(ZBUFileMessageHeader));
 	std::memmove(MessageData.data(), RawData + sizeof(ZBUFileMessageHeader), DataSize - sizeof(ZBUFileMessageHeader));
@@ -258,7 +258,7 @@ void UZenoTcpClient::TryMakeupFile(const uint32 FileId)
 	if (-1 != FileParts && PartSet.Num() == FileParts)
 	{
 		TArray<uint8> Data;
-		Data.Reserve(TotalSize);
+		Data.SetNumUninitialized(TotalSize, true);
 
 		uint64 Offset = 0;
 
@@ -268,8 +268,8 @@ void UZenoTcpClient::TryMakeupFile(const uint32 FileId)
 			std::memmove(Data.GetData() + Offset, RawData.data(), RawData.size());
 			Offset += RawData.size();
 		}
-		
-		OnNewFileNotify.Broadcast(FileType, Data);
+
+		OnNewFileNotifyDelegate.Broadcast(FileType, Data);
 	}
 }
 

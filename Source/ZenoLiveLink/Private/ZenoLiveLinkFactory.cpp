@@ -53,6 +53,7 @@ void UZenoLiveLinkFactory::CreateSourceFromSettings(
 	{
 		const TSharedPtr<FZenoLiveLinkSource> SourcePtr = MakeShared<FZenoLiveLinkSource>(InSettings);
 		OnSourceCreated.ExecuteIfBound(SourcePtr, MoveTemp(ConnectionString));
+		ZenoBridge.GetTcpClient()->OnNewFileNotifyDelegate.AddSP(SourcePtr.ToSharedRef(), &FZenoLiveLinkSource::OnReceivedNewFile);
 	}
 	else
 	{
