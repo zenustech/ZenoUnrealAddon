@@ -22,8 +22,8 @@
 		},
 		{
 			"Name": "ZenoLiveLink",
-			"Type": "Runtime",
-			"LoadingPhase": "PostConfigInit"
+			"Type": "EditorAndProgram",
+			"LoadingPhase": "PostEngineInit"
 		},
 		{
 			"Name": "ZenoLibrary",

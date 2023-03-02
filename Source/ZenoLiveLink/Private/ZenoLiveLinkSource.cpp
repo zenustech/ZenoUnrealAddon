@@ -82,4 +82,9 @@ void FZenoLiveLinkSource::OnReceivedNewFile(const ZBFileType FileType, const TAr
 	}
 }
 
+ILiveLinkClient* FZenoLiveLinkSource::GetCurrentClient() const
+{
+	return Client;
+}
+
 #undef LOCTEXT_NAMESPACE

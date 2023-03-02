@@ -2,6 +2,8 @@
 
 #include "CoreMinimal.h"
 
+class UZenoLandscapeTool;
+
 class FZenoLiveLinkModule : public IModuleInterface, public FTickableGameObject
 {
 public:
@@ -16,5 +18,22 @@ public:
 	virtual TStatId GetStatId() const override;
 	// ~End override FTickableGameObject members
 
+	TWeakObjectPtr<UZenoLandscapeTool> GetLandscapeTool() const;
+
+	static FZenoLiveLinkModule* GetInstance();
+
 private:
+	TSharedPtr<FUICommandList> PluginCommands;
+
+	TStrongObjectPtr<UZenoLandscapeTool> LandscapeTool;
+
+	inline static FZenoLiveLinkModule* ModuleInstance = nullptr;
+
+private:
+	void MapPluginActions() const;
+
+	void OnEditorModeChanged(const FEditorModeID& InModeID, bool bIsEnteringMode);
+
+public:
+	friend UZenoLandscapeTool;
 };

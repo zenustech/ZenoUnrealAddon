@@ -23,6 +23,10 @@ public class ZenoLiveLink : ModuleRules
                 "PropertyEditor",
                 "LiveLinkInterface",
                 "ZenoBridge",
+                "Landscape",
+                "LandscapeEditor",
+                "LevelEditor",
+                "UnrealEd",
             }
         );
         
