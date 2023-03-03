@@ -7,6 +7,8 @@
 #include "Command/FZenoLandscapeCommand.h"
 #include "Modules/ModuleManager.h"
 #include "UI/Landscape/LandscapeToolZenoBridge.h"
+#include "LandscapeEditorModule.h"
+#include "UI/Landscape/LandscapeFileFormatZeno.h"
 
 #define LOCTEXT_NAMESPACE "FZenoLiveLinkModule"
 
@@ -19,6 +21,9 @@ void FZenoLiveLinkModule::StartupModule()
 	MapPluginActions();
 	
 	GLevelEditorModeTools().OnEditorModeIDChanged().AddRaw(this, &FZenoLiveLinkModule::OnEditorModeChanged);
+
+	ILandscapeEditorModule& LandscapeEditorModule = FModuleManager::Get().GetModuleChecked<ILandscapeEditorModule>("LandscapeEditor");
+	LandscapeEditorModule.RegisterHeightmapFileFormat(MakeShared<FLandscapeHeightmapFileFormatZeno_Virtual>());
 }
 
 void FZenoLiveLinkModule::ShutdownModule()

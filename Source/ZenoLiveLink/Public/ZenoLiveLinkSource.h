@@ -29,6 +29,8 @@ public:
 	void OnReceivedNewFile(const enum class ZBFileType FileType, const TArray<uint8>& RawData);
 
 	ILiveLinkClient* GetCurrentClient() const;
+	FGuid GetGuid() const;
+	bool HasSubject(const FName SubjectName) const;
 
 public:
 	static inline TSharedPtr<FZenoLiveLinkSource> CurrentProviderInstance = nullptr;

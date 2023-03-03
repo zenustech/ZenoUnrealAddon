@@ -2,6 +2,8 @@
 
 #include "ZenoLiveLink.h"
 #include "ZenoLiveLinkSource.h"
+#include "Role/LiveLinkTextureRole.h"
+#include "Role/ZenoLiveLinkTypes.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/Input/SComboButton.h"
 #include "Widgets/Layout/SScrollBox.h"
@@ -106,6 +108,19 @@ bool UZenoLandscapeTool::ShouldCreateDockTab(const FSpawnTabArgs& Args)
 	return true;
 }
 
+void UZenoLandscapeTool::ImportHeightMapFromSubject()
+{
+	if (!SelectedSubjectKey.IsSet())
+	{
+		return;
+	}
+	if (const TOptional<FLiveLinkSubjectFrameData> FrameData = GetFrameData(SelectedSubjectKey.GetValue()); FrameData.IsSet())
+	{
+		const FLiveLinkHeightFieldStaticData* Data = FrameData->StaticData.Cast<FLiveLinkHeightFieldStaticData>();
+		
+	}
+}
+
 FText UZenoLandscapeTool::GetSubjectComboButtonText() const
 {
 	if (SelectedSubjectKey.IsSet())
@@ -127,6 +142,7 @@ FOnClicked UZenoLandscapeTool::CreateOnSubjectListItemClicked(const FLiveLinkSub
 			{
 				ComboPtr->SetIsOpen(false);
 			}
+			That->ImportHeightMapFromSubject();
 		}
 		return FReply::Handled();
 	});

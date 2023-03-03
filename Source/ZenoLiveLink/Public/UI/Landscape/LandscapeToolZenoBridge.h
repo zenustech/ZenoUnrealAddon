@@ -18,6 +18,8 @@ private:
 	TSharedRef<class SDockTab> MakeDockTab(const FSpawnTabArgs& Args);
 	bool ShouldCreateDockTab(const FSpawnTabArgs& Args);
 
+	void ImportHeightMapFromSubject();
+
 #pragma region FetchState
 	FText GetSubjectComboButtonText() const;
 #pragma endregion FetchState
