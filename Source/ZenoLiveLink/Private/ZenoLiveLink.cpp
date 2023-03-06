@@ -1,5 +1,6 @@
 ﻿#include "ZenoLiveLink.h"
 
+#include "AssetToolsModule.h"
 #include "EditorModeManager.h"
 #include "LevelEditor.h"
 #include "ZenoBridge.h"
@@ -8,6 +9,8 @@
 #include "Modules/ModuleManager.h"
 #include "UI/Landscape/LandscapeToolZenoBridge.h"
 #include "LandscapeEditorModule.h"
+#include "Asset/ZenoAssetLandscapeActorFactory.h"
+#include "Asset/ZenoBridgeAssetFactory.h"
 #include "UI/Landscape/LandscapeFileFormatZeno.h"
 
 #define LOCTEXT_NAMESPACE "FZenoLiveLinkModule"
@@ -24,6 +27,8 @@ void FZenoLiveLinkModule::StartupModule()
 
 	ILandscapeEditorModule& LandscapeEditorModule = FModuleManager::Get().GetModuleChecked<ILandscapeEditorModule>("LandscapeEditor");
 	LandscapeEditorModule.RegisterHeightmapFileFormat(MakeShared<FLandscapeHeightmapFileFormatZeno_Virtual>());
+
+	RegisterAssets();
 }
 
 void FZenoLiveLinkModule::ShutdownModule()
@@ -32,6 +37,7 @@ void FZenoLiveLinkModule::ShutdownModule()
 	PluginCommands.Reset();
 	UZenoLandscapeTool::UnRegister();
 	ModuleInstance = nullptr;
+	UnRegisterAssets();
 }
 
 void FZenoLiveLinkModule::Tick(float DeltaTime)
@@ -61,6 +67,30 @@ FZenoLiveLinkModule* FZenoLiveLinkModule::GetInstance()
 void FZenoLiveLinkModule::MapPluginActions() const
 {
 	if (!PluginCommands.IsValid()) return;
+}
+
+void FZenoLiveLinkModule::RegisterAssets()
+{
+	IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
+	const TSharedRef<IAssetTypeActions> ZenoBridgeAssetActions = MakeShared<FZenoBridgeAssetActions>();
+	EncounteredAssets.Add(ZenoBridgeAssetActions);
+	AssetTools.RegisterAssetTypeActions(ZenoBridgeAssetActions);
+
+	auto LandscapeActorFactory = NewObject<UZenoAssetLandscapeActorFactory>();
+	GEditor->ActorFactories.Add(LandscapeActorFactory);
+}
+
+void FZenoLiveLinkModule::UnRegisterAssets()
+{
+	if (const FAssetToolsModule* AssetToolsModule = FModuleManager::GetModulePtr<FAssetToolsModule>("AssetTools"); nullptr != AssetToolsModule)
+	{
+		IAssetTools& AssetTools = AssetToolsModule->Get();
+
+		for (auto Action : EncounteredAssets)
+		{
+			AssetTools.UnregisterAssetTypeActions(Action);
+		}
+	}
 }
 
 void FZenoLiveLinkModule::OnEditorModeChanged(const FEditorModeID& InModeID, bool bIsEnteringMode)

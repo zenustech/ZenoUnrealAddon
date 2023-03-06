@@ -19,7 +19,8 @@ public class ZenoLibrary : ModuleRules
                 "CoreUObject",
                 "Engine",
                 "Slate",
-                "SlateCore"
+                "SlateCore",
+                "ProceduralMeshComponent",
             }
         );
 

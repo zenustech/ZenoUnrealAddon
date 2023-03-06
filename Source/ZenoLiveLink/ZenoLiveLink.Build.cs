@@ -27,6 +27,8 @@ public class ZenoLiveLink : ModuleRules
                 "LandscapeEditor",
                 "LevelEditor",
                 "UnrealEd",
+                "ZenoLibrary",
+                "AssetTools",
             }
         );
         

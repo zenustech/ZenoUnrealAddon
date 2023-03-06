@@ -29,8 +29,13 @@ private:
 
 	inline static FZenoLiveLinkModule* ModuleInstance = nullptr;
 
+	TArray<TSharedRef<class IAssetTypeActions>> EncounteredAssets;
+
 private:
 	void MapPluginActions() const;
+
+	void RegisterAssets();
+	void UnRegisterAssets();
 
 	void OnEditorModeChanged(const FEditorModeID& InModeID, bool bIsEnteringMode);
 

@@ -22,7 +22,7 @@ FLandscapeFileInfo FLandscapeHeightmapFileFormatZeno_Virtual::Validate(const TCH
 	FName LayerName) const
 {
 	FLandscapeFileInfo Result;
-	Result.DataScale = FVector { 64.0, 64.0, 64.0 / 128.0 };
+	// Result.DataScale = FVector { 64.0, 64.0, 64.0 / 128.0 };
 
 	if (!UZenoCommonDataSource::HasConnectToZeno())
 	{
@@ -82,7 +82,7 @@ FLandscapeImportData<uint16> FLandscapeHeightmapFileFormatZeno_Virtual::Import(c
 	ImportData.Data.Reserve(StaticData->Data.Num());
 	for (size_t Idx = 0; Idx < StaticData->Data.Num(); ++Idx)
 	{
-		const float Height = (StaticData->Data[Idx] + 255.f) / 512.f * 0xFFFF * 0.75;
+		const float Height = (StaticData->Data[Idx] + 255.f) / 512.f * 0xFFFF;
 		ImportData.Data.Push(static_cast<uint16>(Height));
 	}
 	ImportData.ResultCode = ELandscapeImportResult::Success;
