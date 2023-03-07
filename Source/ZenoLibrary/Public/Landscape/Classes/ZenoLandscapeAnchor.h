@@ -3,9 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
+#include "Landscape.h"
 #include "ZenoLandscapeAnchor.generated.h"
 
+class UZenoBridgeAssetData_Heightfield;
 UCLASS()
 class ZENOLIBRARY_API AZenoLandscapeAnchor : public AActor
 {
@@ -13,6 +14,14 @@ class ZENOLIBRARY_API AZenoLandscapeAnchor : public AActor
 
 public:
 	// Sets default values for this actor's properties
-	AZenoLandscapeAnchor();
+	AZenoLandscapeAnchor(const FObjectInitializer& ObjectInitializer);
+
+	UPROPERTY(Category = "Zeno|Property", BlueprintReadOnly, EditAnywhere)
+	UZenoBridgeAssetData_Heightfield* Heightfield = nullptr;
+
+	UPROPERTY(Category = "Zeno|Property", BlueprintReadOnly, EditAnywhere)
+	FVector LandscapeScale = FVector{100, 100, 100};
+
+	virtual void OnConstruction(const FTransform& Transform) override;
 
 };

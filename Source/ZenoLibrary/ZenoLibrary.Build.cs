@@ -21,6 +21,14 @@ public class ZenoLibrary : ModuleRules
                 "Slate",
                 "SlateCore",
                 "ProceduralMeshComponent",
+                "Foliage",
+				"Landscape",
+                "LandscapeEditorUtilities",
+                "RenderCore",
+                "RHI",
+                "InputCore",
+				"ImageCore",
+				"EditorFramework",
             }
         );
 

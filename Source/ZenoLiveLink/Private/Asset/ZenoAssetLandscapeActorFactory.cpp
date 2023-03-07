@@ -18,6 +18,16 @@ UZenoAssetLandscapeActorFactory::UZenoAssetLandscapeActorFactory(const FObjectIn
 void UZenoAssetLandscapeActorFactory::PostSpawnActor(UObject* Asset, AActor* NewActor)
 {
 	Super::PostSpawnActor(Asset, NewActor);
+	if (const UZenoBridgeAsset* BridgeAsset = Cast<UZenoBridgeAsset>(Asset); IsValid(BridgeAsset))
+	{
+		if (AZenoLandscapeAnchor* LandscapeAnchor = Cast<AZenoLandscapeAnchor>(NewActor); IsValid(LandscapeAnchor))
+		{
+			if (UZenoBridgeAssetData_Heightfield* Data_Heightfield = Cast<UZenoBridgeAssetData_Heightfield>(BridgeAsset->GetAssetData()); IsValid(Data_Heightfield))
+			{
+				LandscapeAnchor->Heightfield = Data_Heightfield;
+			}
+		}
+	}
 }
 
 void UZenoAssetLandscapeActorFactory::PostCreateBlueprint(UObject* Asset, AActor* CDO)
@@ -33,7 +43,10 @@ bool UZenoAssetLandscapeActorFactory::CanCreateActorFrom(const FAssetData& Asset
 		if (nullptr != AssetClass && AssetClass->IsChildOf(UZenoBridgeAsset::StaticClass()))
 		{
 			const UZenoBridgeAsset* Asset = Cast<UZenoBridgeAsset>(AssetData.GetAsset());
-			if (nullptr != Asset && Asset->GetAssetType() == EZenoAssetType::Invalid)
+			if (nullptr != Asset
+				&& Asset->GetAssetType() == EZenoAssetType::HeightField
+				&& IsValid(Cast<UZenoBridgeAssetData_Heightfield>(Asset->GetAssetData()))
+				)
 			{
 				return true;
 			}
