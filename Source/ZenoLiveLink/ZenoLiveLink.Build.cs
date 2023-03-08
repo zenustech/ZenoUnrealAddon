@@ -29,6 +29,7 @@ public class ZenoLiveLink : ModuleRules
                 "UnrealEd",
                 "ZenoLibrary",
                 "AssetTools",
+                "EditorFramework",
             }
         );
         

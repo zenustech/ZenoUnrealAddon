@@ -5,18 +5,14 @@
 #include "UObject/Object.h"
 #include "LiveLinkTypes.h"
 #include "ZenoLiveLinkSource.h"
-#include "ZenoCommonDataSource.generated.h"
 
 /**
  * Utilities to access data from live link.
  */
-UCLASS()
-class ZENOLIVELINK_API UZenoCommonDataSource : public UObject
+class ZENOLIVELINK_API FZenoCommonDataSource
 {
-	GENERATED_BODY()
-
 public:
-	UZenoCommonDataSource();
+	FZenoCommonDataSource();
 
 	/**
 	 * Check live link has connected to zeno
@@ -40,7 +36,7 @@ private:
 template <
 	typename T
 >
-T* UZenoCommonDataSource::GetRoleChecked(const FLiveLinkSubjectKey& InSubjectKey)
+T* FZenoCommonDataSource::GetRoleChecked(const FLiveLinkSubjectKey& InSubjectKey)
 {
 	if (!HasConnectToZeno()) return nullptr;
 	const TSubclassOf<ULiveLinkRole> SubjectRole = FZenoLiveLinkSource::CurrentProviderInstance->GetCurrentClient()->GetSubjectRole_AnyThread(InSubjectKey);

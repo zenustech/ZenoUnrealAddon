@@ -5,6 +5,7 @@
 #include "LevelEditor.h"
 #include "ZenoBridge.h"
 #include "Editor.h"
+#include "EditorModes.h"
 #include "Command/FZenoLandscapeCommand.h"
 #include "Modules/ModuleManager.h"
 #include "UI/Landscape/LandscapeToolZenoBridge.h"
@@ -22,6 +23,8 @@ void FZenoLiveLinkModule::StartupModule()
 	FZenoLandscapeCommand::Register();
 	PluginCommands = MakeShared<FUICommandList>();
 	MapPluginActions();
+
+	LandscapeTool = TStrongObjectPtr { NewObject<UZenoLandscapeTool>() };
 	
 	GLevelEditorModeTools().OnEditorModeIDChanged().AddRaw(this, &FZenoLiveLinkModule::OnEditorModeChanged);
 
@@ -35,7 +38,6 @@ void FZenoLiveLinkModule::ShutdownModule()
 {
 	FZenoLandscapeCommand::Unregister();
 	PluginCommands.Reset();
-	UZenoLandscapeTool::UnRegister();
 	ModuleInstance = nullptr;
 	UnRegisterAssets();
 }
@@ -95,16 +97,15 @@ void FZenoLiveLinkModule::UnRegisterAssets()
 
 void FZenoLiveLinkModule::OnEditorModeChanged(const FEditorModeID& InModeID, bool bIsEnteringMode)
 {
-	if (InModeID == "EM_Landscape")
+	if (InModeID == FBuiltinEditorModes::EM_Landscape)
 	{
 		if (bIsEnteringMode)
 		{
-			UZenoLandscapeTool::Register();
-			LandscapeTool->InitWidget();
+			LandscapeTool->InvokeUI();
 		}
 		else
 		{
-			UZenoLandscapeTool::UnRegister();
+			LandscapeTool->RequestToClose();
 		}
 	}
 }

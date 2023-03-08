@@ -24,7 +24,7 @@ FLandscapeFileInfo FLandscapeHeightmapFileFormatZeno_Virtual::Validate(const TCH
 	FLandscapeFileInfo Result;
 	// Result.DataScale = FVector { 64.0, 64.0, 64.0 / 128.0 };
 
-	if (!UZenoCommonDataSource::HasConnectToZeno())
+	if (!FZenoCommonDataSource::HasConnectToZeno())
 	{
 		Result.ResultCode = ELandscapeImportResult::Error;
 		Result.ErrorMessage = LOCTEXT("NotConnected", "LiveLink hasn't connected to zeno.");
@@ -49,7 +49,7 @@ FLandscapeFileInfo FLandscapeHeightmapFileFormatZeno_Virtual::Validate(const TCH
 			Result.ErrorMessage = LOCTEXT("SubjectNotFound", "Subject not found.");
 		} else
 		{
-			TOptional<FLiveLinkSubjectFrameData> FrameData = UZenoCommonDataSource::GetFrameData( { FZenoLiveLinkSource::CurrentProviderInstance->GetGuid(), SubjectName});
+			TOptional<FLiveLinkSubjectFrameData> FrameData = FZenoCommonDataSource::GetFrameData( { FZenoLiveLinkSource::CurrentProviderInstance->GetGuid(), SubjectName});
 			if (!FrameData.IsSet() || !FrameData->StaticData.IsValid() || FrameData->StaticData.Cast<FLiveLinkHeightFieldStaticData>() == nullptr)
 			{
 				Result.ResultCode = ELandscapeImportResult::Error;
@@ -77,7 +77,7 @@ FLandscapeImportData<uint16> FLandscapeHeightmapFileFormatZeno_Virtual::Import(c
 	Filename = Filename.Mid(Index+1);
 	Filename.RemoveFromEnd(".virtual_zeno_heightmap");
 	const FName SubjectName = FName(Filename);
-	TOptional<FLiveLinkSubjectFrameData> FrameData = UZenoCommonDataSource::GetFrameData( { FZenoLiveLinkSource::CurrentProviderInstance->GetGuid(), SubjectName});
+	TOptional<FLiveLinkSubjectFrameData> FrameData = FZenoCommonDataSource::GetFrameData( { FZenoLiveLinkSource::CurrentProviderInstance->GetGuid(), SubjectName});
 	const FLiveLinkHeightFieldStaticData* StaticData = FrameData->StaticData.Cast<FLiveLinkHeightFieldStaticData>();
 	ImportData.Data.Reserve(StaticData->Data.Num());
 	for (size_t Idx = 0; Idx < StaticData->Data.Num(); ++Idx)
