@@ -115,6 +115,10 @@ END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 void UZenoLandscapeTool::ImportHeightMapFromSubject()
 {
+	if (UISetting->SelectedSubjectKey.SubjectName.Name.IsNone())
+	{
+		return;
+	}
 	if (const TOptional<FLiveLinkSubjectFrameData> FrameData = FZenoCommonDataSource::GetFrameData(UISetting->SelectedSubjectKey); FrameData.IsSet())
 	{
 		const FLiveLinkHeightFieldStaticData* Data = FrameData->StaticData.Cast<FLiveLinkHeightFieldStaticData>();
@@ -127,8 +131,18 @@ void UZenoLandscapeTool::ImportHeightMapFromSubject()
 		HeightData.SetNumUninitialized(Data->Data.Num());
 		for (size_t Idx = 0; Idx < Data->Data.Num(); ++Idx)
 		{
-			 const float Height = (Data->Data[Idx] + 255.f) / 512.f * 0xFFFF;
-			 HeightData[Idx] = static_cast<uint16>(Height);
+			uint16 Height;
+			if (Data->Data[Idx] > 256.f)
+			{
+				Height = UINT16_MAX;
+			} else if (Data->Data[Idx] < -256.f)
+			{
+				Height = 0;
+			} else
+			{
+				Height = (Data->Data[Idx] + 255.f) / 512.f * 0xFFFF;
+			}
+			HeightData[Idx] = Height;
 		}
 		FZenoLandscapeHelper::ExpandHeightmapData(HeightData, {SizeX, SizeY}, ExpandedHeightData);
 

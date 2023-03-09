@@ -75,14 +75,19 @@ void FZenoLiveLinkSource::OnReceivedNewFile(const ZBFileType FileType, const TAr
 			UE_LOG(LogTemp, Warning, TEXT("Unable to unpack file: %hs"), Error.message().c_str());
 			return;
 		}
-		const FName SubjectName(Subject.m_name.substr(0, Subject.m_name.find(":")).c_str() );
+		// const FName SubjectName(Subject.m_name.substr(0, Subject.m_name.find(":")).c_str() );
+		const FName SubjectName(Subject.m_name.c_str());
 		EncounteredSubjects.Add(SubjectName);
 		
 		FLiveLinkStaticDataStruct StaticData(FLiveLinkHeightFieldStaticData::StaticStruct());
 		FLiveLinkHeightFieldStaticData& HeightFieldStaticData = *StaticData.Cast<FLiveLinkHeightFieldStaticData>();
 		HeightFieldStaticData.Size = Subject.m_resolution;
 		HeightFieldStaticData.Data.SetNumUninitialized(Subject.m_height.size());
-		std::memmove(HeightFieldStaticData.Data.GetData(), Subject.m_height.data(), Subject.m_height.size());
+		// for (size_t Idx = 0; Idx < Subject.m_height.size(); ++Idx)
+		// {
+		// 	HeightFieldStaticData.Data[Idx] = Subject.m_height[Idx];
+		// }
+		FGenericPlatformMemory::Memmove(HeightFieldStaticData.Data.GetData(), Subject.m_height.data(), Subject.m_height.size() * sizeof(float));
 		Client->PushSubjectStaticData_AnyThread({ SourceGuid, SubjectName }, ULiveLinkHeightFieldRole::StaticClass(), MoveTemp(StaticData));
 	}
 }

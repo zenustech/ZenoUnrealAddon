@@ -11,5 +11,5 @@ void FZenoLandscapeHelper::ExpandHeightmapData(const TArray<uint16>& InHeightMap
 	FLandscapeImportResolution ImportResolution(Size, Size);
 	FLandscapeImportResolution TargetResolution(InTargetResolution.X, InTargetResolution.Y);
 
-	FLandscapeImportHelper::TransformHeightmapImportData(InHeightMap, OutHeightMap, ImportResolution, TargetResolution, ELandscapeImportTransformType::ExpandCentered);
+	FLandscapeImportHelper::TransformHeightmapImportData(InHeightMap, OutHeightMap, ImportResolution, TargetResolution, ELandscapeImportTransformType::Resample);
 }
