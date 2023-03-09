@@ -13,12 +13,17 @@ public:
 
 	virtual void Init() override;
 	virtual bool CanBeCreate(const FSpawnTabArgs& Args) override;
+
+	bool GetIsPropertyVisible(const FPropertyAndParent& PropertyAndParent) const;
+
+protected:
+	void Slate_MarkImportHeightfield(FToolBarBuilder& ToolBarBuilder, const TSharedRef<SVerticalBox> Container);
+	void Slate_MarkExportWeightmap(FToolBarBuilder& ToolBarBuilder, const TSharedRef<SVerticalBox> Container);
 	
 private:
 	void ImportHeightMapFromSubject();
 
 #pragma region FetchState
-	FText GetSubjectComboButtonText() const;
 #pragma endregion FetchState
 	
 private:
@@ -26,6 +31,7 @@ private:
 	// UI
 	TSharedPtr<class SScrollBox> Slate_SubjectListView;
 	TSharedPtr<class SComboButton> Slate_SubjectListComboButton;
+	TSharedPtr<class IDetailsView> Slate_DetailPanel;
 
 	UPROPERTY()
 	UZenoLandscapeEditorObject* UISetting;
@@ -38,5 +44,6 @@ private:
 public:
 	inline static const FName TabName = FName("ZT_Landscape");
 
-private:
+	inline static const FName NAME_ImportHeightfield = FName("ZT_Landscape_ImportHeightfield");
+	inline static const FName NAME_ExportWeightmap = FName("ZT_Landscape_ExportWeightmap");
 };

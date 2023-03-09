@@ -17,6 +17,7 @@
 #include "Role/LiveLinkTextureRole.h"
 #include "Role/ZenoLiveLinkTypes.h"
 #include "UI/Landscape/ZenoLandscapeEditorObject.h"
+#include "UI/Landscape/ZenoLandscapeHelper.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/Input/SComboButton.h"
 #include "Widgets/Layout/SScrollBox.h"
@@ -33,24 +34,18 @@ UZenoLandscapeTool::UZenoLandscapeTool(const FObjectInitializer& ObjectInitializ
 
 void UZenoLandscapeTool::Init()
 {
-	AddMode(FName("ZT_Landscape_ImportHeightfield"), FZenoLandscapeCommand::Get().ImportLiveLinkHeightmap.ToSharedRef(), FZenoEditorToolkitBuildToolPalette::CreateLambda([] (FToolBarBuilder& ToolBarBuilder, const TSharedRef<SVerticalBox> Container)
-	{
-		Container->AddSlot()
-		.AutoHeight()
-		[
-			SNew(STextBlock)
-			.Text(FText::FromString("123"))
-		];
-	}));
-	AddMode(FName("ZT_Landscape_ExportWeightmap"), FZenoLandscapeCommand::Get().ExportLiveLinkWeightmap.ToSharedRef(), FZenoEditorToolkitBuildToolPalette::CreateLambda([] (FToolBarBuilder& ToolBarBuilder, const TSharedRef<SVerticalBox> Container)
-	{
-		Container->AddSlot()
-		.AutoHeight()
-		[
-			SNew(STextBlock)
-			.Text(FText::FromString("456"))
-		];
-	}));
+	FPropertyEditorModule& PropertyEditorModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+	FDetailsViewArgs DetailsViewArgs;
+    DetailsViewArgs.NameAreaSettings = FDetailsViewArgs::HideNameArea;
+    DetailsViewArgs.bAllowSearch = false;
+	
+	Slate_DetailPanel = PropertyEditorModule.CreateDetailView(DetailsViewArgs);
+	Slate_DetailPanel->SetIsPropertyVisibleDelegate(FIsPropertyVisible::CreateUObject(this, &UZenoLandscapeTool::GetIsPropertyVisible));
+	check(IsValid(UISetting));
+	Slate_DetailPanel->SetObject(UISetting);
+	
+	AddMode(FName(NAME_ImportHeightfield), FZenoLandscapeCommand::Get().ImportLiveLinkHeightmap.ToSharedRef(), FZenoEditorToolkitBuildToolPalette::CreateUObject(this, &UZenoLandscapeTool::Slate_MarkImportHeightfield));
+	AddMode(FName(NAME_ExportWeightmap), FZenoLandscapeCommand::Get().ExportLiveLinkWeightmap.ToSharedRef(), FZenoEditorToolkitBuildToolPalette::CreateUObject(this, &UZenoLandscapeTool::Slate_MarkExportWeightmap));
 }
 
 bool UZenoLandscapeTool::CanBeCreate(const FSpawnTabArgs& Args)
@@ -58,103 +53,101 @@ bool UZenoLandscapeTool::CanBeCreate(const FSpawnTabArgs& Args)
 	return GLevelEditorModeTools().IsModeActive(FBuiltinEditorModes::EM_Landscape);
 }
 
+bool UZenoLandscapeTool::GetIsPropertyVisible(const FPropertyAndParent& PropertyAndParent) const
+{
+	const FProperty& Property = PropertyAndParent.Property;
+	if (Property.HasMetaData("ShowForTools"))
+	{
+		TArray<FString> ShowForTools;
+		Property.GetMetaData("ShowForTools").ParseIntoArray(ShowForTools, TEXT(","), true);
+		FString CurrentModeText = CurrentMode.ToString().Replace(TEXT("ZT_Landscape_"), TEXT(""));
+		if (ShowForTools.Contains(CurrentModeText))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
-// TSharedRef<SDockTab> UZenoLandscapeTool::MakeDockTab(const FSpawnTabArgs& Args)
-// {
-// 	TArray<FLiveLinkSubjectKey> SubjectKeys = FZenoCommonDataSource::GetAllSubjectKeys();
-//
-// 	Slate_SubjectListView = SNew(SScrollBox).Orientation(EOrientation::Orient_Vertical);
-// 	for (const auto Key : SubjectKeys)
-// 	{
-// 		Slate_SubjectListView
-// 		->AddSlot()
-// 		.AutoSize()
-// 		[
-// 			SNew(SButton)
-// 			.Text(FText::FromString(Key.SubjectName.ToString()))
-// 			.OnClicked(CreateOnSubjectListItemClicked(Key))
-// 		];
-// 	}
-//
-// 	Slate_SubjectListComboButton = SNew(SComboButton)
-// 		.ButtonContent()
-// 		[
-// 		    SNew(STextBlock)
-// 		    .Text_UObject(this, &UZenoLandscapeTool::GetSubjectComboButtonText)
-// 		]
-// 		.MenuContent()
-// 		[
-// 		    SNew(SVerticalBox)
-// 		    + SVerticalBox::Slot()
-// 		    .MaxHeight(150)
-// 		    [
-// 				Slate_SubjectListView.ToSharedRef()
-// 			]
-// 		];
-// 	
-// 	TSharedRef<SDockTab> DockTab = SNew(SDockTab)
-// 		.TabRole(ETabRole::NomadTab)
-// 		[
-// 			// List height maps
-// 			SNew(SVerticalBox)
-// 			+ SVerticalBox::Slot()
-// 			.AutoHeight()
-// 			[
-// 				SNew(STextBlock)
-// 				.Text(LOCTEXT("LiveLinkSubjects", "Target Subject"))
-// 			]
-// 			+ SVerticalBox::Slot()
-// 			.AutoHeight()
-// 			[
-// 				Slate_SubjectListComboButton.ToSharedRef()
-// 			]
-// 		]
-// 		.OnTabClosed(SDockTab::FOnTabClosedCallback::CreateLambda( [] (TSharedRef<SDockTab>)
-// 		{
-// 		}))
-// 	;
-//
-// 	Slate_LandscapeToolDockTab = DockTab;
-//
-// 	return DockTab;
-// }
+
+void UZenoLandscapeTool::Slate_MarkImportHeightfield(FToolBarBuilder& ToolBarBuilder,
+                                                     const TSharedRef<SVerticalBox> Container)
+{
+	Slate_DetailPanel->ForceRefresh();
+	Container
+	->AddSlot()
+	.AutoHeight()
+	[
+		Slate_DetailPanel.ToSharedRef()
+	]
+	;
+	Container
+	->AddSlot()
+	.AutoHeight()
+	[
+		SNew(SButton)
+		.Text(FText::FromString("Import"))
+		.OnClicked(FOnClicked::CreateLambda([this]
+		{
+			ImportHeightMapFromSubject();
+			return FReply::Handled();
+		}))
+	]
+	;
+}
+
+void UZenoLandscapeTool::Slate_MarkExportWeightmap(FToolBarBuilder& ToolBarBuilder,
+	const TSharedRef<SVerticalBox> Container)
+{
+	Slate_DetailPanel->ForceRefresh();
+	Container
+	->AddSlot()
+	.AutoHeight()
+	[
+		Slate_DetailPanel.ToSharedRef()
+	]
+	;
+}
+
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 void UZenoLandscapeTool::ImportHeightMapFromSubject()
 {
-	if (!UISetting->SelectedSubjectKey.IsSet())
-	{
-		return;
-	}
-	if (const TOptional<FLiveLinkSubjectFrameData> FrameData = FZenoCommonDataSource::GetFrameData(UISetting->SelectedSubjectKey.GetValue()); FrameData.IsSet())
+	if (const TOptional<FLiveLinkSubjectFrameData> FrameData = FZenoCommonDataSource::GetFrameData(UISetting->SelectedSubjectKey); FrameData.IsSet())
 	{
 		const FLiveLinkHeightFieldStaticData* Data = FrameData->StaticData.Cast<FLiveLinkHeightFieldStaticData>();
 
+		const int32 SizeX = UISetting->ImportLandscape_ComponentCount.X * UISetting->ImportLandscape_QuadsPerSection + 1;
+		const int32 SizeY = UISetting->ImportLandscape_ComponentCount.Y * UISetting->ImportLandscape_QuadsPerSection + 1;
+		
 		TArray<uint16> HeightData;
+		TArray<uint16> ExpandedHeightData;
 		HeightData.SetNumUninitialized(Data->Data.Num());
 		for (size_t Idx = 0; Idx < Data->Data.Num(); ++Idx)
 		{
 			 const float Height = (Data->Data[Idx] + 255.f) / 512.f * 0xFFFF;
 			 HeightData[Idx] = static_cast<uint16>(Height);
 		}
-		int32 Size = sqrt(Data->Size);
+		FZenoLandscapeHelper::ExpandHeightmapData(HeightData, {SizeX, SizeY}, ExpandedHeightData);
 
 		TMap<FGuid, TArray<uint16>> HeightDataPerLayers;
 		TMap<FGuid, TArray<FLandscapeImportLayerInfo>> MaterialLayerDataPerLayers;
 		TArray<FLandscapeImportLayerInfo> LandscapeImportLayerInfos;
 
-		HeightDataPerLayers.Add({ FGuid(), HeightData });
+		HeightDataPerLayers.Add({ FGuid(), ExpandedHeightData });
 		MaterialLayerDataPerLayers.Add({FGuid(), LandscapeImportLayerInfos});
 		
 		FScopedTransaction Transaction(LOCTEXT("Undo", "Creating New Landscape"));
 
-		ALandscape* Landscape = GWorld->SpawnActor<ALandscape>(FVector::ZeroVector, FRotator::ZeroRotator);
-		Landscape->bCanHaveLayersContent = false;
-		Landscape->LandscapeMaterial = nullptr;
-		Landscape->SetActorRelativeScale3D(FVector{ 100, 100, 32 });
-		Landscape->StaticLightingLOD = FMath::DivideAndRoundUp(FMath::CeilLogTwo((Size * Size) / (2048 * 2048) + 1), (uint32)2);
-		
-		Landscape->Import(FGuid::NewGuid(), 0, 0, Size - 1, Size - 1, 1, 7, HeightDataPerLayers, TEXT(""), MaterialLayerDataPerLayers, ELandscapeImportAlphamapType::Additive);
+		ALandscape* Landscape = GWorld->SpawnActor<ALandscape>(UISetting->NewLandscape_Location, UISetting->NewLandscape_Rotation);
+		Landscape->bCanHaveLayersContent = UISetting->bImportLandscape_CanHaveLayer;
+		Landscape->LandscapeMaterial = UISetting->ImportLandscape_MaterialInterface.Get(false);
+		Landscape->SetActorRelativeScale3D(UISetting->ImportLandscape_Scale);
+		Landscape->StaticLightingLOD = FMath::DivideAndRoundUp(FMath::CeilLogTwo((SizeX * SizeY) / (2048 * 2048) + 1), static_cast<uint32>(2));
+
+		Landscape->Import(FGuid::NewGuid(), 0, 0, SizeX - 1, SizeY - 1, UISetting->ImportLandscape_SectionsPerComponent, UISetting->ImportLandscape_QuadsPerSection, HeightDataPerLayers, *FString::Printf(TEXT("zeno://%s.subject"), *UISetting->SelectedSubjectKey.SubjectName.ToString()), MaterialLayerDataPerLayers, ELandscapeImportAlphamapType::Additive);
 		
 		ULandscapeInfo* LandscapeInfo = Landscape->GetLandscapeInfo();
 		check(LandscapeInfo);
@@ -190,15 +183,6 @@ void UZenoLandscapeTool::ImportHeightMapFromSubject()
 		// 	ContentBrowserModule.Get().SyncBrowserToAssets(Assets);
 		// }
 	}
-}
-
-FText UZenoLandscapeTool::GetSubjectComboButtonText() const
-{
-	if (UISetting->SelectedSubjectKey.IsSet())
-	{
-		return FText::FromString(UISetting->SelectedSubjectKey->SubjectName.ToString());
-	}
-	return LOCTEXT("SelectASubject", "Select a subject...");
 }
 
 FOnClicked UZenoLandscapeTool::CreateOnSubjectListItemClicked(const FLiveLinkSubjectKey& Key)

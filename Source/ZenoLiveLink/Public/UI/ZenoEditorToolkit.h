@@ -39,6 +39,8 @@ protected:
 	TMap<FName, TSharedRef<FUICommandInfo>> ModeInfos;
 	FName CurrentMode;
 	
+	TSharedPtr<SDockTab> Slate_ToolkitDockTab;
+	
 	void AddMode(FName InNewMode, const TSharedRef<FUICommandInfo> CommandInfo, FZenoEditorToolkitBuildToolPalette Builder);
 	
 	virtual void OnChangeMode(FName ModeName);
@@ -50,5 +52,4 @@ protected:
 private:
 	TSharedRef<SDockTab> GetDockTab(const FSpawnTabArgs& Args);
 
-	TSharedPtr<SDockTab> Slate_ToolkitDockTab;
 };

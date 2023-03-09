@@ -51,12 +51,15 @@ void UZenoEditorToolkit::MakeDockTab(FName InMode)
 	if (!Slate_ToolkitDockTab.IsValid()) return;
 
 	const TSharedRef<SVerticalBox> TabBox = SNew(SVerticalBox);
+	Slate_ToolkitDockTab->SetContent(TabBox);
 	
-	FVerticalToolBarBuilder CatalogBuilder { UICommandList, FMultiBoxCustomization::None };
+	FUniformToolBarBuilder  CatalogBuilder { UICommandList, FMultiBoxCustomization::None };
+	CatalogBuilder.SetStyle(&FAppStyle::Get(), "PaletteToolBar");
 	for (auto Catalog : ModeInfos)
 	{
 		const FName Name {Catalog.Key};
 		UICommandList->MapAction(Catalog.Value, FUIAction { FExecuteAction::CreateUObject(this, &UZenoEditorToolkit::OnChangeMode, FName(Name)), FCanExecuteAction::CreateUObject(this, &UZenoEditorToolkit::IsModeEnabled, FName(Name)), FIsActionChecked::CreateUObject(this, &UZenoEditorToolkit::IsModeActive, FName(Name)) });
+		// CatalogBuilder.AddToolBarButton(Catalog.Value);
 		CatalogBuilder.AddToolbarStackButton(Catalog.Value);
 	}
 	TSet<FName> Keys;
@@ -65,15 +68,13 @@ void UZenoEditorToolkit::MakeDockTab(FName InMode)
 	{
 		CurrentMode = *Keys.begin();
 	}
-	TabBox->AddSlot().AutoHeight() [ CatalogBuilder.MakeWidget(nullptr, 150) ];
+	TabBox->AddSlot().AutoHeight() [ CatalogBuilder.MakeWidget(nullptr, 20) ];
 
 	FVerticalToolBarBuilder Builder { UICommandList, FMultiBoxCustomization::None };
 	if (ToolPaletteBuilders.Contains(CurrentMode))
 	{
 		ToolPaletteBuilders[CurrentMode].ExecuteIfBound(Builder, TabBox);
 	}
-
-	Slate_ToolkitDockTab->SetContent(TabBox);
 }
 
 void UZenoEditorToolkit::RequestToClose()
