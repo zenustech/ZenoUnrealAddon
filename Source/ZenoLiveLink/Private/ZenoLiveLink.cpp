@@ -13,6 +13,7 @@
 #include "Asset/ZenoAssetLandscapeActorFactory.h"
 #include "Asset/ZenoBridgeAssetFactory.h"
 #include "UI/Landscape/LandscapeFileFormatZeno.h"
+#include "UI/Landscape/ZenoLandscapeDetailCustomization.h"
 
 #define LOCTEXT_NAMESPACE "FZenoLiveLinkModule"
 
@@ -31,6 +32,8 @@ void FZenoLiveLinkModule::StartupModule()
 	ILandscapeEditorModule& LandscapeEditorModule = FModuleManager::Get().GetModuleChecked<ILandscapeEditorModule>("LandscapeEditor");
 	LandscapeEditorModule.RegisterHeightmapFileFormat(MakeShared<FLandscapeHeightmapFileFormatZeno_Virtual>());
 
+	FZenoLandscapeDetailCustomization::Register();
+
 	RegisterAssets();
 }
 
@@ -39,6 +42,7 @@ void FZenoLiveLinkModule::ShutdownModule()
 	FZenoLandscapeCommand::Unregister();
 	PluginCommands.Reset();
 	ModuleInstance = nullptr;
+	FZenoLandscapeDetailCustomization::UnRegister();
 	UnRegisterAssets();
 }
 

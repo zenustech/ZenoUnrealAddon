@@ -22,6 +22,7 @@ protected:
 	
 private:
 	void ImportHeightMapFromSubject();
+	void SaveHeightMapToAsset();
 
 #pragma region FetchState
 #pragma endregion FetchState

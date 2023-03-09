@@ -20,7 +20,10 @@ public:
 	UZenoBridgeAssetData_Heightfield* Heightfield = nullptr;
 
 	UPROPERTY(Category = "Zeno|Property", BlueprintReadOnly, EditAnywhere)
-	FVector LandscapeScale = FVector{100, 100, 100};
+	FVector LandscapeScale = FVector{1000, 1000, 360};
+
+	UPROPERTY()
+	ALandscape* LandscapeActor;
 
 	virtual void OnConstruction(const FTransform& Transform) override;
 

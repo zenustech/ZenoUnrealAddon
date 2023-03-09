@@ -87,13 +87,29 @@ void UZenoLandscapeTool::Slate_MarkImportHeightfield(FToolBarBuilder& ToolBarBui
 	->AddSlot()
 	.AutoHeight()
 	[
-		SNew(SButton)
-		.Text(FText::FromString("Import"))
-		.OnClicked(FOnClicked::CreateLambda([this]
-		{
-			ImportHeightMapFromSubject();
-			return FReply::Handled();
-		}))
+		SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		[
+			SNew(SButton)
+			.Text(FText::FromString("Import"))
+			.OnClicked(FOnClicked::CreateLambda([this]
+			{
+				ImportHeightMapFromSubject();
+				return FReply::Handled();
+			}))
+		]
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		[
+			SNew(SButton)
+			.Text(FText::FromString("Save"))
+			.OnClicked(FOnClicked::CreateLambda([this]
+			{
+				SaveHeightMapToAsset();
+				return FReply::Handled();
+			}))
+		]
 	]
 	;
 }
@@ -131,18 +147,7 @@ void UZenoLandscapeTool::ImportHeightMapFromSubject()
 		HeightData.SetNumUninitialized(Data->Data.Num());
 		for (size_t Idx = 0; Idx < Data->Data.Num(); ++Idx)
 		{
-			uint16 Height;
-			if (Data->Data[Idx] > 256.f)
-			{
-				Height = UINT16_MAX;
-			} else if (Data->Data[Idx] < -256.f)
-			{
-				Height = 0;
-			} else
-			{
-				Height = (Data->Data[Idx] + 255.f) / 512.f * 0xFFFF;
-			}
-			HeightData[Idx] = Height;
+			HeightData[Idx] = FZenoLandscapeHelper::RemapFloatToUint16(Data->Data[Idx]);
 		}
 		FZenoLandscapeHelper::ExpandHeightmapData(HeightData, {SizeX, SizeY}, ExpandedHeightData);
 
@@ -169,33 +174,45 @@ void UZenoLandscapeTool::ImportHeightMapFromSubject()
 		FActorLabelUtilities::SetActorLabelUnique(Landscape, ALandscape::StaticClass()->GetName());
 
 		LandscapeInfo->UpdateLayerInfoMap(Landscape);
-		// const FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
-		// const FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
-		//
-		// UZenoBridgeAssetFactory* ZenoFactory = NewObject<UZenoBridgeAssetFactory>();
-		// UZenoBridgeAsset* Asset = Cast<UZenoBridgeAsset>(AssetToolsModule.Get().CreateAssetWithDialog(UZenoBridgeAsset::StaticClass(), ZenoFactory));
-		// if (IsValid(Asset))
-		// {
-		// 	Asset->SetAssetType(EZenoAssetType::HeightField);
-		// 	UZenoBridgeAssetData_Heightfield* Data_Heightfield = NewObject<UZenoBridgeAssetData_Heightfield>(Asset);
-		// 	Data_Heightfield->Size = sqrt(Data->Size);
-		// 	Data_Heightfield->Heights.SetNumUninitialized(Data->Data.Num());
-		// 	for (size_t Idx = 0; Idx < Data->Data.Num(); ++Idx)
-		// 	{
-		// 		const float Height = (Data->Data[Idx] + 255.f) / 512.f * 0xFFFF;
-		// 		Data_Heightfield->Heights[Idx] = static_cast<uint16>(Height);
-		// 	}
-		// 	Asset->SetAssetData(Data_Heightfield);
-		//
-		// 	FAssetRegistryModule::AssetCreated(Asset);
-		// 	if (IsValid(Asset->GetPackage()))
-		// 	{
-		// 		Asset->GetPackage()->MarkPackageDirty();
-		// 	}
-		// 	TArray<UObject*> Assets;
-		// 	Assets.Push(Asset);
-		// 	ContentBrowserModule.Get().SyncBrowserToAssets(Assets);
-		// }
+	}
+}
+
+void UZenoLandscapeTool::SaveHeightMapToAsset()
+{
+	if (UISetting->SelectedSubjectKey.SubjectName.Name.IsNone())
+	{
+		return;
+	}
+	if (const TOptional<FLiveLinkSubjectFrameData> FrameData = FZenoCommonDataSource::GetFrameData(UISetting->SelectedSubjectKey); FrameData.IsSet())
+	{
+		const FLiveLinkHeightFieldStaticData* Data = FrameData->StaticData.Cast<FLiveLinkHeightFieldStaticData>();
+		
+		const FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>("AssetTools");
+		const FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+		
+		UZenoBridgeAssetFactory* ZenoFactory = NewObject<UZenoBridgeAssetFactory>();
+		UZenoBridgeAsset* Asset = Cast<UZenoBridgeAsset>(AssetToolsModule.Get().CreateAssetWithDialog(UZenoBridgeAsset::StaticClass(), ZenoFactory));
+		if (IsValid(Asset))
+		{
+			Asset->SetAssetType(EZenoAssetType::HeightField);
+			UZenoBridgeAssetData_Heightfield* Data_Heightfield = NewObject<UZenoBridgeAssetData_Heightfield>(Asset);
+			Data_Heightfield->Size = sqrt(Data->Size);
+			Data_Heightfield->Heights.SetNumUninitialized(Data->Data.Num());
+			for (size_t Idx = 0; Idx < Data->Data.Num(); ++Idx)
+			{
+				 Data_Heightfield->Heights[Idx] = FZenoLandscapeHelper::RemapFloatToUint16(Data->Data[Idx]);;
+			}
+			Asset->SetAssetData(Data_Heightfield);
+		
+			FAssetRegistryModule::AssetCreated(Asset);
+			if (IsValid(Asset->GetPackage()))
+			{
+				 auto _ = Asset->GetPackage()->MarkPackageDirty();
+			}
+			TArray<UObject*> Assets;
+			Assets.Push(Asset);
+			ContentBrowserModule.Get().SyncBrowserToAssets(Assets);
+		}
 	}
 }
 

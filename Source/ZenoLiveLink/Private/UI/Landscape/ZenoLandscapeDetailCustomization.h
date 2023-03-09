@@ -5,4 +5,9 @@ class FZenoLandscapeDetailCustomization : public IDetailCustomization
 {
 public:
 	virtual void CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) override;
+
+	static void Register();
+	static void UnRegister();
+
+	static TSharedRef<IDetailCustomization> GetInstance();
 };

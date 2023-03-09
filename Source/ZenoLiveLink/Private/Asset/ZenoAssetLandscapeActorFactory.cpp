@@ -15,10 +15,11 @@ UZenoAssetLandscapeActorFactory::UZenoAssetLandscapeActorFactory(const FObjectIn
 	NewActorClass = AZenoLandscapeAnchor::StaticClass();
 }
 
-void UZenoAssetLandscapeActorFactory::PostSpawnActor(UObject* Asset, AActor* NewActor)
+AActor* UZenoAssetLandscapeActorFactory::SpawnActor(UObject* InAsset, ULevel* InLevel, const FTransform& InTransform,
+	const FActorSpawnParameters& InSpawnParams)
 {
-	Super::PostSpawnActor(Asset, NewActor);
-	if (const UZenoBridgeAsset* BridgeAsset = Cast<UZenoBridgeAsset>(Asset); IsValid(BridgeAsset))
+	AZenoLandscapeAnchor* NewActor = CastChecked<AZenoLandscapeAnchor>(Super::SpawnActor(InAsset, InLevel, InTransform, InSpawnParams));
+	if (const UZenoBridgeAsset* BridgeAsset = Cast<UZenoBridgeAsset>(InAsset); IsValid(BridgeAsset))
 	{
 		if (AZenoLandscapeAnchor* LandscapeAnchor = Cast<AZenoLandscapeAnchor>(NewActor); IsValid(LandscapeAnchor))
 		{
@@ -28,6 +29,12 @@ void UZenoAssetLandscapeActorFactory::PostSpawnActor(UObject* Asset, AActor* New
 			}
 		}
 	}
+	return NewActor;
+}
+
+void UZenoAssetLandscapeActorFactory::PostSpawnActor(UObject* Asset, AActor* NewActor)
+{
+	Super::PostSpawnActor(Asset, NewActor);
 }
 
 void UZenoAssetLandscapeActorFactory::PostCreateBlueprint(UObject* Asset, AActor* CDO)

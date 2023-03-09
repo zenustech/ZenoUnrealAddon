@@ -49,4 +49,5 @@ class ZENOLIVELINK_API UZenoLandscapeEditorObject : public UObject
 	FRotator NewLandscape_Rotation = FRotator::ZeroRotator;
 	
 	friend class UZenoLandscapeTool;
+	friend class FZenoLandscapeDetailCustomization;
 };

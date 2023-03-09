@@ -18,6 +18,7 @@ class UZenoAssetLandscapeActorFactory : public UActorFactory
 	UZenoAssetLandscapeActorFactory(const FObjectInitializer& ObjectInitializer);
 	
 	// UActorFactory interface
+	virtual AActor* SpawnActor(UObject* InAsset, ULevel* InLevel, const FTransform& InTransform, const FActorSpawnParameters& InSpawnParams) override;
 	virtual void PostSpawnActor(UObject* Asset, AActor* NewActor) override;
 	virtual void PostCreateBlueprint(UObject* Asset, AActor* CDO) override;
 	virtual bool CanCreateActorFrom(const FAssetData& AssetData, FText& OutErrorMsg) override;
