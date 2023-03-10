@@ -19,10 +19,14 @@ public:
 protected:
 	void Slate_MarkImportHeightfield(FToolBarBuilder& ToolBarBuilder, const TSharedRef<SVerticalBox> Container);
 	void Slate_MarkExportWeightmap(FToolBarBuilder& ToolBarBuilder, const TSharedRef<SVerticalBox> Container);
+	void Slate_VisualLayer(FToolBarBuilder& ToolBarBuilder, const TSharedRef<SVerticalBox> Container);
 	
 private:
+	bool CheckSubjectKey() const;
+	
 	void ImportHeightMapFromSubject();
 	void SaveHeightMapToAsset();
+	void ReimportHeightMapToSelectedLandscape();
 
 #pragma region FetchState
 #pragma endregion FetchState
@@ -47,4 +51,9 @@ public:
 
 	inline static const FName NAME_ImportHeightfield = FName("ZT_Landscape_ImportHeightfield");
 	inline static const FName NAME_ExportWeightmap = FName("ZT_Landscape_ExportWeightmap");
+	inline static const FName NAME_VisualLandscapeLayer = FName("ZT_Landscape_VisualLandscapeLayer");
+
+	static void SetSharedCurrentMode(const FName InName);
+
+	inline static FName LandscapeToolCurrentMode = NAME_None;
 };

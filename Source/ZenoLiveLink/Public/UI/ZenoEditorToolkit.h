@@ -7,6 +7,7 @@
 #include "ZenoEditorToolkit.generated.h"
 
 DECLARE_DELEGATE_TwoParams(FZenoEditorToolkitBuildToolPalette, class FToolBarBuilder&, const TSharedRef<SVerticalBox>);
+DECLARE_MULTICAST_DELEGATE_OneParam(FZenoToolkitModeChangedDelegate, const FName InName);
 
 UCLASS()
 class ZENOLIVELINK_API UZenoEditorToolkit : public UObject
@@ -51,5 +52,8 @@ protected:
 
 private:
 	TSharedRef<SDockTab> GetDockTab(const FSpawnTabArgs& Args);
+
+public:
+	FZenoToolkitModeChangedDelegate ModeChangedDelegate;
 
 };

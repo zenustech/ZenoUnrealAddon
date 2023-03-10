@@ -66,7 +66,7 @@ void UZenoEditorToolkit::MakeDockTab(FName InMode)
 	ModeInfos.GetKeys(Keys);
 	if (CurrentMode == NAME_None && Keys.Num() > 0)
 	{
-		CurrentMode = *Keys.begin();
+		OnChangeMode(*Keys.begin());
 	}
 	TabBox->AddSlot().AutoHeight() [ CatalogBuilder.MakeWidget(nullptr, 20) ];
 
@@ -96,6 +96,7 @@ void UZenoEditorToolkit::OnChangeMode(const FName ModeName)
 {
 	CurrentMode = ModeName;
 	MakeDockTab(CurrentMode);
+	ModeChangedDelegate.Broadcast(ModeName);
 }
 
 bool UZenoEditorToolkit::IsModeEnabled(FName ModeName) const
@@ -114,3 +115,5 @@ TSharedRef<SDockTab> UZenoEditorToolkit::GetDockTab(const FSpawnTabArgs& Args)
 	MakeDockTab(CurrentMode);
 	return Slate_ToolkitDockTab.ToSharedRef();
 }
+
+#undef LOCTEXT_NAMESPACE

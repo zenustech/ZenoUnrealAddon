@@ -2,12 +2,15 @@
 
 #include "AssetToolsModule.h"
 #include "ContentBrowserModule.h"
+#include "EditorDialogLibrary.h"
 #include "SlateOptMacros.h"
 #include "EditorModeManager.h"
 #include "EditorModes.h"
 #include "IContentBrowserSingleton.h"
 #include "Landscape.h"
+#include "LandscapeEditorUtils.h"
 #include "LandscapeProxy.h"
+#include "Selection.h"
 #include "ZenoLiveLink.h"
 #include "ZenoLiveLinkSource.h"
 #include "Asset/ZenoBridgeAssetFactory.h"
@@ -46,6 +49,14 @@ void UZenoLandscapeTool::Init()
 	
 	AddMode(FName(NAME_ImportHeightfield), FZenoLandscapeCommand::Get().ImportLiveLinkHeightmap.ToSharedRef(), FZenoEditorToolkitBuildToolPalette::CreateUObject(this, &UZenoLandscapeTool::Slate_MarkImportHeightfield));
 	AddMode(FName(NAME_ExportWeightmap), FZenoLandscapeCommand::Get().ExportLiveLinkWeightmap.ToSharedRef(), FZenoEditorToolkitBuildToolPalette::CreateUObject(this, &UZenoLandscapeTool::Slate_MarkExportWeightmap));
+	AddMode(FName(NAME_VisualLandscapeLayer), FZenoLandscapeCommand::Get().VisualLayer.ToSharedRef(), FZenoEditorToolkitBuildToolPalette::CreateUObject(this, &UZenoLandscapeTool::Slate_VisualLayer));
+
+	// ModeChangedDelegate.AddStatic(&UZenoLandscapeTool::SetSharedCurrentMode);
+	ModeChangedDelegate.AddLambda([this] (const FName InName)
+	{
+		SetSharedCurrentMode(InName);
+		if (Slate_DetailPanel.IsValid()) Slate_DetailPanel->ForceRefresh();
+	});
 }
 
 bool UZenoLandscapeTool::CanBeCreate(const FSpawnTabArgs& Args)
@@ -110,6 +121,17 @@ void UZenoLandscapeTool::Slate_MarkImportHeightfield(FToolBarBuilder& ToolBarBui
 				return FReply::Handled();
 			}))
 		]
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		[
+			SNew(SButton)
+			.Text(FText::FromString("Reimport"))
+			.OnClicked(FOnClicked::CreateLambda([this]
+			{
+				ReimportHeightMapToSelectedLandscape();
+				return FReply::Handled();
+			}))
+		]
 	]
 	;
 }
@@ -127,11 +149,37 @@ void UZenoLandscapeTool::Slate_MarkExportWeightmap(FToolBarBuilder& ToolBarBuild
 	;
 }
 
+void UZenoLandscapeTool::Slate_VisualLayer(FToolBarBuilder& ToolBarBuilder, const TSharedRef<SVerticalBox> Container)
+{
+	Slate_DetailPanel->ForceRefresh();
+	Container
+	->AddSlot()
+	.AutoHeight()
+	[
+		Slate_DetailPanel.ToSharedRef()
+	]
+	;
+}
+
+bool UZenoLandscapeTool::CheckSubjectKey() const
+{
+	if (UISetting->SelectedSubjectKey.SubjectName.IsNone())
+	{
+		UEditorDialogLibrary::ShowMessage(
+			LOCTEXT("ActionWarning", "Warning"),
+			LOCTEXT("SubjectKeyIsNone", "You must select a subject to perform this action."),
+			EAppMsgType::Ok
+		);
+		return false;
+	}
+	return true;
+}
+
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 void UZenoLandscapeTool::ImportHeightMapFromSubject()
 {
-	if (UISetting->SelectedSubjectKey.SubjectName.Name.IsNone())
+	if (!CheckSubjectKey())
 	{
 		return;
 	}
@@ -179,7 +227,7 @@ void UZenoLandscapeTool::ImportHeightMapFromSubject()
 
 void UZenoLandscapeTool::SaveHeightMapToAsset()
 {
-	if (UISetting->SelectedSubjectKey.SubjectName.Name.IsNone())
+	if (!CheckSubjectKey())
 	{
 		return;
 	}
@@ -216,6 +264,45 @@ void UZenoLandscapeTool::SaveHeightMapToAsset()
 	}
 }
 
+void UZenoLandscapeTool::ReimportHeightMapToSelectedLandscape()
+{
+	if (!CheckSubjectKey())
+	{
+		return;
+	}
+	TArray<ALandscapeProxy*> SelectedLandscapes;
+	USelection* SelectedActors = GEditor->GetSelectedActors();
+	SelectedActors->GetSelectedObjects<ALandscapeProxy>(SelectedLandscapes);
+	if (SelectedLandscapes.Num() == 0)
+	{
+		UEditorDialogLibrary::ShowMessage(
+			LOCTEXT("ActionWarning", "Warning"),
+			LOCTEXT("MustSelectALandscape", "You must select a landscape in level editor to perform this action."),
+			EAppMsgType::Ok
+		);
+		return;
+	}
+	if (const TOptional<FLiveLinkSubjectFrameData> FrameData = FZenoCommonDataSource::GetFrameData(UISetting->SelectedSubjectKey); FrameData.IsSet())
+	{
+		FScopedTransaction Transaction(LOCTEXT("UndoReimport", "Reimporting Landscape"));
+		const FLiveLinkHeightFieldStaticData* Data = FrameData->StaticData.Cast<FLiveLinkHeightFieldStaticData>();
+		int32 Size = sqrt(Data->Size);
+		TArray<uint16> HeightData;
+		HeightData.SetNumUninitialized(Data->Data.Num());
+		for (size_t Idx = 0; Idx < Data->Data.Num(); ++Idx)
+		{
+			HeightData[Idx] = FZenoLandscapeHelper::RemapFloatToUint16(Data->Data[Idx]);
+		}
+		for (ALandscapeProxy* LandscapeProxy : SelectedLandscapes)
+		{
+			ULandscapeInfo* LandscapeInfo = LandscapeProxy->GetLandscapeInfo();
+			// FHeightmapAccessor<false> HeightmapAccessor(LandscapeInfo);
+			// HeightmapAccessor.SetData(0, 0, Size - 1, Size - 1, HeightData.GetData());
+			// LandscapeEditorUtils::SetHeightmapData(LandscapeProxy, HeightData);
+		}
+	}
+}
+
 FOnClicked UZenoLandscapeTool::CreateOnSubjectListItemClicked(const FLiveLinkSubjectKey& Key)
 {
 	TWeakObjectPtr<UZenoLandscapeTool> WeakThat { this };
@@ -232,6 +319,11 @@ FOnClicked UZenoLandscapeTool::CreateOnSubjectListItemClicked(const FLiveLinkSub
 		}
 		return FReply::Handled();
 	});
+}
+
+void UZenoLandscapeTool::SetSharedCurrentMode(const FName InName)
+{
+	LandscapeToolCurrentMode = InName;
 }
 
 #undef LOCTEXT_NAMESPACE

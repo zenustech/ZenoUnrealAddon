@@ -4,13 +4,63 @@
 
 #include "CoreMinimal.h"
 #include "LiveLinkTypes.h"
+#include "LandscapeComponent.h"
 #include "UObject/Object.h"
 #include "ZenoLandscapeEditorObject.generated.h"
 
+
+USTRUCT(NotBlueprintable)
+struct FZenoLandscape_VisualData_Weight
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY(VisibleAnywhere, Category = "Weight Data")
+	TArray<TObjectPtr<UTexture2D>> Textures;
+
+	UPROPERTY(VisibleAnywhere, Category = "Weight Data")
+	TArray<FWeightmapLayerAllocationInfo> LayerAllocations;
+
+	UPROPERTY(VisibleAnywhere, Category = "Weight Data")
+	TArray<TObjectPtr<ULandscapeWeightmapUsage>> TextureUsages;
+};
+
+USTRUCT(NotBlueprintable)
+struct FZenoLandscape_VisualData_Height
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY(VisibleAnywhere, Category = "Height Data")
+	TWeakObjectPtr<UTexture2D> Texture;
+};
+
+USTRUCT(NotBlueprintable)
+struct FZenoLandscape_VisualData_Component
+{
+	GENERATED_USTRUCT_BODY()
+
+	UPROPERTY(VisibleAnywhere, Category = "Component Data")
+	FZenoLandscape_VisualData_Height HeightData;
+
+	UPROPERTY(VisibleAnywhere, Category = "Component Data")
+	FZenoLandscape_VisualData_Weight WeightData;
+};
+
+UCLASS()
+class UZenoLandscape_VisualData : public UObject
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(VisibleAnywhere, Category = "Landscape Data")
+	TMap<FGuid, FZenoLandscape_VisualData_Component> Components;
+};
 UCLASS()
 class ZENOLIVELINK_API UZenoLandscapeEditorObject : public UObject
 {
 	GENERATED_BODY()
+
+public:
+	UZenoLandscapeEditorObject();
 
 	UPROPERTY(Category="Zeno Target", EditAnywhere, NonTransactional, meta=(DisplayName="Target Subject", ShowForTools="ImportHeightfield,ExportWeightmap", ShowForTargetTypes = "Heightmap,Visibility"))
 	FLiveLinkSubjectKey SelectedSubjectKey;
@@ -47,7 +97,18 @@ class ZENOLIVELINK_API UZenoLandscapeEditorObject : public UObject
 	// The rotation of the new landscape
 	UPROPERTY(Category="New Landscape", EditAnywhere, meta=(DisplayName="Rotation", ShowForTools="ImportHeightfield"))
 	FRotator NewLandscape_Rotation = FRotator::ZeroRotator;
+
+	// Layer Visual
+	
+	UPROPERTY(Category="Landscape Target", EditAnywhere, NonTransactional, meta=(DisplayName="Landscape Actor", ShowForTools="VisualLandscapeLayer", ShowTreeView))
+	ALandscapeProxy* LayerVisual_LandscapeActors;
+
+	// Texture Visual
+	UPROPERTY(Category="Landscape Visual", EditAnywhere, NonTransactional, meta=(DisplayName="Landscape Info", ShowForTools="VisualLandscapeLayer"))
+	UZenoLandscape_VisualData* LayerVisual_VisualData;
 	
 	friend class UZenoLandscapeTool;
 	friend class FZenoLandscapeDetailCustomization;
+	friend class FZenoLandscapeDetailCustomization_ImportLandscape;
+	friend class FZenoLandscapeDetailCustomization_VisualLayer;
 };

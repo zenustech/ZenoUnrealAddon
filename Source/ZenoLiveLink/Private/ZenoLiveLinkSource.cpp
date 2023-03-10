@@ -75,8 +75,8 @@ void FZenoLiveLinkSource::OnReceivedNewFile(const ZBFileType FileType, const TAr
 			UE_LOG(LogTemp, Warning, TEXT("Unable to unpack file: %hs"), Error.message().c_str());
 			return;
 		}
-		// const FName SubjectName(Subject.m_name.substr(0, Subject.m_name.find(":")).c_str() );
-		const FName SubjectName(Subject.m_name.c_str());
+		const FName SubjectName(Subject.m_name.substr(0, Subject.m_name.find(":")).c_str() );
+		// const FName SubjectName(Subject.m_name.c_str());
 		EncounteredSubjects.Add(SubjectName);
 		
 		FLiveLinkStaticDataStruct StaticData(FLiveLinkHeightFieldStaticData::StaticStruct());

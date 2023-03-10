@@ -10,6 +10,7 @@ public:
 public:
 	TSharedPtr<FUICommandInfo> ImportLiveLinkHeightmap;
 	TSharedPtr<FUICommandInfo> ExportLiveLinkWeightmap;
+	TSharedPtr<FUICommandInfo> VisualLayer;
 
 	TMap<FName, TSharedPtr<FUICommandInfo>> NameToCommandMap;
 };

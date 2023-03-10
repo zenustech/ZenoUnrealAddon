@@ -31,6 +31,7 @@ public class ZenoLiveLink : ModuleRules
                 "AssetTools",
                 "EditorFramework",
                 "LandscapeEditor",
+                "EditorScriptingUtilities",
             }
         );
         

@@ -21,6 +21,9 @@ void FZenoLandscapeCommand::RegisterCommands()
 
 	UI_COMMAND(ExportLiveLinkWeightmap, "Weightmap", "Export weightmap to zeno", EUserInterfaceActionType::RadioButton, FInputChord());
 	NameToCommandMap.Add("Export_Weightmap", ExportLiveLinkWeightmap);
+	
+	UI_COMMAND(VisualLayer, "Visual", "See what is inside layers", EUserInterfaceActionType::RadioButton, FInputChord());
+	NameToCommandMap.Add("Visual_Layer", ExportLiveLinkWeightmap);
 }
 
 #undef LOCTEXT_NAMESPACE
