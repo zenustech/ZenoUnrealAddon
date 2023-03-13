@@ -273,11 +273,23 @@ void UZenoTcpClient::TryMakeupFile(const uint32 FileId)
 		{
 			if (Value < FileMessages.Num())
 			{
-				FileMessages.RemoveAt(0);
+				FileMessages.RemoveAt(Value);
 			}
 		}
 
 		OnNewFileNotifyDelegate.Broadcast(FileType, Data);
+	}
+}
+
+void UZenoTcpClient::SendUdpDatagrams(const TSharedRef<FInternetAddr>& Addr, const TArray<TArray<uint8>>& Datagrams) const
+{
+	if (UdpSocket)
+	{
+		int32 ByteToSend = 0;
+		for (const TArray<uint8>& Datagram : Datagrams)
+		{
+			UdpSocket->SendTo(Datagram.GetData(), Datagram.Num(), ByteToSend, Addr.Get());
+		}
 	}
 }
 

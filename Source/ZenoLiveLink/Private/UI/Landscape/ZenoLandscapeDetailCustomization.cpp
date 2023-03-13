@@ -82,47 +82,52 @@ void FZenoLandscapeDetailCustomization_VisualLayer::CustomizeDetails(IDetailLayo
 	IDetailCategoryBuilder& VisualCategoryBuilder = DetailBuilder.EditCategory(FName(TEXT("Visual")), LOCTEXT("Visual", "Visual"), ECategoryPriority::Important);
 	VisualCategoryBuilder.AddCustomRow(FText())
 	[
-		SNew(SButton)
-	    .Text(LOCTEXT("BindData", "Bind Data"))
-	    .OnClicked(FOnClicked::CreateLambda([PropertyHandle_VisualData]
-	    {
-			UZenoLandscape_VisualData* DataMap = NewObject<UZenoLandscape_VisualData>();
-			// UZenoLandscape_VisualData*& RefMap = DataMap;
-			// PropertyHandle_VisualData->GetValueData(reinterpret_cast<void*&>(RefMap));
-			PropertyHandle_VisualData->SetValue(DataMap);
-
-			TArray<ALandscapeProxy*> SelectedLandscapes;
-			USelection* SelectedActors = GEditor->GetSelectedActors();
-			SelectedActors->GetSelectedObjects<ALandscapeProxy>(SelectedLandscapes);
-			// ALandscapeProxy*& RefLandscapeActorOption = LandscapeActorOption;
-			// PropertyHandle_LandscapeActor->GetValueData(reinterpret_cast<void*&>(RefLandscapeActorOption));
-
-			for (ALandscapeProxy* Landscape : SelectedLandscapes)
-			// if (ALandscapeProxy* Landscape = LandscapeActorOption)
+		SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		[
+			SNew(SButton)
+			.Text(LOCTEXT("BindData", "Bind Data"))
+			.OnClicked(FOnClicked::CreateLambda([PropertyHandle_VisualData]
 			{
-				if (IsValid(Landscape) && Landscape->GetFName() != NAME_None && IsValid(DataMap))
+				UZenoLandscape_VisualData* DataMap = NewObject<UZenoLandscape_VisualData>();
+				// UZenoLandscape_VisualData*& RefMap = DataMap;
+				// PropertyHandle_VisualData->GetValueData(reinterpret_cast<void*&>(RefMap));
+				PropertyHandle_VisualData->SetValue(DataMap);
+
+				TArray<ALandscapeProxy*> SelectedLandscapes;
+				USelection* SelectedActors = GEditor->GetSelectedActors();
+				SelectedActors->GetSelectedObjects<ALandscapeProxy>(SelectedLandscapes);
+				// ALandscapeProxy*& RefLandscapeActorOption = LandscapeActorOption;
+				// PropertyHandle_LandscapeActor->GetValueData(reinterpret_cast<void*&>(RefLandscapeActorOption));
+
+				for (ALandscapeProxy* Landscape : SelectedLandscapes)
+				// if (ALandscapeProxy* Landscape = LandscapeActorOption)
 				{
-					 UZenoLandscape_VisualData* VisualData = DataMap;
-					 ALandscapeProxy* LandscapeActor = Landscape;
-					 for (const TObjectPtr<ULandscapeComponent>& Component : LandscapeActor->LandscapeComponents)
+					 if (IsValid(Landscape) && Landscape->GetFName() != NAME_None && IsValid(DataMap))
 					 {
-						  if (Component)
-						  {
-							  Component->ForEachLayer([VisualData] (const FGuid& Guid, FLandscapeLayerComponentData& Data)
-							  {
-								   FZenoLandscape_VisualData_Component ComponentData;
-								   ComponentData.HeightData.Texture = Data.HeightmapData.Texture;
-								   ComponentData.WeightData.Textures = Data.WeightmapData.Textures;
-								   ComponentData.WeightData.LayerAllocations = Data.WeightmapData.LayerAllocations;
-								   ComponentData.WeightData.TextureUsages = Data.WeightmapData.TextureUsages;
-								   VisualData->Components.Add(Guid, ComponentData);
-							  });
-						  }
+						   UZenoLandscape_VisualData* VisualData = DataMap;
+						   ALandscapeProxy* LandscapeActor = Landscape;
+						   for (const TObjectPtr<ULandscapeComponent>& Component : LandscapeActor->LandscapeComponents)
+						   {
+								if (Component)
+								{
+									 Component->ForEachLayer([VisualData] (const FGuid& Guid, FLandscapeLayerComponentData& Data)
+									 {
+										   FZenoLandscape_VisualData_Component ComponentData;
+										   ComponentData.HeightData.Texture = Data.HeightmapData.Texture;
+										   ComponentData.WeightData.Textures = Data.WeightmapData.Textures;
+										   ComponentData.WeightData.LayerAllocations = Data.WeightmapData.LayerAllocations;
+										   ComponentData.WeightData.TextureUsages = Data.WeightmapData.TextureUsages;
+										   VisualData->Components.Add(Guid, ComponentData);
+									 });
+								}
+						   }
 					 }
 				}
-			}
-	    	return FReply::Handled();
-	    }))
+				 return FReply::Handled();
+			}))
+		]
 	];
 }
 

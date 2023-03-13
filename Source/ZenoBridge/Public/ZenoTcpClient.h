@@ -49,6 +49,8 @@ private:
 	void RemoveSessionFromZeno();
 
 	void TryMakeupFile(const uint32 FileId);
+
+	void SendUdpDatagrams(const TSharedRef<FInternetAddr>& Addr, const TArray<TArray<uint8>>& Datagrams) const;
 	
 public:
 	FClientLostConnectionDelegate LostConnectionDelegate;
