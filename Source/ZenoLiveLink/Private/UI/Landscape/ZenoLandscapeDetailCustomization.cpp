@@ -77,7 +77,6 @@ void FZenoLandscapeDetailCustomization_ImportLandscape::CustomizeDetails(IDetail
 
 void FZenoLandscapeDetailCustomization_VisualLayer::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 {
-	TSharedRef<IPropertyHandle> PropertyHandle_LandscapeActor = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UZenoLandscapeEditorObject, LayerVisual_LandscapeActors));
 	TSharedRef<IPropertyHandle> PropertyHandle_VisualData = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UZenoLandscapeEditorObject, LayerVisual_VisualData));
 	IDetailCategoryBuilder& VisualCategoryBuilder = DetailBuilder.EditCategory(FName(TEXT("Visual")), LOCTEXT("Visual", "Visual"), ECategoryPriority::Important);
 	VisualCategoryBuilder.AddCustomRow(FText())
@@ -91,18 +90,13 @@ void FZenoLandscapeDetailCustomization_VisualLayer::CustomizeDetails(IDetailLayo
 			.OnClicked(FOnClicked::CreateLambda([PropertyHandle_VisualData]
 			{
 				UZenoLandscape_VisualData* DataMap = NewObject<UZenoLandscape_VisualData>();
-				// UZenoLandscape_VisualData*& RefMap = DataMap;
-				// PropertyHandle_VisualData->GetValueData(reinterpret_cast<void*&>(RefMap));
 				PropertyHandle_VisualData->SetValue(DataMap);
 
 				TArray<ALandscapeProxy*> SelectedLandscapes;
 				USelection* SelectedActors = GEditor->GetSelectedActors();
 				SelectedActors->GetSelectedObjects<ALandscapeProxy>(SelectedLandscapes);
-				// ALandscapeProxy*& RefLandscapeActorOption = LandscapeActorOption;
-				// PropertyHandle_LandscapeActor->GetValueData(reinterpret_cast<void*&>(RefLandscapeActorOption));
 
 				for (ALandscapeProxy* Landscape : SelectedLandscapes)
-				// if (ALandscapeProxy* Landscape = LandscapeActorOption)
 				{
 					 if (IsValid(Landscape) && Landscape->GetFName() != NAME_None && IsValid(DataMap))
 					 {

@@ -99,11 +99,8 @@ public:
 	FRotator NewLandscape_Rotation = FRotator::ZeroRotator;
 
 	// Layer Visual
-	
-	UPROPERTY(Category="Landscape Target", EditAnywhere, NonTransactional, meta=(DisplayName="Landscape Actor", ShowForTools="VisualLandscapeLayer", ShowTreeView))
-	ALandscapeProxy* LayerVisual_LandscapeActors;
 
-	// Texture Visual
+	// Landscape texture visualize object
 	UPROPERTY(Category="Landscape Visual", EditAnywhere, NonTransactional, meta=(DisplayName="Landscape Info", ShowForTools="VisualLandscapeLayer"))
 	UZenoLandscape_VisualData* LayerVisual_VisualData;
 	
