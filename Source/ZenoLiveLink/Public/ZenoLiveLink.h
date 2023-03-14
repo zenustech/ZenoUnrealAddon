@@ -32,13 +32,13 @@ private:
 	TArray<TSharedRef<class IAssetTypeActions>> EncounteredAssets;
 
 private:
-	void MapPluginActions() const;
+	void MapPluginActions();
 
 	void RegisterAssets();
 	void UnRegisterAssets();
 
 	void OnEditorModeChanged(const FEditorModeID& InModeID, bool bIsEnteringMode);
-
+	
 public:
 	friend UZenoLandscapeTool;
 };

@@ -12,7 +12,10 @@
 #include "LandscapeEditorModule.h"
 #include "Asset/ZenoAssetLandscapeActorFactory.h"
 #include "Asset/ZenoBridgeAssetFactory.h"
+#include "Command/ZenoTextureExportCommand.h"
+#include "Interfaces/ITextureEditorModule.h"
 #include "UI/Landscape/LandscapeFileFormatZeno.h"
+#include "UI/Landscape/TextureExportHelper.h"
 #include "UI/Landscape/ZenoLandscapeDetailCustomization.h"
 
 #define LOCTEXT_NAMESPACE "FZenoLiveLinkModule"
@@ -22,13 +25,14 @@ void FZenoLiveLinkModule::StartupModule()
 	ModuleInstance = this;
 	
 	FZenoLandscapeCommand::Register();
-	PluginCommands = MakeShared<FUICommandList>();
+	FZenoTextureExportCommand::Register();
 	MapPluginActions();
 
 	LandscapeTool = TStrongObjectPtr { NewObject<UZenoLandscapeTool>() };
 	
 	GLevelEditorModeTools().OnEditorModeIDChanged().AddRaw(this, &FZenoLiveLinkModule::OnEditorModeChanged);
 
+	// Register our heightmap format
 	ILandscapeEditorModule& LandscapeEditorModule = FModuleManager::Get().GetModuleChecked<ILandscapeEditorModule>("LandscapeEditor");
 	LandscapeEditorModule.RegisterHeightmapFileFormat(MakeShared<FLandscapeHeightmapFileFormatZeno_Virtual>());
 
@@ -39,11 +43,14 @@ void FZenoLiveLinkModule::StartupModule()
 
 void FZenoLiveLinkModule::ShutdownModule()
 {
+	FZenoTextureExportCommand::Unregister();
 	FZenoLandscapeCommand::Unregister();
 	PluginCommands.Reset();
-	ModuleInstance = nullptr;
 	FZenoLandscapeDetailCustomization::UnRegister();
 	UnRegisterAssets();
+
+	// Reset module pointer
+	ModuleInstance = nullptr;
 }
 
 void FZenoLiveLinkModule::Tick(float DeltaTime)
@@ -70,9 +77,12 @@ FZenoLiveLinkModule* FZenoLiveLinkModule::GetInstance()
 	return ModuleInstance;
 }
 
-void FZenoLiveLinkModule::MapPluginActions() const
+void FZenoLiveLinkModule::MapPluginActions()
 {
-	if (!PluginCommands.IsValid()) return;
+	if (!PluginCommands.IsValid())
+	{
+		PluginCommands = MakeShared<FUICommandList>();
+	}
 }
 
 void FZenoLiveLinkModule::RegisterAssets()

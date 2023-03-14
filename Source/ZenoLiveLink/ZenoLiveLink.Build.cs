@@ -32,6 +32,8 @@ public class ZenoLiveLink : ModuleRules
                 "EditorFramework",
                 "LandscapeEditor",
                 "EditorScriptingUtilities",
+                "TextureEditor",
+                "Foliage",
             }
         );
         
