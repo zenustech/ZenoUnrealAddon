@@ -8,6 +8,7 @@
 #include "EditorModes.h"
 #include "IContentBrowserSingleton.h"
 #include "Landscape.h"
+#include "LandscapeEdit.h"
 #include "LandscapeEditorUtils.h"
 #include "LandscapeProxy.h"
 #include "Selection.h"
@@ -296,9 +297,9 @@ void UZenoLandscapeTool::ReimportHeightMapToSelectedLandscape()
 		for (ALandscapeProxy* LandscapeProxy : SelectedLandscapes)
 		{
 			ULandscapeInfo* LandscapeInfo = LandscapeProxy->GetLandscapeInfo();
-			// FHeightmapAccessor<false> HeightmapAccessor(LandscapeInfo);
-			// HeightmapAccessor.SetData(0, 0, Size - 1, Size - 1, HeightData.GetData());
-			// LandscapeEditorUtils::SetHeightmapData(LandscapeProxy, HeightData);
+			FHeightmapAccessor<false> HeightmapAccessor(LandscapeInfo);
+			HeightmapAccessor.SetData(0, 0, Size - 1, Size - 1, HeightData.GetData());
+			LandscapeInfo->UpdateLayerInfoMap(LandscapeProxy);
 		}
 	}
 }

@@ -15,6 +15,8 @@ FZenoTextureExportCommand::FZenoTextureExportCommand()
 
 void FZenoTextureExportCommand::RegisterCommands()
 {
+	UI_COMMAND(ExportTexture, "ExportTexture", "Export texture to zeno",
+	           EUserInterfaceActionType::Button, FInputChord());
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -17,6 +17,7 @@
 #include "UI/Landscape/LandscapeFileFormatZeno.h"
 #include "UI/Landscape/TextureExportHelper.h"
 #include "UI/Landscape/ZenoLandscapeDetailCustomization.h"
+#include "UI/Landscape/ZenoLandscapeVisualDataPropertyView.h"
 
 #define LOCTEXT_NAMESPACE "FZenoLiveLinkModule"
 
@@ -37,6 +38,7 @@ void FZenoLiveLinkModule::StartupModule()
 	LandscapeEditorModule.RegisterHeightmapFileFormat(MakeShared<FLandscapeHeightmapFileFormatZeno_Virtual>());
 
 	FZenoLandscapeDetailCustomization::Register();
+	RegisterCustomProperty();
 
 	RegisterAssets();
 }
@@ -48,6 +50,7 @@ void FZenoLiveLinkModule::ShutdownModule()
 	PluginCommands.Reset();
 	FZenoLandscapeDetailCustomization::UnRegister();
 	UnRegisterAssets();
+	UnregisterCustomProperty();
 
 	// Reset module pointer
 	ModuleInstance = nullptr;
@@ -107,6 +110,16 @@ void FZenoLiveLinkModule::UnRegisterAssets()
 			AssetTools.UnregisterAssetTypeActions(Action);
 		}
 	}
+}
+
+void FZenoLiveLinkModule::RegisterCustomProperty()
+{
+	FPropertyEditorModule& PropertyEditorModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+	PropertyEditorModule.RegisterCustomPropertyTypeLayout(FName("ZenoLandscape_VisualData"), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FZenoLandscapeVisualDataPropertyView::MakeInstance));
+}
+
+void FZenoLiveLinkModule::UnregisterCustomProperty()
+{
 }
 
 void FZenoLiveLinkModule::OnEditorModeChanged(const FEditorModeID& InModeID, bool bIsEnteringMode)

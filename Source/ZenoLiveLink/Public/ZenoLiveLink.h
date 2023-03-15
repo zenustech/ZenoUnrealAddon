@@ -37,6 +37,9 @@ private:
 	void RegisterAssets();
 	void UnRegisterAssets();
 
+	void RegisterCustomProperty();
+	void UnregisterCustomProperty();
+
 	void OnEditorModeChanged(const FEditorModeID& InModeID, bool bIsEnteringMode);
 	
 public:

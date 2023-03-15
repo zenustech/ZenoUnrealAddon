@@ -34,6 +34,7 @@ public class ZenoLiveLink : ModuleRules
                 "EditorScriptingUtilities",
                 "TextureEditor",
                 "Foliage",
+                "InputCore",
             }
         );
         

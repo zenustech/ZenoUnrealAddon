@@ -103,7 +103,11 @@ public:
 	// Landscape texture visualize object
 	UPROPERTY(Category="Landscape Visual", EditAnywhere, NonTransactional, meta=(DisplayName="Landscape Info", ShowForTools="VisualLandscapeLayer"))
 	UZenoLandscape_VisualData* LayerVisual_VisualData;
-	
+
+	// The texture user selected
+	UPROPERTY(Category="Export", EditAnywhere, NonTransactional, meta=(DisplayName="Selected Texture", ShowForTools=""))
+	TWeakObjectPtr<UTexture2D> LayerVisual_SelectedTexture;
+
 	friend class UZenoLandscapeTool;
 	friend class FZenoLandscapeDetailCustomization;
 	friend class FZenoLandscapeDetailCustomization_ImportLandscape;

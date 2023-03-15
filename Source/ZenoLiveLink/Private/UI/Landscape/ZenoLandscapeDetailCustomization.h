@@ -30,4 +30,6 @@ class FZenoLandscapeDetailCustomization_ImportLandscape : public FZenoLandscapeD
 class FZenoLandscapeDetailCustomization_VisualLayer : public FZenoLandscapeDetailCustomization_Base
 {
 	virtual void CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) override;
+
+	TSharedPtr<SComboBox<TWeakObjectPtr<UTexture2D>>> Slate_TextureSelectionComboBox;
 };

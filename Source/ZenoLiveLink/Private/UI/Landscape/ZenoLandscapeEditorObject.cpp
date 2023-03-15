@@ -5,5 +5,5 @@
 
 UZenoLandscapeEditorObject::UZenoLandscapeEditorObject()
 {
-	LayerVisual_VisualData = NewObject<UZenoLandscape_VisualData>();
+	LayerVisual_VisualData = Cast<UZenoLandscape_VisualData>(UZenoLandscape_VisualData::StaticClass()->ClassDefaultObject);
 }

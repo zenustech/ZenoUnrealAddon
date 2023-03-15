@@ -6,5 +6,6 @@ public:
 	FZenoTextureExportCommand();
 	
 	virtual void RegisterCommands() override;
-	
+
+	TSharedPtr<FUICommandInfo> ExportTexture;
 };

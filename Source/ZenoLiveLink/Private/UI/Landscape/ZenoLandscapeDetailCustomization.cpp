@@ -5,6 +5,7 @@
 #include "DetailWidgetRow.h"
 #include "Landscape.h"
 #include "LandscapeProxy.h"
+#include "PropertyCustomizationHelpers.h"
 #include "Selection.h"
 #include "UI/Landscape/LandscapeToolZenoBridge.h"
 #include "UI/Landscape/ZenoLandscapeEditorObject.h"
@@ -90,7 +91,6 @@ void FZenoLandscapeDetailCustomization_VisualLayer::CustomizeDetails(IDetailLayo
 			.OnClicked(FOnClicked::CreateLambda([PropertyHandle_VisualData]
 			{
 				UZenoLandscape_VisualData* DataMap = NewObject<UZenoLandscape_VisualData>();
-				PropertyHandle_VisualData->SetValue(DataMap);
 
 				TArray<ALandscapeProxy*> SelectedLandscapes;
 				USelection* SelectedActors = GEditor->GetSelectedActors();
@@ -119,10 +119,23 @@ void FZenoLandscapeDetailCustomization_VisualLayer::CustomizeDetails(IDetailLayo
 						   }
 					 }
 				}
-				 return FReply::Handled();
+				
+				PropertyHandle_VisualData->SetValue(DataMap);
+				
+				return FReply::Handled();
 			}))
 		]
 	];
+	
+	// Export
+	TSharedRef<IPropertyHandle> PropertyHandle_SelectedTexture = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UZenoLandscapeEditorObject, LayerVisual_SelectedTexture));
+
+	TArray<TWeakObjectPtr<UObject>> CustomizeObjects;
+	DetailBuilder.GetObjectsBeingCustomized(CustomizeObjects);
+	TWeakObjectPtr<UZenoLandscapeEditorObject> UISettingPtr;
+	if (CustomizeObjects.Num() > 0) UISettingPtr = Cast<UZenoLandscapeEditorObject>(CustomizeObjects[0].Get());
+	
+	IDetailCategoryBuilder& ExportCategoryBuilder = DetailBuilder.EditCategory(FName("Landscape Visual"), LOCTEXT("Export", "Export"));
 }
 
 #undef LOCTEXT_NAMESPACE
