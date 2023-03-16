@@ -290,6 +290,8 @@ void UZenoTcpClient::SendUdpDatagrams(const TSharedRef<FInternetAddr>& Addr, con
 		{
 			UdpSocket->SendTo(Datagram.GetData(), Datagram.Num(), ByteToSend, Addr.Get());
 		}
+		
+		UdpSocket->Wait(ESocketWaitConditions::WaitForWrite, { 0, 0, 5 });
 	}
 }
 
@@ -306,9 +308,10 @@ bool UZenoTcpClient::CreateRandomUDPSocket(FInternetAddr& OutEndpoint)
 
 		const FIPv4Endpoint Endpoint { {0}, 0 };
 		UdpSocket = FUdpSocketBuilder(TEXT("ZenoBridgeUdpSocket"))
-		   .AsNonBlocking()
-		   .WithReceiveBufferSize(204800)
-		   .BoundToEndpoint(Endpoint)
+			.AsNonBlocking()
+			.WithReceiveBufferSize(204800)
+			.WithSendBufferSize(204800)
+			.BoundToEndpoint(Endpoint)
 		;
 		if (nullptr == UdpSocket)
 		{
@@ -331,4 +334,10 @@ bool UZenoTcpClient::CreateRandomUDPSocket(FInternetAddr& OutEndpoint)
 bool UZenoTcpClient::IsRunning() const
 {
 	return !bIsThreadStop.load() && nullptr != CurrentSocket;
+}
+
+void UZenoTcpClient::SendUdpDatagrams(const TArray<TArray<uint8>>& Datagrams) const
+{
+	const TSharedRef<FInternetAddr> Addr = FUnrealSocketHelper::NewInternetAddr("127.0.0.1", 23343);
+	SendUdpDatagrams(Addr, Datagrams);
 }

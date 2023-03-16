@@ -18,7 +18,7 @@ class UZenoTcpClient;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FClientLostConnectionDelegate, UZenoTcpClient*, Thread);
 
 UCLASS()
-class UZenoTcpClient : public UObject, public FRunnable
+class ZENOBRIDGE_API UZenoTcpClient : public UObject, public FRunnable
 {
 	GENERATED_BODY()
 	
@@ -38,6 +38,9 @@ public:
 	bool CreateRandomUDPSocket(FInternetAddr& OutEndpoint);
 	bool IsRunning() const;
 
+	void SendUdpDatagrams(const TArray<TArray<uint8>>& Datagrams) const;
+	void SendUdpDatagrams(const TSharedRef<FInternetAddr>& Addr, const TArray<TArray<uint8>>& Datagrams) const;
+	
 private:
 	void ReadPacketToBuffer();
 	bool SendPacket(const ZBTControlPacketType PacketType, const uint8* Data, const uint16 Size) const;
@@ -50,8 +53,6 @@ private:
 
 	void TryMakeupFile(const uint32 FileId);
 
-	void SendUdpDatagrams(const TSharedRef<FInternetAddr>& Addr, const TArray<TArray<uint8>>& Datagrams) const;
-	
 public:
 	FClientLostConnectionDelegate LostConnectionDelegate;
 	FZenoClientNewFileNotify OnNewFileNotifyDelegate;

@@ -33,8 +33,13 @@ uint16 FZenoLandscapeHelper::RemapFloatToUint16(const float InFloat)
 	return Height;
 }
 
+float FZenoLandscapeHelper::RemapUint16ToFloat(const uint16 InInt)
+{
+	return static_cast<float>(InInt) / 0xFFFF * 512.f - 255.f;
+}
+
 bool FZenoLandscapeHelper::ChooseBestComponentSizeForSubject(const FLiveLinkSubjectKey& Key,
-	int32& InOutQuadsPerSection, int32& InOutSectionsPerComponent, FIntPoint& OutComponentCount)
+                                                             int32& InOutQuadsPerSection, int32& InOutSectionsPerComponent, FIntPoint& OutComponentCount)
 {
 	if (const TOptional<FLiveLinkSubjectFrameData> FrameData = FZenoCommonDataSource::GetFrameData(Key); !Key.SubjectName.IsNone() && FrameData.IsSet())
 	{

@@ -9,6 +9,8 @@ public:
 
 	static uint16 RemapFloatToUint16(const float InFloat);
 
+	static float RemapUint16ToFloat(const uint16 InInt);
+
 	static bool ChooseBestComponentSizeForSubject(const FLiveLinkSubjectKey& Key, int32& InOutQuadsPerSection, int32& InOutSectionsPerComponent, FIntPoint& OutComponentCount);
 	
 };

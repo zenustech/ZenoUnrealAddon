@@ -7,7 +7,7 @@ DECLARE_LOG_CATEGORY_EXTERN(LogZeno, Log, All);
 #include "SocketSubsystem.h"
 #include <string>
 
-constexpr size_t GUdpPackCutSize = 512;
+constexpr size_t GUdpPackCutSize = 40960;
 
 struct ZENOBRIDGE_API FUnrealSocketHelper
 {
@@ -64,9 +64,8 @@ struct ZENOBRIDGE_API FUnrealSocketHelper
 
 	static inline TOptional<std::string> SessionName {};
 
-	
 	template <typename T>
-	TArray<TArray<uint8>> MakeSendFileData(T& DataToSend, const ZBFileType FileType)
+	static TArray<TArray<uint8>> MakeSendFileData(T& DataToSend, const ZBFileType FileType)
 	{
 		static std::atomic<uint32> CurrentFileId = 0;
 		const static uint8 Timestamp = time(nullptr);
@@ -86,6 +85,7 @@ struct ZENOBRIDGE_API FUnrealSocketHelper
 				Size = Data.size() - (GUdpPackCutSize * Idx);
 			}
 
+#ifdef PLATFORM_LITTLE_ENDIAN
 			ZBUFileMessageHeader Header {
 				FileType,
 				Size,
@@ -93,6 +93,15 @@ struct ZENOBRIDGE_API FUnrealSocketHelper
 				DataPartSize,
 				Idx,
 			};
+#else // PLATFORM_BIT_ENDIAN
+			ZBUFileMessageHeader Header {
+				ByteSwap(FileType),
+				ByteSwap(Size),
+				ByteSwap(FileId),
+				ByteSwap(DataPartSize),
+				ByteSwap(Idx),
+			};
+#endif // PLATFORM_LITTLE_ENDIAN
 
 			TArray<uint8> Temp;
 			Temp.SetNumUninitialized(sizeof(ZBUFileMessageHeader) + Size);
