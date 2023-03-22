@@ -141,6 +141,10 @@ void AZenoLandscapeSimpleBrush::CheckForErrors()
 void AZenoLandscapeSimpleBrush::GetRenderDependencies(TSet<UObject*>& OutDependencies)
 {
 	Super::GetRenderDependencies(OutDependencies);
+	if (IsValid(BrushHeightMapEncoderMaterial))
+	{
+		OutDependencies.Add(BrushHeightMapEncoderMaterial);
+	}
 }
 
 bool AZenoLandscapeSimpleBrush::IsAffectingWeightmapLayer(const FName& InLayerName) const
