@@ -35,6 +35,10 @@ public class ZenoLiveLink : ModuleRules
                 "TextureEditor",
                 "Foliage",
                 "InputCore",
+                "LandscapeEditorUtilities",
+                "RHI",
+                "RenderCore",
+                "DeveloperSettings",
             }
         );
         

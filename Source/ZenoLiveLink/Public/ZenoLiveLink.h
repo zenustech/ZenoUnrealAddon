@@ -40,6 +40,9 @@ private:
 	void RegisterCustomProperty();
 	void UnregisterCustomProperty();
 
+	void RegisterConfig();
+	void UnregisterConfig();
+
 	void OnEditorModeChanged(const FEditorModeID& InModeID, bool bIsEnteringMode);
 	
 public:

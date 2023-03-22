@@ -22,6 +22,7 @@
 #include "Role/ZenoLiveLinkTypes.h"
 #include "UI/Landscape/ZenoLandscapeEditorObject.h"
 #include "UI/Landscape/ZenoLandscapeHelper.h"
+#include "UI/Landscape/ZenoLandscapeSimpleBrush.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/Input/SComboButton.h"
 #include "Widgets/Layout/SScrollBox.h"
@@ -296,10 +297,31 @@ void UZenoLandscapeTool::ReimportHeightMapToSelectedLandscape()
 		}
 		for (ALandscapeProxy* LandscapeProxy : SelectedLandscapes)
 		{
-			ULandscapeInfo* LandscapeInfo = LandscapeProxy->GetLandscapeInfo();
-			FHeightmapAccessor<false> HeightmapAccessor(LandscapeInfo);
-			HeightmapAccessor.SetData(0, 0, Size - 1, Size - 1, HeightData.GetData());
-			LandscapeInfo->UpdateLayerInfoMap(LandscapeProxy);
+			// ULandscapeInfo* LandscapeInfo = LandscapeProxy->GetLandscapeInfo();
+			// FHeightmapAccessor<false> HeightmapAccessor(LandscapeInfo);
+			// HeightmapAccessor.SetData(0, 0, Size - 1, Size - 1, HeightData.GetData());
+			// LandscapeInfo->UpdateLayerInfoMap(LandscapeProxy);
+			if (ALandscape* Landscape = Cast<ALandscape>(LandscapeProxy); Landscape)
+			{
+				if (Landscape->LandscapeLayers.Num() > 0)
+				{
+					const FName SimpleLayerName = FName("SimpleZenoBrushLayer");
+					int32 ExistingWaterLayerIndex = Landscape->GetLayerIndex(SimpleLayerName);
+					if (INDEX_NONE == ExistingWaterLayerIndex)
+					{
+						ExistingWaterLayerIndex = Landscape->CreateLayer(SimpleLayerName);
+					}
+
+					FActorSpawnParameters SpawnParameters;
+					SpawnParameters.bAllowDuringConstructionScript = true;
+					AZenoLandscapeSimpleBrush* Brush = Landscape->GetWorld()->SpawnActor<AZenoLandscapeSimpleBrush>(AZenoLandscapeSimpleBrush::StaticClass(), SpawnParameters);
+					if (IsValid(Brush))
+					{
+						Brush->SetTargetLandscape(Landscape);
+						Brush->AttachToActor(Landscape, FAttachmentTransformRules::SnapToTargetIncludingScale);
+					}
+				}
+			}
 		}
 	}
 }

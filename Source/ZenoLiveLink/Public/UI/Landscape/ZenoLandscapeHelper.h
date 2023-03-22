@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+enum ETextureRenderTargetFormat : int;
 struct FLiveLinkSubjectKey;
 
 class ZENOLIVELINK_API FZenoLandscapeHelper
@@ -12,5 +13,9 @@ public:
 	static float RemapUint16ToFloat(const uint16 InInt);
 
 	static bool ChooseBestComponentSizeForSubject(const FLiveLinkSubjectKey& Key, int32& InOutQuadsPerSection, int32& InOutSectionsPerComponent, FIntPoint& OutComponentCount);
+
+	static UTextureRenderTarget2D* GetOrCreateTransientRenderTarget2D(UTextureRenderTarget2D* InRenderTarget, FName InRenderTargetName, const FIntPoint& InSize, ETextureRenderTargetFormat InFormat, const FLinearColor& InClearColor = FLinearColor::Black, bool bInAutoGenerateMipMaps = false);
+
+	static UMaterialInstanceDynamic* GetOrCreateTransientMid(UMaterialInstanceDynamic* InMID, FName InMIDName, UMaterialInterface* InMaterialInterface, EObjectFlags InAdditionalObjectFlags = RF_NoFlags);
 	
 };

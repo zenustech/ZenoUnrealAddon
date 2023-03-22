@@ -6,6 +6,7 @@
 #include "ZenoBridge.h"
 #include "Editor.h"
 #include "EditorModes.h"
+#include "ISettingsModule.h"
 #include "Command/FZenoLandscapeCommand.h"
 #include "Modules/ModuleManager.h"
 #include "UI/Landscape/LandscapeToolZenoBridge.h"
@@ -17,6 +18,7 @@
 #include "UI/Landscape/LandscapeFileFormatZeno.h"
 #include "UI/Landscape/TextureExportHelper.h"
 #include "UI/Landscape/ZenoLandscapeDetailCustomization.h"
+#include "UI/Landscape/ZenoLandscapeSimpleBrush.h"
 #include "UI/Landscape/ZenoLandscapeVisualDataPropertyView.h"
 
 #define LOCTEXT_NAMESPACE "FZenoLiveLinkModule"
@@ -40,6 +42,7 @@ void FZenoLiveLinkModule::StartupModule()
 	FZenoLandscapeDetailCustomization::Register();
 	RegisterCustomProperty();
 
+	RegisterConfig();
 	RegisterAssets();
 }
 
@@ -50,6 +53,7 @@ void FZenoLiveLinkModule::ShutdownModule()
 	PluginCommands.Reset();
 	FZenoLandscapeDetailCustomization::UnRegister();
 	UnRegisterAssets();
+	UnregisterConfig();
 	UnregisterCustomProperty();
 
 	// Reset module pointer
@@ -120,6 +124,27 @@ void FZenoLiveLinkModule::RegisterCustomProperty()
 
 void FZenoLiveLinkModule::UnregisterCustomProperty()
 {
+}
+
+void FZenoLiveLinkModule::RegisterConfig()
+{
+	// if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
+	// {
+	// 	SettingsModule->RegisterSettings(
+	// 		"Project", "Plugins", "ZenoLandscapeBrush",
+	// 		LOCTEXT("ZenoLandscapeBrushSettingName", "Zeno Landscape Brush"),
+	// 		LOCTEXT("ZenoLandscapeBrushSettingDesc", "Configure zeno landscape brush"),
+	// 		GetMutableDefault<UZenoSimpleBrushSettings>()
+	// 	);
+	// }
+}
+
+void FZenoLiveLinkModule::UnregisterConfig()
+{
+	// if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
+	// {
+	// 	SettingsModule->UnregisterSettings("Project", "Plugins", "ZenoLandscapeBrush");
+	// }
 }
 
 void FZenoLiveLinkModule::OnEditorModeChanged(const FEditorModeID& InModeID, bool bIsEnteringMode)
