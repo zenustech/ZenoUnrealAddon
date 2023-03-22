@@ -35,6 +35,7 @@ public:
 
 protected:
 	// AActor
+	virtual void PostActorCreated() override;
 	virtual void BeginPlay() override;
 	virtual void PostLoad() override;
 	// AActor

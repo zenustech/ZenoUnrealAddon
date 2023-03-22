@@ -31,11 +31,6 @@ void AZenoLandscapeSimpleBrush::BeginPlay()
 void AZenoLandscapeSimpleBrush::PostLoad()
 {
 	Super::PostLoad();
-
-	if (nullptr == GetClass()->ClassGeneratedBy)
-	{
-		SetupDefaultMaterials();
-	}
 }
 
 void AZenoLandscapeSimpleBrush::SetupDefaultMaterials()
@@ -94,6 +89,15 @@ void AZenoLandscapeSimpleBrush::SetTargetLandscape(ALandscape* InTargetLandscape
 
 			InTargetLandscape->AddBrushToLayer(SimpleLayerIndex, this);
 		}
+	}
+}
+
+void AZenoLandscapeSimpleBrush::PostActorCreated()
+{
+	Super::PostActorCreated();
+	if (!BrushHeightMapEncoderMaterial)
+	{
+		SetupDefaultMaterials();
 	}
 }
 
