@@ -2,6 +2,8 @@
 
 enum ETextureRenderTargetFormat : int;
 struct FLiveLinkSubjectKey;
+class AZenoLandscapeSimpleBrush;
+class ALandscape;
 
 class ZENOLIVELINK_API FZenoLandscapeHelper
 {
@@ -17,5 +19,7 @@ public:
 	static UTextureRenderTarget2D* GetOrCreateTransientRenderTarget2D(UTextureRenderTarget2D* InRenderTarget, FName InRenderTargetName, const FIntPoint& InSize, ETextureRenderTargetFormat InFormat, const FLinearColor& InClearColor = FLinearColor::Black, bool bInAutoGenerateMipMaps = false);
 
 	static UMaterialInstanceDynamic* GetOrCreateTransientMid(UMaterialInstanceDynamic* InMID, FName InMIDName, UMaterialInterface* InMaterialInterface, EObjectFlags InAdditionalObjectFlags = RF_NoFlags);
+
+	static AZenoLandscapeSimpleBrush* GetOrCreateLandscapeSimpleBrush(ALandscape* Landscape, int32 InLayerIndex);
 	
 };

@@ -33,6 +33,9 @@ public:
 	/** Set the landscape brush controlling */
 	virtual void SetTargetLandscape(ALandscape* InTargetLandscape);
 
+	/** Set height data into base height map */
+	virtual void SetBaseHeightmapData(const TArray<uint16>& InHeightmapData);
+
 protected:
 	// AActor
 	virtual void PostActorCreated() override;
@@ -61,7 +64,7 @@ public:
 
 protected:
 	/** Keep landscape render target passed in Render_Native function */
-	UPROPERTY(VisibleAnywhere, Transient, Category="Render Target")
+	UPROPERTY(VisibleAnywhere, Transient, Category="Render Targets")
 	TObjectPtr<UTextureRenderTarget2D> LandscapeRTRef = nullptr;
 
 	/** Resolution of landscape's render target. Receive from Initialize_Native. */
@@ -69,10 +72,18 @@ protected:
 	FIntPoint LandscapeRTRes;
 
 	/** Landscape size, quads num in a landscape. Receive from Initialize_Native. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(Category="Debug"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Debug")
 	FIntPoint LandscapeQuads;
 
+	/** Height data pass from CPU side */
+	// UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Render Data")
+	TArray<uint16> BaseHeightData;
+
 	// Render Targets
+
+	/** Base heightmap */
+	UPROPERTY(VisibleAnywhere, Transient, Category = "Render Targets")
+	TObjectPtr<UTextureRenderTarget2D> BaseHeightmapRT;
 	
 	/** Heightmap to return the brush result */
 	UPROPERTY(VisibleAnywhere, Transient, Category = "Render Targets")

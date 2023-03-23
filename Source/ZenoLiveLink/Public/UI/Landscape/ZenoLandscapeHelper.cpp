@@ -6,6 +6,9 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Role/ZenoLiveLinkTypes.h"
 #include "UI/ZenoCommonDataSource.h"
+#include "LandscapeBlueprintBrushBase.h"
+#include "Landscape.h"
+#include "ZenoLandscapeSimpleBrush.h"
 
 void FZenoLandscapeHelper::ExpandHeightmapData(const TArray<uint16>& InHeightMap, const FIntVector2& InTargetResolution,
                                                TArray<uint16>& OutHeightMap)
@@ -16,7 +19,8 @@ void FZenoLandscapeHelper::ExpandHeightmapData(const TArray<uint16>& InHeightMap
 	FLandscapeImportResolution ImportResolution(Size, Size);
 	FLandscapeImportResolution TargetResolution(InTargetResolution.X, InTargetResolution.Y);
 
-	FLandscapeImportHelper::TransformHeightmapImportData(InHeightMap, OutHeightMap, ImportResolution, TargetResolution, ELandscapeImportTransformType::Resample);
+	FLandscapeImportHelper::TransformHeightmapImportData(InHeightMap, OutHeightMap, ImportResolution, TargetResolution,
+	                                                     ELandscapeImportTransformType::Resample);
 }
 
 uint16 FZenoLandscapeHelper::RemapFloatToUint16(const float InFloat)
@@ -24,13 +28,15 @@ uint16 FZenoLandscapeHelper::RemapFloatToUint16(const float InFloat)
 	uint16 Height;
 	if (InFloat > 256.f)
 	{
-		 Height = UINT16_MAX;
-	} else if (InFloat < -256.f)
+		Height = UINT16_MAX;
+	}
+	else if (InFloat < -256.f)
 	{
-		 Height = 0;
-	} else
+		Height = 0;
+	}
+	else
 	{
-		 Height = (InFloat + 255.f) / 512.f * 0xFFFF;
+		Height = (InFloat + 255.f) / 512.f * 0xFFFF;
 	}
 	return Height;
 }
@@ -41,13 +47,17 @@ float FZenoLandscapeHelper::RemapUint16ToFloat(const uint16 InInt)
 }
 
 bool FZenoLandscapeHelper::ChooseBestComponentSizeForSubject(const FLiveLinkSubjectKey& Key,
-                                                             int32& InOutQuadsPerSection, int32& InOutSectionsPerComponent, FIntPoint& OutComponentCount)
+                                                             int32& InOutQuadsPerSection,
+                                                             int32& InOutSectionsPerComponent,
+                                                             FIntPoint& OutComponentCount)
 {
-	if (const TOptional<FLiveLinkSubjectFrameData> FrameData = FZenoCommonDataSource::GetFrameData(Key); !Key.SubjectName.IsNone() && FrameData.IsSet())
+	if (const TOptional<FLiveLinkSubjectFrameData> FrameData = FZenoCommonDataSource::GetFrameData(Key); !Key.
+		SubjectName.IsNone() && FrameData.IsSet())
 	{
 		const FLiveLinkHeightFieldStaticData* Data = FrameData->StaticData.Cast<FLiveLinkHeightFieldStaticData>();
 		const int32 Size = sqrt(Data->Size);
-		FLandscapeImportHelper::ChooseBestComponentSizeForImport(Size, Size, InOutQuadsPerSection, InOutSectionsPerComponent, OutComponentCount);
+		FLandscapeImportHelper::ChooseBestComponentSizeForImport(Size, Size, InOutQuadsPerSection,
+		                                                         InOutSectionsPerComponent, OutComponentCount);
 		return true;
 	}
 	return false;
@@ -77,7 +87,9 @@ UTextureRenderTarget2D* FZenoLandscapeHelper::GetOrCreateTransientRenderTarget2D
 		}
 	}
 
-	UTextureRenderTarget2D* NewRenderTarget2D = NewObject<UTextureRenderTarget2D>(GetTransientPackage(), MakeUniqueObjectName(GetTransientPackage(), UTextureRenderTarget2D::StaticClass(), InRenderTargetName));
+	UTextureRenderTarget2D* NewRenderTarget2D = NewObject<UTextureRenderTarget2D>(
+		GetTransientPackage(),
+		MakeUniqueObjectName(GetTransientPackage(), UTextureRenderTarget2D::StaticClass(), InRenderTargetName));
 	check(NewRenderTarget2D);
 	NewRenderTarget2D->RenderTargetFormat = InFormat;
 	NewRenderTarget2D->ClearColor = InClearColor;
@@ -86,16 +98,18 @@ UTextureRenderTarget2D* FZenoLandscapeHelper::GetOrCreateTransientRenderTarget2D
 	NewRenderTarget2D->UpdateResourceImmediate(true);
 
 	ENQUEUE_RENDER_COMMAND(FlushRHIThreadToUpdateTextureRenderTargetReference)(
-	[](FRHICommandListImmediate& RHICmdList)
-	{
-		RHICmdList.ImmediateFlush(EImmediateFlushType::FlushRHIThread);
-	});
+		[](FRHICommandListImmediate& RHICmdList)
+		{
+			RHICmdList.ImmediateFlush(EImmediateFlushType::FlushRHIThread);
+		});
 
 	return NewRenderTarget2D;
 }
 
 UMaterialInstanceDynamic* FZenoLandscapeHelper::GetOrCreateTransientMid(UMaterialInstanceDynamic* InMID,
-	FName InMIDName, UMaterialInterface* InMaterialInterface, EObjectFlags InAdditionalObjectFlags)
+                                                                        FName InMIDName,
+                                                                        UMaterialInterface* InMaterialInterface,
+                                                                        EObjectFlags InAdditionalObjectFlags)
 {
 	if (!IsValid(InMaterialInterface))
 	{
@@ -114,11 +128,48 @@ UMaterialInstanceDynamic* FZenoLandscapeHelper::GetOrCreateTransientMid(UMateria
 		}
 		else
 		{
-			ResultMID = UMaterialInstanceDynamic::Create(InMaterialInterface, nullptr, MakeUniqueObjectName(GetTransientPackage(), UMaterialInstanceDynamic::StaticClass(), InMIDName));
+			ResultMID = UMaterialInstanceDynamic::Create(InMaterialInterface, nullptr,
+			                                             MakeUniqueObjectName(
+				                                             GetTransientPackage(),
+				                                             UMaterialInstanceDynamic::StaticClass(), InMIDName));
 			ResultMID->SetFlags(InAdditionalObjectFlags);
 		}
 	}
 
 	check(nullptr != ResultMID);
 	return ResultMID;
+}
+
+AZenoLandscapeSimpleBrush* FZenoLandscapeHelper::GetOrCreateLandscapeSimpleBrush(
+	ALandscape* Landscape, const int32 InLayerIndex)
+{
+	if (!IsValid(Landscape) || InLayerIndex == INDEX_NONE)
+	{
+		return nullptr;
+	}
+	
+	TArray<ALandscapeBlueprintBrushBase*> Brushes = Landscape->GetBrushesForLayer(InLayerIndex);
+	AZenoLandscapeSimpleBrush* Result = nullptr;
+	for (ALandscapeBlueprintBrushBase* Brush : Brushes)
+	{
+		if (Result = Cast<AZenoLandscapeSimpleBrush>(Brush); IsValid(Result))
+		{
+			break;
+		}
+	}
+
+	if (nullptr == Result)
+	{
+		FActorSpawnParameters SpawnParameters;
+		SpawnParameters.bAllowDuringConstructionScript = true;
+		Result = Landscape->GetWorld()->SpawnActor<AZenoLandscapeSimpleBrush>(
+			AZenoLandscapeSimpleBrush::StaticClass(), SpawnParameters);
+		if (IsValid(Result))
+		{
+			Result->SetTargetLandscape(Landscape);
+			Result->AttachToActor(Landscape, FAttachmentTransformRules::SnapToTargetIncludingScale);
+		}
+	}
+
+	return Result;
 }

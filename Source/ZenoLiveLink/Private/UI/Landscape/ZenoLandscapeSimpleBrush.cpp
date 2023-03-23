@@ -43,9 +43,10 @@ void AZenoLandscapeSimpleBrush::SetupDefaultMaterials()
 
 bool AZenoLandscapeSimpleBrush::AllocateRTs()
 {
+	BaseHeightmapRT = FZenoLandscapeHelper::GetOrCreateTransientRenderTarget2D(BaseHeightmapRT, TEXT("BaseHeightmapRT"), LandscapeRTRes, RTF_RGBA8);
 	HeightmapRTA = FZenoLandscapeHelper::GetOrCreateTransientRenderTarget2D(HeightmapRTA, TEXT("HeightmapRTA"), LandscapeRTRes, RTF_RGBA8);
 
-	return nullptr != HeightmapRTA;
+	return nullptr != HeightmapRTA && nullptr != BaseHeightmapRT;
 }
 
 bool AZenoLandscapeSimpleBrush::CreateMIDs()
@@ -69,6 +70,40 @@ bool AZenoLandscapeSimpleBrush::BrushRenderSetup()
 		return false;
 	}
 
+	// Write color data into texture pixels
+	ENQUEUE_RENDER_COMMAND(UpdateBaseHeightRT) (
+	[&](FRHICommandListImmediate& RHICmdList)
+	{
+		const int32 Size = sqrt(BaseHeightData.Num());
+		
+		const TRefCountPtr<FRHITexture2D> Texture = BaseHeightmapRT->GetRenderTargetResource()->GetRenderTargetTexture();
+		uint32 DestStride = 0;
+		uint8* RawData = static_cast<uint8*>(RHICmdList.LockTexture2D(Texture, 0, EResourceLockMode::RLM_WriteOnly, DestStride, false, true));
+
+		const uint32 RowNum = FMath::Min(BaseHeightmapRT->SizeY, Size);
+		const uint32 ColNum = FMath::Min(BaseHeightmapRT->SizeX, Size);
+		uint32 BaseHeightDataOffset = 0;
+		
+		for (uint32 Row = 0; Row < RowNum; ++Row)
+		{
+			for (uint32 Col = 0; Col < ColNum; ++Col)
+			{
+				FColor* PixelAddress = reinterpret_cast<FColor*>(RawData + Col * sizeof(FColor) + Row * DestStride);
+				
+				const uint16 Height = BaseHeightData[BaseHeightDataOffset++];
+				const uint8 R = Height >> 8;
+				const uint8 G = Height & 0xFF;
+				const FColor PixelColor { R, G, 0, 0 };
+				*PixelAddress = PixelColor;
+			}
+		}
+		
+		RHICmdList.UnlockTexture2D(Texture, 0, false, true);
+	});
+	FlushRenderingCommands();
+
+	BrushHeightMapEncoderMID->SetTextureParameterValue(FName("InputHeightRT"), BaseHeightmapRT);
+
 	return true;
 }
 
@@ -90,6 +125,17 @@ void AZenoLandscapeSimpleBrush::SetTargetLandscape(ALandscape* InTargetLandscape
 			InTargetLandscape->AddBrushToLayer(SimpleLayerIndex, this);
 		}
 	}
+}
+
+void AZenoLandscapeSimpleBrush::SetBaseHeightmapData(const TArray<uint16>& InHeightmapData)
+{
+	// TODO [darc] : support shapes other than rect and remove this check :
+	{
+		const int32 Size = sqrt(InHeightmapData.Num());
+		check(Size * Size == InHeightmapData.Num());
+	}
+	BaseHeightData.Empty();
+	BaseHeightData.Append(InHeightmapData);
 }
 
 void AZenoLandscapeSimpleBrush::PostActorCreated()
