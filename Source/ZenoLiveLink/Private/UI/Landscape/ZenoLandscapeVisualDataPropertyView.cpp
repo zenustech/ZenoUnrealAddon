@@ -14,77 +14,61 @@
 
 #define LOCTEXT_NAMESPACE "FZenoLandscapeVisualDataPropertyView"
 
-/**
- * Custom view for texture2d export
- */
-class FZenoLandscapeTexture2DExportPropertyView : public IPropertyTypeCustomization
+
+FZenoLandscapeTexture2DExportPropertyView::FZenoLandscapeTexture2DExportPropertyView(): ExportSetting(NewObject<UZenoTextureExportSetting>())
 {
-
-public:
-	FZenoLandscapeTexture2DExportPropertyView()
-		: ExportSetting(NewObject<UZenoTextureExportSetting>())
-	{
-		ExportSetting->AddToRoot();
+	ExportSetting->AddToRoot();
 		
-		FPropertyEditorModule& PropertyEditorModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
-		FDetailsViewArgs DetailsViewArgs;
-		DetailsViewArgs.NameAreaSettings = FDetailsViewArgs::HideNameArea;
-		DetailsViewArgs.bShowScrollBar = true;
-		DetailsView = PropertyEditorModule.CreateDetailView(DetailsViewArgs);
-		DetailsView->SetObject(ExportSetting);
-	}
+	FPropertyEditorModule& PropertyEditorModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+	FDetailsViewArgs DetailsViewArgs;
+	DetailsViewArgs.NameAreaSettings = FDetailsViewArgs::HideNameArea;
+	DetailsViewArgs.bShowScrollBar = true;
+	DetailsView = PropertyEditorModule.CreateDetailView(DetailsViewArgs);
+	DetailsView->SetObject(ExportSetting);
+}
 
-	virtual ~FZenoLandscapeTexture2DExportPropertyView() override
-	{
-		ExportSetting->RemoveFromRoot();
-	}
-	
-	static TSharedRef<IPropertyTypeCustomization> MakeInstance()
-	{
-		return MakeShared<FZenoLandscapeTexture2DExportPropertyView>();
-	}
+FZenoLandscapeTexture2DExportPropertyView::~FZenoLandscapeTexture2DExportPropertyView()
+{
+	ExportSetting->RemoveFromRoot();
+}
 
-	virtual void CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle, FDetailWidgetRow& HeaderRow,
-		IPropertyTypeCustomizationUtils& CustomizationUtils) override
-	{
-		HeaderRow.ValueContent()
+TSharedRef<IPropertyTypeCustomization> FZenoLandscapeTexture2DExportPropertyView::MakeInstance()
+{
+	return MakeShared<FZenoLandscapeTexture2DExportPropertyView>();
+}
+
+void FZenoLandscapeTexture2DExportPropertyView::CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle,
+                                                                FDetailWidgetRow& HeaderRow, IPropertyTypeCustomizationUtils& CustomizationUtils)
+{
+	HeaderRow.ValueContent()
+	[
+		SNew(SVerticalBox)
+		+ SVerticalBox::Slot()
 		[
-			SNew(SVerticalBox)
-			+ SVerticalBox::Slot()
+			SNew(SProperty, PropertyHandle).ShouldDisplayName(false)
+		]
+		+ SVerticalBox::Slot()
+		.Padding(FMargin { .0, 10.0, .0, .0 })
+		[
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
 			[
-				SNew(SProperty, PropertyHandle).ShouldDisplayName(false)
-			]
-			+ SVerticalBox::Slot()
-			.Padding(FMargin { .0, 10.0, .0, .0 })
-			[
-				SNew(SHorizontalBox)
-				+ SHorizontalBox::Slot()
+				// Export button
+				SNew(SComboButton)
+				.ButtonContent()
 				[
-					// Export button
-					SNew(SComboButton)
-					.ButtonContent()
-					[
-						SNew(STextBlock).Text(LOCTEXT("Export", "Export")).Font(CustomizationUtils.GetRegularFont())
-					]
-					.OnGetMenuContent(FOnGetContent::CreateSP(this, &FZenoLandscapeTexture2DExportPropertyView::MakeExportPanelContent, PropertyHandle))
-			    ]
+					SNew(STextBlock).Text(LOCTEXT("Export", "Export")).Font(CustomizationUtils.GetRegularFont())
+				]
+				.OnGetMenuContent(FOnGetContent::CreateSP(this, &FZenoLandscapeTexture2DExportPropertyView::MakeExportPanelContent, PropertyHandle))
 			]
-		];
-	}
-	
-	virtual void CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle, IDetailChildrenBuilder& ChildBuilder,
-		IPropertyTypeCustomizationUtils& CustomizationUtils) override
-	{
-	}
+		]
+	];
+}
 
-private:
-	const TObjectPtr<UZenoTextureExportSetting> ExportSetting;
-	TSharedPtr<IDetailsView> DetailsView;
-	TSharedPtr<SWidget> Slate_ExportPanel;
-
-	TSharedRef<SWidget> MakeExportPanelContent(TSharedRef<IPropertyHandle> PropertyHandle)
-	{
-		return SAssignNew(Slate_ExportPanel, SScrollBox)
+TSharedRef<SWidget> FZenoLandscapeTexture2DExportPropertyView::MakeExportPanelContent(
+	TSharedRef<IPropertyHandle> PropertyHandle)
+{
+	return SAssignNew(Slate_ExportPanel, SScrollBox)
 		+ SScrollBox::Slot()
 		[
 			DetailsView.ToSharedRef()
@@ -101,73 +85,64 @@ private:
 			]
 		]
 		;
-	}
+}
 
-	FReply ExportData(TSharedRef<IPropertyHandle> PropertyHandle)
-	{
-		TWeakObjectPtr<UTexture2D>* Ptr;
-		PropertyHandle->GetValueData(reinterpret_cast<void*&>(Ptr));
+FReply FZenoLandscapeTexture2DExportPropertyView::ExportData(TSharedRef<IPropertyHandle> PropertyHandle)
+{
+	TWeakObjectPtr<UTexture2D>* Ptr;
+	PropertyHandle->GetValueData(reinterpret_cast<void*&>(Ptr));
 		
-		if (Ptr && Ptr->IsValid())
+	if (Ptr && Ptr->IsValid())
+	{
+		if (!ExportSetting->SubjectName.IsEmpty())
 		{
-			if (!ExportSetting->SubjectName.IsEmpty())
+			UTexture2D* Texture2D = Ptr->Get();
+			const FZenoBridgeModule& ZenoBridgeModule = FModuleManager::LoadModuleChecked<FZenoBridgeModule>("ZenoBridge");
+			if (TObjectPtr<UZenoTcpClient> Client = ZenoBridgeModule.GetTcpClient(); Client)
 			{
-				UTexture2D* Texture2D = Ptr->Get();
-				const FZenoBridgeModule& ZenoBridgeModule = FModuleManager::LoadModuleChecked<FZenoBridgeModule>("ZenoBridge");
-				if (TObjectPtr<UZenoTcpClient> Client = ZenoBridgeModule.GetTcpClient(); Client)
-				{
-					// Update texture2d options to make sure there is a mipmap data
-					// Keeping old settings
-					const TextureCompressionSettings OldCompressSettings = Texture2D->CompressionSettings;
-					const TextureMipGenSettings OldMipGenSettings = Texture2D->MipGenSettings;
-					const bool OldSRGB = Texture2D->SRGB;
-					// Update settings
-					Texture2D->MipGenSettings = TextureMipGenSettings::TMGS_NoMipmaps;
-					Texture2D->SRGB = false;
-					Texture2D->UpdateResource();
+				// Update texture2d options to make sure there is a mipmap data
+				// Keeping old settings
+				const TextureCompressionSettings OldCompressSettings = Texture2D->CompressionSettings;
+				const TextureMipGenSettings OldMipGenSettings = Texture2D->MipGenSettings;
+				const bool OldSRGB = Texture2D->SRGB;
+				// Update settings
+				Texture2D->MipGenSettings = TextureMipGenSettings::TMGS_NoMipmaps;
+				Texture2D->SRGB = false;
+				Texture2D->UpdateResource();
 					
-					UnrealHeightFieldSubject Subject;
-					Subject.m_name = TCHAR_TO_UTF8(*ExportSetting->SubjectName);
-					FTexture2DMipMap* MipMap = &Texture2D->GetPlatformData()->Mips[0];
-					ensure(MipMap && MipMap->SizeX == MipMap->SizeY);
-					Subject.m_resolution = MipMap->SizeX; // assume that x == y for now
-					FByteBulkData& RawTextureData = MipMap->BulkData;
-					const FColor* FormattedImageData = static_cast<const FColor*>(RawTextureData.LockReadOnly());
-					const size_t HeightFieldSize = MipMap->SizeX * MipMap->SizeY;
-					Subject.m_height.resize(HeightFieldSize);
+				UnrealHeightFieldSubject Subject;
+				Subject.m_name = TCHAR_TO_UTF8(*ExportSetting->SubjectName);
+				FTexture2DMipMap* MipMap = &Texture2D->GetPlatformData()->Mips[0];
+				ensure(MipMap && MipMap->SizeX == MipMap->SizeY);
+				Subject.m_resolution = MipMap->SizeX; // assume that x == y for now
+				FByteBulkData& RawTextureData = MipMap->BulkData;
+				const FColor* FormattedImageData = static_cast<const FColor*>(RawTextureData.LockReadOnly());
+				const size_t HeightFieldSize = MipMap->SizeX * MipMap->SizeY;
+				Subject.m_height.resize(HeightFieldSize);
 
-					for (size_t Idx = 0; Idx < HeightFieldSize; Idx++)
-					{
-						const FColor& PixelColor = FormattedImageData[Idx];
-						uint16 RawHeight = (PixelColor.R << 8) + PixelColor.G;
-						Subject.m_height[Idx] = FZenoLandscapeHelper::RemapUint16ToFloat(RawHeight);
-					}
-					RawTextureData.Unlock();
-
-					// Reset settings
-					Texture2D->CompressionSettings = OldCompressSettings;
-					Texture2D->MipGenSettings = OldMipGenSettings;
-					Texture2D->SRGB = OldSRGB;
-					Texture2D->UpdateResource();
-					
-					const TArray<TArray<uint8>> Data = FUnrealSocketHelper::MakeSendFileData(Subject, ZBFileType::HeightField);
-					Client->SendUdpDatagrams(Data);
-				}
-				else
+				for (size_t Idx = 0; Idx < HeightFieldSize; Idx++)
 				{
-					 UEditorDialogLibrary::ShowMessage(
-						   LOCTEXT("ActionWarning", "Warning"),
-						   LOCTEXT("ZenoNotConnected", "You have to connect to zeno first. You could find it on LiveLink panel."),
-						   EAppMsgType::Ok
-					 );
+					const FColor& PixelColor = FormattedImageData[Idx];
+					uint16 RawHeight = (PixelColor.R << 8) + PixelColor.G;
+					Subject.m_height[Idx] = FZenoLandscapeHelper::RemapUint16ToFloat(RawHeight);
 				}
+				RawTextureData.Unlock();
+
+				// Reset settings
+				Texture2D->CompressionSettings = OldCompressSettings;
+				Texture2D->MipGenSettings = OldMipGenSettings;
+				Texture2D->SRGB = OldSRGB;
+				Texture2D->UpdateResource();
+					
+				const TArray<TArray<uint8>> Data = FUnrealSocketHelper::MakeSendFileData(Subject, ZBFileType::HeightField);
+				Client->SendUdpDatagrams(Data);
 			}
 			else
 			{
 				UEditorDialogLibrary::ShowMessage(
-					 LOCTEXT("ActionWarning", "Warning"),
-					 LOCTEXT("SubjectNameIsEmpty", "Subject's name could not be empty."),
-					 EAppMsgType::Ok
+					LOCTEXT("ActionWarning", "Warning"),
+					LOCTEXT("ZenoNotConnected", "You have to connect to zeno first. You could find it on LiveLink panel."),
+					EAppMsgType::Ok
 				);
 			}
 		}
@@ -175,14 +150,22 @@ private:
 		{
 			UEditorDialogLibrary::ShowMessage(
 				LOCTEXT("ActionWarning", "Warning"),
-				LOCTEXT("BadTargetPtr", "Bad target pointer."),
+				LOCTEXT("SubjectNameIsEmpty", "Subject's name could not be empty."),
 				EAppMsgType::Ok
 			);
 		}
-		
-		return FReply::Handled();
 	}
-};
+	else
+	{
+		UEditorDialogLibrary::ShowMessage(
+			LOCTEXT("ActionWarning", "Warning"),
+			LOCTEXT("BadTargetPtr", "Bad target pointer."),
+			EAppMsgType::Ok
+		);
+	}
+		
+	return FReply::Handled();
+}
 
 FZenoLandscapeVisualDataPropertyView::FZenoLandscapeVisualDataPropertyView()
 {

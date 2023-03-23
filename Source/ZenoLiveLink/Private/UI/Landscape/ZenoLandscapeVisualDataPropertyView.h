@@ -24,6 +24,37 @@ public:
 	ETextureExportType Type;
 };
 
+/**
+ * Custom view for texture2d export
+ */
+class FZenoLandscapeTexture2DExportPropertyView : public IPropertyTypeCustomization
+{
+
+public:
+	FZenoLandscapeTexture2DExportPropertyView();
+
+	virtual ~FZenoLandscapeTexture2DExportPropertyView() override;
+
+	static TSharedRef<IPropertyTypeCustomization> MakeInstance();
+
+	virtual void CustomizeHeader(TSharedRef<IPropertyHandle> PropertyHandle, FDetailWidgetRow& HeaderRow,
+	                             IPropertyTypeCustomizationUtils& CustomizationUtils) override;
+
+	virtual void CustomizeChildren(TSharedRef<IPropertyHandle> PropertyHandle, IDetailChildrenBuilder& ChildBuilder,
+	                               IPropertyTypeCustomizationUtils& CustomizationUtils) override
+	{
+	}
+
+private:
+	const TObjectPtr<UZenoTextureExportSetting> ExportSetting;
+	TSharedPtr<IDetailsView> DetailsView;
+	TSharedPtr<SWidget> Slate_ExportPanel;
+
+	TSharedRef<SWidget> MakeExportPanelContent(TSharedRef<IPropertyHandle> PropertyHandle);
+
+	FReply ExportData(TSharedRef<IPropertyHandle> PropertyHandle);
+};
+
 class FZenoLandscapeVisualDataPropertyView : public IPropertyTypeCustomization
 {
 public:
