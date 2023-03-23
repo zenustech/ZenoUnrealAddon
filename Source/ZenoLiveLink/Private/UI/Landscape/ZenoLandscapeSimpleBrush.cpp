@@ -109,22 +109,22 @@ bool AZenoLandscapeSimpleBrush::BrushRenderSetup()
 
 void AZenoLandscapeSimpleBrush::SetTargetLandscape(ALandscape* InTargetLandscape)
 {
-	if (OwningLandscape != InTargetLandscape)
+	// if (OwningLandscape != InTargetLandscape)
+	// {
+	if (OwningLandscape)
 	{
-		if (OwningLandscape)
-		{
-			OwningLandscape->RemoveBrush(this);
-		}
-
-		if (InTargetLandscape && InTargetLandscape->CanHaveLayersContent())
-		{
-			static const FName SimpleLayerName = FName("SimpleZenoBrushLayer");
-			const ILandscapeModule& LandscapeModule = FModuleManager::GetModuleChecked<ILandscapeModule>("Landscape");
-			const int32 SimpleLayerIndex = LandscapeModule.GetLandscapeEditorServices()->GetOrCreateEditLayer(SimpleLayerName, InTargetLandscape);
-
-			InTargetLandscape->AddBrushToLayer(SimpleLayerIndex, this);
-		}
+		OwningLandscape->RemoveBrush(this);
 	}
+
+	if (InTargetLandscape && InTargetLandscape->CanHaveLayersContent())
+	{
+		static const FName SimpleLayerName = FName("SimpleZenoBrushLayer");
+		const ILandscapeModule& LandscapeModule = FModuleManager::GetModuleChecked<ILandscapeModule>("Landscape");
+		const int32 SimpleLayerIndex = LandscapeModule.GetLandscapeEditorServices()->GetOrCreateEditLayer(SimpleLayerName, InTargetLandscape);
+
+		InTargetLandscape->AddBrushToLayer(SimpleLayerIndex, this);
+	}
+	// }
 }
 
 void AZenoLandscapeSimpleBrush::SetBaseHeightmapData(const TArray<uint16>& InHeightmapData)
@@ -136,6 +136,7 @@ void AZenoLandscapeSimpleBrush::SetBaseHeightmapData(const TArray<uint16>& InHei
 	}
 	BaseHeightData.Empty();
 	BaseHeightData.Append(InHeightmapData);
+	RequestLandscapeUpdate(true);
 }
 
 void AZenoLandscapeSimpleBrush::PostActorCreated()
