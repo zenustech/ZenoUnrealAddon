@@ -76,8 +76,8 @@ protected:
 	FIntPoint LandscapeQuads;
 
 	/** Height data pass from CPU side */
-	// UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Render Data")
-	TArray<uint16> BaseHeightData;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Render Data")
+	TArray<int32> BaseHeightData;
 
 	// Render Targets
 
