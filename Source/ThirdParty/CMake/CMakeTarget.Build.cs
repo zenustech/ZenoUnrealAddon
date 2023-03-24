@@ -259,7 +259,7 @@ public class CMakeTargetInst
 
 		m_cmakeTargetPath = Path.GetFullPath(rules.Target.ProjectFile.FullName);
 		m_cmakeTargetPath = Directory.GetParent(m_cmakeTargetPath).FullName +
-		                    "/Plugins/ZenoEngine/Source/ThirdParty/UE4CMake";
+		                    "/Plugins/ZenoEngine/Source/ThirdParty/CMake";
 
 		m_modulePath = Path.GetFullPath(rules.ModuleDirectory);
 		m_targetPath = Path.Combine(m_modulePath, m_targetLocation);

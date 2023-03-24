@@ -19,11 +19,6 @@
 			"Name": "ZenoEngine",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
-		},
-		{
-			"Name": "CMake",
-			"Type": "Runtime",
-			"LoadingPhase": "Default"
 		}
 	]
 }

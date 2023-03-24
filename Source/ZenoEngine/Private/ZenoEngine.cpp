@@ -4,6 +4,7 @@
 #include "Core.h"
 #include "Modules/ModuleManager.h"
 #include "Interfaces/IPluginManager.h"
+#include "zeno/core/Session.h"
 
 #define LOCTEXT_NAMESPACE "FZenoEngineModule"
 
@@ -25,6 +26,7 @@ void FZenoEngineModule::StartupModule()
 #endif // PLATFORM_WINDOWS
 
 	ZenoLibraryHandle = !LibraryPath.IsEmpty() ? FPlatformProcess::GetDllHandle(*LibraryPath) : nullptr;
+	zeno::getSession();
 
 	if (ZenoLibraryHandle)
 	{
