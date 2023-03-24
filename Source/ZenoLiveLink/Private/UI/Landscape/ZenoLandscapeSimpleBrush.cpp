@@ -11,6 +11,8 @@
 
 DEFINE_LOG_CATEGORY(LogZenoLandscapeSimpleBrush);
 
+#define LOCTEXT_NAMESPACE "AZenoLandscapeSimpleBrush"
+
 UZenoSimpleBrushSettings::UZenoSimpleBrushSettings()
 	: DefaultBrushHeightMapEncoderMaterial(FSoftObjectPath(TEXT("/ZenoBridge/Material/Mat_HeightMapEncoder.Mat_HeightMapEncoder")))
 {
@@ -199,3 +201,4 @@ bool AZenoLandscapeSimpleBrush::IsAffectingWeightmapLayer(const FName& InLayerNa
 	return Super::IsAffectingWeightmapLayer(InLayerName);
 }
 
+#undef LOCTEXT_NAMESPACE

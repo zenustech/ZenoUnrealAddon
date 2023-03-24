@@ -7,6 +7,7 @@
 #include "Editor.h"
 #include "EditorModes.h"
 #include "ISettingsModule.h"
+#include "Landscape.h"
 #include "Command/FZenoLandscapeCommand.h"
 #include "Modules/ModuleManager.h"
 #include "UI/Landscape/LandscapeToolZenoBridge.h"
@@ -17,6 +18,7 @@
 #include "Interfaces/ITextureEditorModule.h"
 #include "UI/Landscape/LandscapeFileFormatZeno.h"
 #include "UI/Landscape/TextureExportHelper.h"
+#include "UI/Landscape/ZenoLandscapeActorDetailCustomization.h"
 #include "UI/Landscape/ZenoLandscapeDetailCustomization.h"
 #include "UI/Landscape/ZenoLandscapeSimpleBrush.h"
 #include "UI/Landscape/ZenoLandscapeVisualDataPropertyView.h"
@@ -119,11 +121,17 @@ void FZenoLiveLinkModule::UnRegisterAssets()
 void FZenoLiveLinkModule::RegisterCustomProperty()
 {
 	FPropertyEditorModule& PropertyEditorModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+	// Visualize Landscape Data for export
 	PropertyEditorModule.RegisterCustomPropertyTypeLayout(FName("ZenoLandscape_VisualData"), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FZenoLandscapeVisualDataPropertyView::MakeInstance));
+	// Enchantment for the ALandscape
+	PropertyEditorModule.RegisterCustomClassLayout(ALandscape::StaticClass()->GetFName(), FOnGetDetailCustomizationInstance::CreateStatic(&FZenoLandscapeActorDetailCustomization::MakeInstance));
 }
 
 void FZenoLiveLinkModule::UnregisterCustomProperty()
 {
+	FPropertyEditorModule& PropertyEditorModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+	PropertyEditorModule.UnregisterCustomClassLayout(ALandscape::StaticClass()->GetFName());
+	PropertyEditorModule.UnregisterCustomClassLayout(FName("ZenoLandscape_VisualData"));
 }
 
 void FZenoLiveLinkModule::RegisterConfig()

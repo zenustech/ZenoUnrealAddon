@@ -39,6 +39,7 @@ public class ZenoLiveLink : ModuleRules
                 "RHI",
                 "RenderCore",
                 "DeveloperSettings",
+                "TextureEditor",
             }
         );
         
