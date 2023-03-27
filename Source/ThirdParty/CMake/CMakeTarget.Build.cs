@@ -121,7 +121,7 @@ public class CMakeTargetInst
 			if (tokens.Length != 2)
 				continue;
 
-			values.Add(tokens[0], tokens[1]);
+			values.Add(tokens[0], tokens[1].Replace("\"", ""));
 		}
 
 		if (values.ContainsKey("cppStandard"))
@@ -191,18 +191,32 @@ public class CMakeTargetInst
 				rules.PublicIncludePaths.Add(include);
 			}
 		}
+		//
+		// if (values.ContainsKey("binaryDirectories"))
+		// {
+		// 	string[] binaryDirectories = values["binaryDirectories"].Split(',');
+		//
+		// 	foreach (string binaryDirectory in binaryDirectories)
+		// 	{
+		// 		if (String.IsNullOrEmpty(binaryDirectory))
+		// 			continue;
+		//
+		// 		Console.WriteLine("Add dynamic library path: " + binaryDirectory);
+		// 		rules.PublicRuntimeLibraryPaths.Add(binaryDirectory);
+		// 	}
+		// }
 
-		if (values.ContainsKey("binaryDirectories"))
+		// Copy runtime library to binary directory
+		if (values.ContainsKey("binaries"))
 		{
-			string[] binaryDirectories = values["binaryDirectories"].Split(',');
-
-			foreach (string binaryDirectory in binaryDirectories)
+			string[] Binaries = values["binaries"].Split(",");
+			foreach (string BinaryFile in Binaries)
 			{
-				if (String.IsNullOrEmpty(binaryDirectory))
+				if (String.IsNullOrEmpty(BinaryFile))
 					continue;
-
-				Console.WriteLine("Add library path: " + binaryDirectory);
-				rules.PublicRuntimeLibraryPaths.Add(binaryDirectory);
+				
+				Console.WriteLine("Add runtime dependency: " + BinaryFile);
+				rules.RuntimeDependencies.Add("$(BinaryOutputDir)/" + Path.GetFileName(BinaryFile), BinaryFile);
 			}
 		}
 
@@ -215,6 +229,7 @@ public class CMakeTargetInst
 				if (String.IsNullOrEmpty(library))
 					continue;
 
+				Console.WriteLine("Add static library: " + library);
 				rules.PublicAdditionalLibraries.Add(library);
 			}
 		}
@@ -255,7 +270,7 @@ public class CMakeTargetInst
 	{
 		string buildType = GetBuildType(target);
 
-		Console.WriteLine("Loading cmake target: " + target);
+		Console.WriteLine("Loading cmake target: " + target + "(" + buildType + ")");
 
 		m_cmakeTargetPath = Path.GetFullPath(rules.Target.ProjectFile.FullName);
 		m_cmakeTargetPath = Directory.GetParent(m_cmakeTargetPath).FullName +
@@ -265,7 +280,7 @@ public class CMakeTargetInst
 		m_targetPath = Path.Combine(m_modulePath, m_targetLocation);
 
 		m_thirdPartyGeneratedPath =
-			Path.Combine(rules.Target.ProjectFile.Directory.FullName, "Intermediate", "CMakeTarget");
+			Path.Combine(Directory.GetParent(Directory.GetParent(rules.ModuleDirectory)!.FullName)!.FullName, "Intermediate", "CMakeTarget");
 		m_generatedTargetPath = Path.Combine(m_thirdPartyGeneratedPath, m_targetName);
 		m_buildDirectory = "build";
 		m_buildPath = Path.Combine(m_generatedTargetPath, m_buildDirectory);
@@ -285,7 +300,7 @@ public class CMakeTargetInst
 		{
 			return false;
 		}
-
+		
 		return true;
 	}
 

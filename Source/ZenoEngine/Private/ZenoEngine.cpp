@@ -14,28 +14,7 @@ void FZenoEngineModule::StartupModule()
 
 	// Get the base directory of this plugin
 	FString BaseDir = IPluginManager::Get().FindPlugin("ZenoEngine")->GetBaseDir();
-
-	// Add on the relative location of the third party dll and load it
-	FString LibraryPath;
-#if PLATFORM_WINDOWS
-	LibraryPath = FPaths::Combine(*BaseDir, TEXT("Binaries/ThirdParty/ZenoEngineLibrary/Win64/zeno.dll"));
-#elif PLATFORM_MAC
-    LibraryPath = FPaths::Combine(*BaseDir, TEXT("Source/ThirdParty/ZenoEngineLibrary/Mac/Release/libExampleLibrary.dylib"));
-#elif PLATFORM_LINUX
-	LibraryPath = FPaths::Combine(*BaseDir, TEXT("Binaries/ThirdParty/ZenoEngineLibrary/Linux/x86_64-unknown-linux-gnu/libExampleLibrary.so"));
-#endif // PLATFORM_WINDOWS
-
-	ZenoLibraryHandle = !LibraryPath.IsEmpty() ? FPlatformProcess::GetDllHandle(*LibraryPath) : nullptr;
 	zeno::getSession();
-
-	if (ZenoLibraryHandle)
-	{
-		// Call the test function in the third party library that opens a message box
-	}
-	else
-	{
-		FMessageDialog::Open(EAppMsgType::Ok, LOCTEXT("ThirdPartyLibraryError", "Failed to load example third party library"));
-	}
 }
 
 void FZenoEngineModule::ShutdownModule()
