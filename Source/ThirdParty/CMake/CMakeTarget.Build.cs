@@ -191,20 +191,20 @@ public class CMakeTargetInst
 				rules.PublicIncludePaths.Add(include);
 			}
 		}
-		//
-		// if (values.ContainsKey("binaryDirectories"))
-		// {
-		// 	string[] binaryDirectories = values["binaryDirectories"].Split(',');
-		//
-		// 	foreach (string binaryDirectory in binaryDirectories)
-		// 	{
-		// 		if (String.IsNullOrEmpty(binaryDirectory))
-		// 			continue;
-		//
-		// 		Console.WriteLine("Add dynamic library path: " + binaryDirectory);
-		// 		rules.PublicRuntimeLibraryPaths.Add(binaryDirectory);
-		// 	}
-		// }
+		
+		if (values.ContainsKey("binaryDirectories"))
+		{
+			string[] binaryDirectories = values["binaryDirectories"].Split(',');
+		
+			foreach (string binaryDirectory in binaryDirectories)
+			{
+				if (String.IsNullOrEmpty(binaryDirectory))
+					continue;
+		
+				Console.WriteLine("Add dynamic library path: " + binaryDirectory);
+				rules.PublicRuntimeLibraryPaths.Add(binaryDirectory);
+			}
+		}
 
 		// Copy runtime library to binary directory
 		if (values.ContainsKey("binaries"))
