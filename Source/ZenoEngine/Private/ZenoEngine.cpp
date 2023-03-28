@@ -7,8 +7,8 @@
 #include "Engine/Engine.h"
 #include "Modules/ModuleManager.h"
 #include "Interfaces/IPluginManager.h"
-#include "VAT/VATTypes.h"
-#include "VAT/VATUtility.h"
+#include "Importer/VAT/VATTypes.h"
+#include "Importer/VAT/VATUtility.h"
 // PRAGMA_PUSH_PLATFORM_DEFAULT_PACKING
 // THIRD_PARTY_INCLUDES_START
 // #include "zeno/core/Session.h"

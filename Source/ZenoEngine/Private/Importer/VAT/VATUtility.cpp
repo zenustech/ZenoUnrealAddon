@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "VAT/VATUtility.h"
+#include "Importer/VAT/VATUtility.h"
 
 bool UVATUtility::ParseBinaryInfo(const FString& InFilePath, FVATInfo& OutInfo)
 {

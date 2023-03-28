@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
-#include "VAT/VATTypes.h"
+#include "Importer/VAT/VATTypes.h"
 #include "VATUtility.generated.h"
 
 /**
