@@ -7,6 +7,7 @@ public class ZenoEngine : ModuleRules
 	public ZenoEngine(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+		bUseRTTI = true;
 		
 		PublicIncludePaths.AddRange(
 			new string[] {
@@ -26,8 +27,14 @@ public class ZenoEngine : ModuleRules
 			new string[]
 			{
 				"Core",
+				"Engine",
+				"Slate",
+				"SlateCore",
+				"CoreUObject",
 				"CMakeTarget",
 				"Projects",
+				"UObjectPlugin",
+				"DesktopPlatform",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);

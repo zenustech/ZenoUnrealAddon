@@ -2,29 +2,32 @@
 
 #include "ZenoEngine.h"
 #include "Core.h"
+#include "DesktopPlatformModule.h"
+#include "IDesktopPlatform.h"
+#include "Engine/Engine.h"
 #include "Modules/ModuleManager.h"
 #include "Interfaces/IPluginManager.h"
-#include "zeno/core/Session.h"
+#include "VAT/VATTypes.h"
+#include "VAT/VATUtility.h"
+// PRAGMA_PUSH_PLATFORM_DEFAULT_PACKING
+// THIRD_PARTY_INCLUDES_START
+// #include "zeno/core/Session.h"
+// #include "zeno/core/Graph.h"
+// #include "zeno/core/INode.h"
+// #include "zeno/DictObject.h"
+// THIRD_PARTY_INCLUDES_END
+// PRAGMA_POP_PLATFORM_DEFAULT_PACKING
 
 #define LOCTEXT_NAMESPACE "FZenoEngineModule"
 
 void FZenoEngineModule::StartupModule()
 {
-	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
-
-	// Get the base directory of this plugin
 	FString BaseDir = IPluginManager::Get().FindPlugin("ZenoEngine")->GetBaseDir();
-	zeno::getSession();
+
 }
 
 void FZenoEngineModule::ShutdownModule()
 {
-	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
-	// we call this function before unloading the module.
-
-	// Free the dll handle
-	FPlatformProcess::FreeDllHandle(ZenoLibraryHandle);
-	ZenoLibraryHandle = nullptr;
 }
 
 #undef LOCTEXT_NAMESPACE

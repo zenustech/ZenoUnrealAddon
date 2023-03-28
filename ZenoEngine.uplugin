@@ -24,6 +24,11 @@
 			"Name": "CMakeTarget",
 			"Type": "RuntimeAndProgram",
 			"LoadingPhase": "PreDefault"
+		},
+		{
+			"Name": "ZenoEditor",
+			"Type": "EditorAndProgram",
+			"LoadingPhase": "Default"
 		}
 	]
 }
