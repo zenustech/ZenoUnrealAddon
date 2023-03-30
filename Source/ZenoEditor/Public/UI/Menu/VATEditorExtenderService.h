@@ -10,6 +10,7 @@ public:
 	virtual void Unregister() override;
 
 	void ExtendMenuBar(FMenuBarBuilder& Builder);
+	void ExtendVATPullDownMenu(FMenuBuilder& Builder);
 	void MapAction();
 	
 	static FVATEditorExtenderService& Get();
@@ -20,4 +21,5 @@ private:
 
 private:
 	void Debug();
+	void ImportWavefrontObjFile();
 };

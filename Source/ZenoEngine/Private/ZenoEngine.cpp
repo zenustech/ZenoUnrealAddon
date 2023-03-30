@@ -9,14 +9,6 @@
 #include "Interfaces/IPluginManager.h"
 #include "Importer/VAT/VATTypes.h"
 #include "Importer/VAT/VATUtility.h"
-// PRAGMA_PUSH_PLATFORM_DEFAULT_PACKING
-// THIRD_PARTY_INCLUDES_START
-// #include "zeno/core/Session.h"
-// #include "zeno/core/Graph.h"
-// #include "zeno/core/INode.h"
-// #include "zeno/DictObject.h"
-// THIRD_PARTY_INCLUDES_END
-// PRAGMA_POP_PLATFORM_DEFAULT_PACKING
 
 #define LOCTEXT_NAMESPACE "FZenoEngineModule"
 

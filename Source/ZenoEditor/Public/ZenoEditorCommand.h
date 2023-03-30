@@ -4,9 +4,10 @@ class FZenoEditorCommand : public TCommands<FZenoEditorCommand>
 {
 public:
 	FZenoEditorCommand();
-
-	TSharedPtr<FUICommandInfo> Debug;
 	
 	virtual void RegisterCommands() override;
-protected:
+
+public:
+	TSharedPtr<FUICommandInfo> Debug;
+	TSharedPtr<FUICommandInfo> ImportWavefrontMesh;
 };
