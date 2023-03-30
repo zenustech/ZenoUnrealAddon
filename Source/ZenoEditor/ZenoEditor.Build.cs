@@ -32,6 +32,7 @@ public class ZenoEditor : ModuleRules
                 "AssetTools",
                 "DeveloperSettings",
                 "ContentBrowser",
+                "Kismet",
             }
         );
         

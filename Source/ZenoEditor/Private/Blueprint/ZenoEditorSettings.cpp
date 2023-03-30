@@ -10,7 +10,7 @@
 #include "Materials/MaterialInstanceDynamic.h"
 
 UZenoEditorSettings::UZenoEditorSettings()
-	: bAutoCreateBasicVatMaterialInstanceConstant(false)
+	: bAutoCreateBasicVatMaterialInstanceConstant(true)
 	, DefaultBasicVATMaterial(FSoftObjectPath("/ZenoEngine/Material/Mat_PositionAndNormalVAT.Mat_PositionAndNormalVAT"))
 {
 }
@@ -31,7 +31,7 @@ UMaterialInstance* UZenoEditorSettings::CreateBasicVATMaterialInstance(const FSt
 		const FString SaveAssetName = FPaths::GetBaseFilename(SavePackageName);
 
 		UMaterialInterface* ParentMaterial = Get()->DefaultBasicVATMaterial.LoadSynchronous();
-		UPackage* Package = CreatePackage(*SavePackagePath);
+		UPackage* Package = CreatePackage(*SavePackageName);
 		UMaterialInstance* NewMaterial = NewObject<UMaterialInstance>(Package, UMaterialInstanceConstant::StaticClass(), FName(SaveAssetName), RF_Standalone | RF_Public);
 		NewMaterial->PreEditChange(nullptr);
 		NewMaterial->Parent = ParentMaterial;
@@ -41,6 +41,7 @@ UMaterialInstance* UZenoEditorSettings::CreateBasicVATMaterialInstance(const FSt
 		{
 			auto _ = Package->MarkPackageDirty();
 		}
+		return NewMaterial;
 	}
 
 	return nullptr;

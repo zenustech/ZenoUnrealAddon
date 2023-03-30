@@ -22,4 +22,7 @@ private:
 private:
 	void Debug();
 	void ImportWavefrontObjFile();
+
+	static void ProcessObjFileImport(const FString& FilePath);
+	static bool TryLoadPositionAndNormalVATBinaryDescriptor(const FString& InObjPath, UMaterialInstance* MaterialInstance);
 };
