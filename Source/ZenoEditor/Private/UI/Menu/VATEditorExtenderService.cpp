@@ -3,9 +3,15 @@
 #include "DesktopPlatformModule.h"
 #include "IDesktopPlatform.h"
 #include "LevelEditor.h"
+#include "ProceduralMeshComponent.h"
+#include "RawMesh.h"
+#include "StaticMeshAttributes.h"
 #include "ZenoEditorCommand.h"
-#include "VAT/VATTypes.h"
-#include "VAT/VATUtility.h"
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "Importer/VAT/VATTypes.h"
+#include "Importer/VAT/VATUtility.h"
+#include "Importer/Wavefront/ZenoObjLoader.h"
+#include "Misc/FileHelper.h"
 
 
 bool OpenFileDialog(TArray<FString>& OutFiles)
@@ -60,10 +66,31 @@ void FVATEditorExtenderService::Debug()
 	TArray<FString> Files;
 	if (OpenFileDialog(Files))
 	{
-		FVATInfo Info;
-		if (UVATUtility::ParseBinaryInfo(Files[0], Info))
+		TArray<FString> Arr;
+		FFileHelper::LoadFileToStringArray(Arr, *Files[0]);
+		const FWavefrontFileParser Parser{Arr};
+		EWavefrontParseError Err;
+		TSharedPtr<FRawMesh> RawMesh = Parser.Parse(Err);
+		if (Err == EWavefrontParseError::Success)
 		{
-			UE_LOG(LogTemp, Error, TEXT("%hs"), reinterpret_cast<const char*>(Info.Magic.data()));
+			UPackage* MeshPackage = CreatePackage(TEXT("/Game/TestStaticMesh"));
+			UStaticMesh* StaticMesh = NewObject<UStaticMesh>(MeshPackage, MakeUniqueObjectName(MeshPackage, UStaticMesh::StaticClass()), RF_Public | RF_Standalone);
+			StaticMesh->ImportVersion = LastVersion;
+			StaticMesh->PreEditChange(nullptr);
+			{
+				StaticMesh->NaniteSettings.bEnabled = false;
+				FStaticMeshSourceModel& SourceModel = StaticMesh->AddSourceModel();
+				SourceModel.BuildSettings.bRecomputeNormals = false;
+				SourceModel.BuildSettings.bRecomputeTangents = false;
+				SourceModel.BuildSettings.bRemoveDegenerates = false;
+				SourceModel.BuildSettings.bComputeWeightedNormals = false;
+				SourceModel.BuildSettings.BuildScale3D = {10.0, 10.0, 10.0};
+				SourceModel.BuildSettings.bUseFullPrecisionUVs = true;
+				SourceModel.SaveRawMesh(*RawMesh);
+			}
+			StaticMesh->PostEditChange();
+			StaticMesh->Build(false);
+			FAssetRegistryModule::AssetCreated(StaticMesh);
 		}
 	}
 }

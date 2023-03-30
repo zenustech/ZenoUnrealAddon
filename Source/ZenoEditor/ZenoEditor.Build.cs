@@ -19,10 +19,15 @@ public class ZenoEditor : ModuleRules
                 "CoreUObject",
                 "Engine",
                 "Slate",
+                "UnrealEd",
                 "SlateCore",
                 "ZenoEngine",
                 "LevelEditor",
                 "DesktopPlatform",
+                "MeshDescription",
+                "StaticMeshDescription",
+                "ProceduralMeshComponent",
+                "ProceduralMeshComponentEditor",
             }
         );
     }

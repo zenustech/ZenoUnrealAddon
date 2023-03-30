@@ -37,6 +37,9 @@ public class ZenoEngine : ModuleRules
 				"DesktopPlatform",
 				"RawMesh",
 				"MeshUtilities",
+				"UObjectPlugin",
+				"Renderer",
+				"RenderCore",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
