@@ -99,16 +99,19 @@ void FVATEditorExtenderService::ImportWavefrontObjFile()
 				SourceModel.BuildSettings.bRemoveDegenerates = false;
 				SourceModel.BuildSettings.bComputeWeightedNormals = false;
 				SourceModel.BuildSettings.bUseMikkTSpace = false;
-				SourceModel.BuildSettings.BuildScale3D = {10.0, 10.0, 10.0};
 				SourceModel.BuildSettings.bUseFullPrecisionUVs = true;
 				SourceModel.BuildSettings.bUseHighPrecisionTangentBasis = true;
 				SourceModel.SaveRawMesh(*RawMesh);
 			}
 			StaticMesh = Cast<UStaticMesh>(AssetToolsModule.Get().DuplicateAssetWithDialog(MakeUniqueObjectName(GetTransientPackage(), UStaticMesh::StaticClass()).ToString(), "/GAME", StaticMesh));
-			UMaterialInstance* NewMI = UZenoEditorSettings::CreateBasicVATMaterialInstance(FString::Printf(TEXT("Mat_%ls_Inst"), *StaticMesh->GetName()), StaticMesh->GetFullName());
-			const FName MaterialSlotName = StaticMesh->AddMaterial(NewMI);
+			FName MaterialSlotName = NAME_None;
 			FStaticMaterial StaticMaterial;
-			StaticMaterial.MaterialInterface = NewMI;
+			if (UZenoEditorSettings::Get()->bAutoCreateBasicVatMaterialInstanceConstant)
+			{
+				UMaterialInstance* NewMI = UZenoEditorSettings::CreateBasicVATMaterialInstance(FString::Printf(TEXT("Mat_%ls_Inst"), *StaticMesh->GetName()), StaticMesh->GetFullName());
+				MaterialSlotName = StaticMesh->AddMaterial(NewMI);
+				StaticMaterial.MaterialInterface = NewMI;
+			}
 			StaticMaterial.MaterialSlotName = MaterialSlotName;
 			StaticMesh->GetStaticMaterials().Add(StaticMaterial);
 			StaticMesh->PostEditChange();
