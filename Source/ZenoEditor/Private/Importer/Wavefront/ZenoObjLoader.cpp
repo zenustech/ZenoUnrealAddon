@@ -114,7 +114,7 @@ TSharedPtr<FRawMesh> FWavefrontFileParser::Parse(EWavefrontParseError& OutError)
 	RawMesh->FaceMaterialIndices.SetNumZeroed(EdgeNum / 3);
 	RawMesh->FaceSmoothingMasks.SetNumZeroed(EdgeNum / 3);
 	
-	return RawMesh.ToSharedPtr();
+	return RawMesh;
 }
 
 EWavefrontAttrType FWavefrontFileParser::GetLabelFromLine(const FString& InLine, FString& OutLineData)
