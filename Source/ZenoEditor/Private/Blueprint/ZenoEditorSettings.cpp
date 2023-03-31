@@ -12,6 +12,7 @@
 UZenoEditorSettings::UZenoEditorSettings()
 	: bAutoCreateBasicVatMaterialInstanceConstant(true)
 	, DefaultBasicVATMaterial(FSoftObjectPath("/ZenoEngine/Material/Mat_PositionAndNormalVAT.Mat_PositionAndNormalVAT"))
+	, VATImportScale(1.0f)
 {
 }
 

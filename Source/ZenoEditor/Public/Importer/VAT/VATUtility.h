@@ -11,7 +11,7 @@
  *
  */
 UCLASS()
-class ZENOENGINE_API UVATUtility : public UObject
+class ZENOEDITOR_API UVATUtility : public UObject
 {
 	GENERATED_BODY()
 

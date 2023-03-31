@@ -3,6 +3,8 @@
 
 #include "Importer/VAT/VATUtility.h"
 
+#include "Misc/FileHelper.h"
+
 bool UVATUtility::ParseBinaryInfo(const FString& InFilePath, FVATInfo& OutInfo)
 {
 	TArray<uint8> BinaryBuffer;

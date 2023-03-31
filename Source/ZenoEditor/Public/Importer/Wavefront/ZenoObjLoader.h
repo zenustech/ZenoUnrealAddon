@@ -3,7 +3,7 @@
 
 enum class EWavefrontParseError : uint8;
 
-class ZENOENGINE_API FWavefrontFileParser : public TSharedFromThis<FWavefrontFileParser>
+class ZENOEDITOR_API FWavefrontFileParser : public TSharedFromThis<FWavefrontFileParser>
 {
 public:
 	explicit FWavefrontFileParser(const TArray<FString>& InContent);

@@ -2,6 +2,7 @@
 
 #include "MeshUtilities.h"
 #include "RawMesh.h"
+#include "Blueprint/ZenoEditorSettings.h"
 #include "Chaos/Pair.h"
 
 FWavefrontFileParser::FWavefrontFileParser(const TArray<FString>& InContent)
@@ -35,9 +36,10 @@ TSharedPtr<FRawMesh> FWavefrontFileParser::Parse(EWavefrontParseError& OutError)
 				OutError = EWavefrontParseError::BadVertexData;
 				return nullptr;
 			}
-			float X = FCString::Atof(*TempArr[0]);
-			float Y = FCString::Atof(*TempArr[1]);
-			float Z = FCString::Atof(*TempArr[2]);
+			const FVector3f& Scale = GetDefault<UZenoEditorSettings>()->VATImportScale;
+			float X = FCString::Atof(*TempArr[0]) * Scale.X;
+			float Y = FCString::Atof(*TempArr[2]) * Scale.Y;
+			float Z = FCString::Atof(*TempArr[1]) * Scale.Z;
 			RawMesh->VertexPositions.Add({ X, Y, Z });
 		} else if (Type == EWavefrontAttrType::VertexTexture)
 		{
