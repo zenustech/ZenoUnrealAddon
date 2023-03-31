@@ -157,11 +157,11 @@ bool FVATEditorExtenderService::TryLoadPositionAndNormalVATBinaryDescriptor(cons
 					Constant->SetScalarParameterValueEditorOnly(TEXT("Number of Frames"), FrameNum);
 					Constant->SetScalarParameterValueEditorOnly(TEXT("Height"), Height);
 					Constant->SetScalarParameterValueEditorOnly(TEXT("BBMaxX"), Info.BoundingBoxMax.at(0));
-					Constant->SetScalarParameterValueEditorOnly(TEXT("BBMaxY"), Info.BoundingBoxMax.at(1));
-					Constant->SetScalarParameterValueEditorOnly(TEXT("BBMaxZ"), Info.BoundingBoxMax.at(2));
+					Constant->SetScalarParameterValueEditorOnly(TEXT("BBMaxY"), Info.BoundingBoxMax.at(2));
+					Constant->SetScalarParameterValueEditorOnly(TEXT("BBMaxZ"), Info.BoundingBoxMax.at(1));
 					Constant->SetScalarParameterValueEditorOnly(TEXT("BBMinX"), Info.BoundingBoxMin.at(0));
-					Constant->SetScalarParameterValueEditorOnly(TEXT("BBMinY"), Info.BoundingBoxMin.at(1));
-					Constant->SetScalarParameterValueEditorOnly(TEXT("BBMinZ"), Info.BoundingBoxMin.at(2));
+					Constant->SetScalarParameterValueEditorOnly(TEXT("BBMinY"), Info.BoundingBoxMin.at(2));
+					Constant->SetScalarParameterValueEditorOnly(TEXT("BBMinZ"), Info.BoundingBoxMin.at(1));
 					return true;
 				}
 			}
