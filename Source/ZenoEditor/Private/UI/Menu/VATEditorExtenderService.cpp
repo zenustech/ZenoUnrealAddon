@@ -19,30 +19,24 @@
 #define LOCTEXT_NAMESPACE "FVATEditorExtenderService"
 
 FVATEditorExtenderService::FVATEditorExtenderService()
-	: CommandList(MakeShared<FUICommandList>())
+	: FZenoEditorExtenderServiceBase()
 {
 }
 
 void FVATEditorExtenderService::Register()
 {
-	MapAction();
-	
-	FLevelEditorModule& LevelEditorModule = FModuleManager::LoadModuleChecked<FLevelEditorModule>("LevelEditor");
-	MenuBarExtender = MakeShareable(new FExtender);
-
+	FZenoEditorExtenderServiceBase::Register();
 	MenuBarExtender->AddMenuBarExtension("Help", EExtensionHook::After, CommandList, FMenuBarExtensionDelegate::CreateRaw(this, &FVATEditorExtenderService::ExtendMenuBar));
-
-	LevelEditorModule.GetMenuExtensibilityManager()->AddExtender(MenuBarExtender);
 }
 
 void FVATEditorExtenderService::Unregister()
 {
+	FZenoEditorExtenderServiceBase::Unregister();
 }
 
 void FVATEditorExtenderService::ExtendMenuBar(FMenuBarBuilder& Builder)
 {
-	const FName ZenoHook = "MENU_Zeno";
-	Builder.AddPullDownMenu(LOCTEXT("Zeno", "Zeno"), LOCTEXT("ZenoTooltip", "Zeno Tools"), FNewMenuDelegate::CreateRaw(this, &FVATEditorExtenderService::ExtendVATPullDownMenu), ZenoHook, ZenoHook);
+	Builder.AddPullDownMenu(LOCTEXT("Zeno", "Zeno"), LOCTEXT("ZenoTooltip", "Zeno Tools"), FNewMenuDelegate::CreateRaw(this, &FVATEditorExtenderService::ExtendVATPullDownMenu), ZenoHookLabel, ZenoHookLabel);
 }
 
 void FVATEditorExtenderService::ExtendVATPullDownMenu(FMenuBuilder& Builder)

@@ -8,6 +8,22 @@ public:
 	virtual void Unregister() = 0;
 };
 
+class FZenoEditorExtenderServiceBase : public IZenoEditorExtenderService
+{
+public:
+	FZenoEditorExtenderServiceBase();
+
+	virtual void Register() override;
+	virtual void Unregister() override;
+	virtual void MapAction() {};
+
+protected:
+	TSharedPtr<FUICommandList> CommandList;
+	TSharedPtr<FExtender> MenuBarExtender;
+
+	inline static FName ZenoHookLabel = "MENU_Zeno";
+};
+
 class FZenoEditorMenuExtender final : public IZenoEditorExtenderService
 {
 public:

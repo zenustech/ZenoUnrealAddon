@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "ZenoEditorMenuExtender.h"
 
-class FVATEditorExtenderService final : public IZenoEditorExtenderService
+class FVATEditorExtenderService final : public FZenoEditorExtenderServiceBase
 {
 public:
 	FVATEditorExtenderService();
@@ -11,13 +11,9 @@ public:
 
 	void ExtendMenuBar(FMenuBarBuilder& Builder);
 	void ExtendVATPullDownMenu(FMenuBuilder& Builder);
-	void MapAction();
+	virtual void MapAction() override;
 	
 	static FVATEditorExtenderService& Get();
-
-private:
-	TSharedPtr<FExtender> MenuBarExtender;
-	TSharedPtr<FUICommandList> CommandList;
 
 private:
 	void Debug();
