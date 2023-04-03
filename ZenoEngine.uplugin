@@ -22,7 +22,7 @@
 		},
 		{
 			"Name": "CMakeTarget",
-			"Type": "RuntimeAndProgram",
+			"Type": "EditorAndProgram",
 			"LoadingPhase": "PreDefault"
 		},
 		{

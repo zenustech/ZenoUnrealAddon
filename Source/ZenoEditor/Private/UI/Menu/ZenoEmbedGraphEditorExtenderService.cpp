@@ -3,6 +3,15 @@
 #include "LevelEditor.h"
 #include "ZenoEditorCommand.h"
 
+PRAGMA_PUSH_PLATFORM_DEFAULT_PACKING
+THIRD_PARTY_INCLUDES_START
+#include "zeno/core/Session.h"
+#include "zeno/core/Graph.h"
+#include "zeno/core/INode.h"
+#include "zeno/DictObject.h"
+THIRD_PARTY_INCLUDES_END
+PRAGMA_POP_PLATFORM_DEFAULT_PACKING
+
 #define LOCTEXT_NAMESPACE "FZenoEmbedGraphEditorExtenderService"
 
 FZenoEmbedGraphEditorExtenderService::FZenoEmbedGraphEditorExtenderService()
@@ -44,7 +53,10 @@ void FZenoEmbedGraphEditorExtenderService::MapAction()
 
 void FZenoEmbedGraphEditorExtenderService::Debug()
 {
-	UE_LOG(LogTemp, Error, TEXT("123"));
+	auto Graph = zeno::getSession().createGraph();
+	std::map<std::string, zeno::zany> Inputs, Outputs;
+	Outputs = Graph->callTempNode("EmptyDict", std::move(Inputs));
+	UE_LOG(LogTemp, Error, TEXT("Num: %llu"), Outputs.size());
 }
 
 #undef LOCTEXT_NAMESPACE

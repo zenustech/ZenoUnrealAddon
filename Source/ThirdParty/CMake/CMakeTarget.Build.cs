@@ -6,6 +6,7 @@ using System.IO;
 using System.Diagnostics;
 using System.Text;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 public static class DateTimeExtensions
@@ -217,6 +218,22 @@ public class CMakeTargetInst
 				
 				Console.WriteLine("Add runtime dependency: " + BinaryFile);
 				rules.RuntimeDependencies.Add("$(BinaryOutputDir)/" + Path.GetFileName(BinaryFile), BinaryFile);
+				// Add third party deps
+				var Ext = new List<string> { "dll", "pdb" };
+				var OthersFiles = Directory
+					.EnumerateFiles(Path.GetDirectoryName(BinaryFile)!)
+					.Where(S => Ext.Contains(Path.GetExtension(S).TrimStart('.').ToLowerInvariant()));
+				foreach (var File in OthersFiles)
+				{
+					 Console.WriteLine("Add runtime dependency: " + File);
+					 rules.RuntimeDependencies.Add("$(BinaryOutputDir)/" + Path.GetFileName(File), File);
+				}
+				// // Try to copy pdb with library
+				// var PDBFilePath = BinaryFile.Replace(".dll", ".pdb");
+				// if (BinaryFile.EndsWith(".dll") && File.Exists(PDBFilePath))
+				// {
+				// 	rules.RuntimeDependencies.Add("$(BinaryOutputDir)/" + Path.GetFileName(PDBFilePath), PDBFilePath);
+				// }
 			}
 		}
 
@@ -327,6 +344,8 @@ public class CMakeTargetInst
 			Console.WriteLine("Target " + m_targetName + " CMakeLists.txt out of date, rebuilding");
 
 			var configureCommand = CreateCMakeConfigCommand(target, rules, m_buildPath, buildType, useSystemCompiler);
+			Console.WriteLine($"Configure command line: {configureCommand}");
+			
 			var configureCode = ExecuteCommandSync(configureCommand);
 
 			if (configureCode != 0)
@@ -518,7 +537,7 @@ public class CMakeTargetInst
 		string toolChain = "";
 		if (generateToolchain(target, generatorInfo, toolchainPath, useSystemCompiler))
 		{
-			toolChain = " -DCMAKE_TOOLCHAIN_FILE=\"" + toolchainPath + "\"";
+			toolChain = $" -DCMAKE_TOOLCHAIN_FILE=\"{toolchainPath}\"";
 		}
 
 		if (!String.IsNullOrEmpty(generatorInfo.m_cCompiler) && !useSystemCompiler)
