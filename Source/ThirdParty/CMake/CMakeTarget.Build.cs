@@ -387,8 +387,25 @@ public class CMakeTargetInst
 
 		return generatorName;
 	}
-
+	
+#if UE_5_2_OR_LATER
 	private string GetWindowsGeneratorOptions(WindowsCompiler compiler, UnrealArch architecture)
+	{
+		string generatorOptions = "";
+
+		if ((compiler == WindowsCompiler.VisualStudio2022) || (compiler == WindowsCompiler.VisualStudio2019)
+		   )
+		{
+			if (architecture == UnrealArch.X64)
+				generatorOptions = "-A x64";
+			else if (architecture == UnrealArch.Arm64)
+				generatorOptions = "-A ARM64";
+		}
+
+		return generatorOptions;
+	}
+#else
+	private string GetWindowsGeneratorOptions(WindowsCompiler compiler, WindowsArchitecture architecture)
 	{
 		string generatorOptions = "";
 
@@ -398,20 +415,21 @@ public class CMakeTargetInst
 #endif //!UE_5_0_OR_LATER 
 		   )
 		{
-			if (architecture == UnrealArch.X64)
+			if (architecture == WindowsArchitecture.x64)
 				generatorOptions = "-A x64";
-			else if (architecture == UnrealArch.Arm64)
+			else if (architecture == WindowsArchitecture.ARM64)
 				generatorOptions = "-A ARM64";
 #if !UE_5_0_OR_LATER
-            else if(architecture == UnrealArch.x86)
+            else if(architecture == WindowsArchitecture.x86)
                 generatorOptions = "-A Win32";
-            else if(architecture == UnrealArch.Arm32)
+            else if(architecture == WindowsArchitecture.ARM32)
                 generatorOptions = "-A ARM";
 #endif //!UE_5_0_OR_LATER
 		}
 
 		return generatorOptions;
 	}
+#endif // UE_5_2_OR_LATER
 
 	GeneratorInfo GetGeneratorInfo(ReadOnlyTargetRules target, ModuleRules rules)
 	{
