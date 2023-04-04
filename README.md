@@ -2,7 +2,7 @@
 
 A plugin to allow run zeno graph inside UnrealEngine.
 
-Using [Rider](https://jb.gg/OpenSourceSupport) ![Rider logo](https://resources.jetbrains.com/storage/products/company/brand/logos/Rider_icon.png) while developing this project.
+Using [![Rider logo](https://resources.jetbrains.com/storage/products/company/brand/logos/Rider_icon.png "Rider" =50x50)](https://jb.gg/OpenSourceSupport) while developing this project.
 
 ## Setup
 
