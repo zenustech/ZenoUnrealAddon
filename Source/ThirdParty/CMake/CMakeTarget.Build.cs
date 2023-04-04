@@ -594,6 +594,7 @@ public class CMakeTargetInst
 		}
 
 		contents = contents.Replace("@FORCE_RELEASE_RUNTIME@", forceReleaseRuntime ? "ON" : "OFF");
+		Console.WriteLine($"Force release runtime option: {forceReleaseRuntime}.");
 
 		addIncludedToolchain(ref contents);
 

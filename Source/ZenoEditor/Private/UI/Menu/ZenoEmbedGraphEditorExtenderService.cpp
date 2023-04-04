@@ -2,13 +2,15 @@
 
 #include "LevelEditor.h"
 #include "ZenoEditorCommand.h"
+#include "Blueprint/ZenoCommonBlueprintLibrary.h"
+#include "Misc/FileHelper.h"
 
 PRAGMA_PUSH_PLATFORM_DEFAULT_PACKING
 THIRD_PARTY_INCLUDES_START
-#include "zeno/core/Session.h"
+#include "zeno/zeno.h"
 #include "zeno/core/Graph.h"
-#include "zeno/core/INode.h"
-#include "zeno/DictObject.h"
+#include "zeno/unreal/UnrealTool.h"
+#include "zeno/unreal/Pair.h"
 THIRD_PARTY_INCLUDES_END
 PRAGMA_POP_PLATFORM_DEFAULT_PACKING
 
@@ -53,10 +55,22 @@ void FZenoEmbedGraphEditorExtenderService::MapAction()
 
 void FZenoEmbedGraphEditorExtenderService::Debug()
 {
+	TArray<FString> Files;
+	UZenoCommonBlueprintLibrary::OpenSystemFilePicker(Files);
+	if (Files.Num() == 0)
+	{
+		return;
+	}
+	FString Json;
+	if (!FFileHelper::LoadFileToString(Json, *Files[0]))
+	{
+		return;
+	}
+	
 	auto Graph = zeno::getSession().createGraph();
 	std::map<std::string, zeno::zany> Inputs, Outputs;
-	Outputs = Graph->callTempNode("EmptyDict", std::move(Inputs));
-	UE_LOG(LogTemp, Error, TEXT("Num: %llu"), Outputs.size());
+	SIZE_T Num = zeno::CallTempNode(Graph, "EmptyDict", 1, zeno::Pair<const char*, zeno::zany>("123", {}));
+	UE_LOG(LogTemp, Error, TEXT("Num: %llu"), Num);
 }
 
 #undef LOCTEXT_NAMESPACE
