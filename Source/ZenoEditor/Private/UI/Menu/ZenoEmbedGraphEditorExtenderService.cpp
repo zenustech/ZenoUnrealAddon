@@ -69,8 +69,8 @@ void FZenoEmbedGraphEditorExtenderService::Debug()
 	
 	auto Graph = zeno::getSession().createGraph();
 	std::map<std::string, zeno::zany> Inputs, Outputs;
-	SIZE_T Num = zeno::CallTempNode(Graph, "EmptyDict", 1, zeno::Pair<const char*, zeno::zany>("123", {}));
-	UE_LOG(LogTemp, Error, TEXT("Num: %llu"), Num);
+	auto Result = zeno::CallTempNode(Graph, "EmptyDict", 1, std::pair<const char*, zeno::zany>("123", {}));
+	UE_LOG(LogTemp, Error, TEXT("Num: %llu"), Result.size());
 }
 
 #undef LOCTEXT_NAMESPACE
