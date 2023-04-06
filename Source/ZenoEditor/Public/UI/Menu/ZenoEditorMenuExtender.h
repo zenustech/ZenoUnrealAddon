@@ -21,7 +21,8 @@ protected:
 	TSharedPtr<FUICommandList> CommandList;
 	TSharedPtr<FExtender> MenuBarExtender;
 
-	inline static FName ZenoHookLabel = "MENU_Zeno";
+	inline static FName ZenoVATHookLabel = "ZenoVAT";
+	inline static FName ZenoGraphHookLabel = "ZenoGraph";
 };
 
 class FZenoEditorMenuExtender final : public IZenoEditorExtenderService
