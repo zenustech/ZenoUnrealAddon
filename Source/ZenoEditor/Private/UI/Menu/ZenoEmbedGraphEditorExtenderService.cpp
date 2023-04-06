@@ -66,11 +66,15 @@ void FZenoEmbedGraphEditorExtenderService::Debug()
 	{
 		return;
 	}
+	Json = Json.Replace(TEXT("\n"), TEXT(""));
 	
 	auto Graph = zeno::getSession().createGraph();
 	std::map<std::string, zeno::zany> Inputs, Outputs;
-	auto Result = zeno::CallTempNode(Graph, "EmptyDict", 1, std::pair<const char*, zeno::zany>("123", {}));
-	UE_LOG(LogTemp, Error, TEXT("Num: %llu"), Result.size());
+	auto Result = zeno::CallTempNode(Graph.get(), "EmptyDict", 1, std::pair<const char*, zeno::zany>("123", {}));
+	UE_LOG(LogTemp, Error, TEXT("Res Num: %llu"), Result.size());
+	Graph->loadGraph(TCHAR_TO_ANSI(*Json));
+	auto Output = zeno::CallSubnetNode(Graph.get(), "fa438882-tower", 4, std::pair<const char*, zeno::zany>{ "TowerHeight", std::make_shared<zeno::NumericObject>(18) }, std::pair<const char*, zeno::zany>{ "TowerRadius", std::make_shared<zeno::NumericObject>(2) }, std::pair<const char*, zeno::zany>{ "TowerPillars", std::make_shared<zeno::NumericObject>(6) }, std::pair<const char*, zeno::zany>{ "TowerPillarHeight", std::make_shared<zeno::NumericObject>(3) });
+	UE_LOG(LogTemp, Error, TEXT("Out Num: %llu"), Output.size());
 }
 
 #undef LOCTEXT_NAMESPACE
