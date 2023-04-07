@@ -15,6 +15,8 @@ class ZENOEDITOR_API UZenoGraphAssetActorFactory : public UActorFactory
 {
 	GENERATED_BODY()
 
+	explicit UZenoGraphAssetActorFactory(const FObjectInitializer& Initializer);
+
 	//~ Begin UActorFactory interface
 	virtual AActor* SpawnActor(UObject* InAsset, ULevel* InLevel, const FTransform& InTransform, const FActorSpawnParameters& InSpawnParams) override;
 	virtual void PostSpawnActor(UObject* Asset, AActor* NewActor) override;

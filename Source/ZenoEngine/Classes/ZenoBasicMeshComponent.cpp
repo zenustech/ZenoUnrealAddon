@@ -35,6 +35,15 @@ public:
 	virtual void GetDynamicMeshElements(const TArray<const FSceneView*>& Views, const FSceneViewFamily& ViewFamily, uint32 VisibilityMap, FMeshElementCollector& Collector) const override
 	{
 		QUICK_SCOPE_CYCLE_COUNTER(STAT_ZenoBasicSceneProxy_GetDynamicMeshElements);
+
+		for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ViewIndex++)
+		{
+			if (VisibilityMap & (1 << ViewIndex))
+			{
+				FMeshBatch& MeshBatch = Collector.AllocateMesh();
+				FMeshBatchElement& BatchElement = MeshBatch.Elements[0];
+			}
+		}
 	}
 
 	virtual uint32 GetMemoryFootprint() const override
@@ -51,10 +60,11 @@ public:
 	{
 		FPrimitiveViewRelevance Result;
 		Result.bDrawRelevance = IsShown(View);
-		Result.bDynamicRelevance = true;
 		Result.bShadowRelevance = IsShadowCast(View);
 		Result.bEditorPrimitiveRelevance = UseEditorCompositing(View);
 		Result.bVelocityRelevance = DrawsVelocity() && Result.bOpaque && Result.bRenderInMainPass;
+		Result.bDynamicRelevance = true;
+		Result.bRenderInMainPass = true;
 
 		return Result;
 	}

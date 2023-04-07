@@ -88,9 +88,14 @@ void FZenoEmbedGraphEditorExtenderService::ImportZslFile()
 	{
 		for (const FString& File : Files)
 		{
-			// TODO [darc] : check is json valid :
 			FString JsonData;
 			if (!FFileHelper::LoadFileToString(JsonData, *File)) { continue; }
+			if (!zeno::IsValidZSL(TCHAR_TO_ANSI(*JsonData)))
+			{
+				// TODO [darc] : pop warning window :
+				UE_LOG(LogTemp, Error, TEXT("File '%ls' is not a valid zsl file."), *File);
+				continue;
+			}
 			if (const FString ContentPath = UZenoCommonBlueprintLibrary::OpenContentPicker(); !ContentPath.IsEmpty())
 			{
 				const FString SavePackageName = FPackageName::ObjectPathToPackageName(ContentPath);

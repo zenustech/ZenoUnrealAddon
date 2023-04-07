@@ -13,4 +13,9 @@ public:
 	virtual void ShutdownModule() override;
 
 private:
+	void MapShaderDirectory(const FString& BaseDir);
+
+private:
+	FString ShaderDirectory;
+	static FString VirtualShaderPath;
 };

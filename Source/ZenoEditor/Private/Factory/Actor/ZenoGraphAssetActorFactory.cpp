@@ -1,10 +1,14 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+﻿#include "Factory/Actor/ZenoGraphAssetActorFactory.h"
 
+#define LOCTEXT_NAMESPACE "UZenoGraphAssetActorFactory"
 
-#include "Factory/Actor/ZenoGraphAssetActorFactory.h"
+UZenoGraphAssetActorFactory::UZenoGraphAssetActorFactory(const FObjectInitializer& Initializer)
+{
+	DisplayName = LOCTEXT("ZenoGraphAssetActorName", "Zeno Graph");
+}
 
 AActor* UZenoGraphAssetActorFactory::SpawnActor(UObject* InAsset, ULevel* InLevel, const FTransform& InTransform,
-	const FActorSpawnParameters& InSpawnParams)
+                                                const FActorSpawnParameters& InSpawnParams)
 {
 	return Super::SpawnActor(InAsset, InLevel, InTransform, InSpawnParams);
 }
@@ -23,3 +27,5 @@ bool UZenoGraphAssetActorFactory::CanCreateActorFrom(const FAssetData& AssetData
 {
 	return Super::CanCreateActorFrom(AssetData, OutErrorMsg);
 }
+
+#undef LOCTEXT_NAMESPACE
