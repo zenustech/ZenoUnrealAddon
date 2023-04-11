@@ -1,0 +1,11 @@
+﻿#pragma once
+
+// #include "/Engine/Private/VertexFactoryCommon.ush"
+// #include "/Engine/Private/LocalVertexFactoryCommon.ush"
+#include "/Engine/Private/LocalVertexFactory.ush"
+// #include "/Engine/Private/LightmapData.ush"
+#if RAYHITGROUPSHADER
+#include "../RayTracing/RayTracingCommon.ush"
+#endif
+
+// #include "/Engine/Generated/UniformBuffers/PrecomputedLightingBuffer.ush"

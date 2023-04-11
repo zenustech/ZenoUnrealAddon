@@ -18,7 +18,7 @@
 		{
 			"Name": "ZenoEngine",
 			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "PostConfigInit"
 		},
 		{
 			"Name": "CMakeTarget",
@@ -28,7 +28,7 @@
 		{
 			"Name": "ZenoEditor",
 			"Type": "EditorAndProgram",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "PostEngineInit"
 		}
 	]
 }

@@ -9,6 +9,7 @@
 
 PRAGMA_PUSH_PLATFORM_DEFAULT_PACKING
 THIRD_PARTY_INCLUDES_START
+#include "ThirdParty/msgpack.h"
 #include "zeno/zeno.h"
 #include "zeno/core/Graph.h"
 #include "zeno/unreal/UnrealTool.h"
@@ -74,11 +75,12 @@ void FZenoEmbedGraphEditorExtenderService::Debug()
 	
 	auto Graph = zeno::getSession().createGraph();
 	std::map<std::string, zeno::zany> Inputs, Outputs;
-	auto Result = zeno::CallTempNode(Graph.get(), "EmptyDict", 1, std::pair<const char*, zeno::zany>("123", {}));
-	UE_LOG(LogTemp, Error, TEXT("Res Num: %llu"), Result.size());
 	Graph->loadGraph(TCHAR_TO_ANSI(*Json));
-	auto Output = zeno::CallSubnetNode(Graph.get(), "fa438882-tower", 4, std::pair<const char*, zeno::zany>{ "TowerHeight", std::make_shared<zeno::NumericObject>(18) }, std::pair<const char*, zeno::zany>{ "TowerRadius", std::make_shared<zeno::NumericObject>(2) }, std::pair<const char*, zeno::zany>{ "TowerPillars", std::make_shared<zeno::NumericObject>(6) }, std::pair<const char*, zeno::zany>{ "TowerPillarHeight", std::make_shared<zeno::NumericObject>(3) });
-	UE_LOG(LogTemp, Error, TEXT("Out Num: %llu"), Output.size());
+	// auto Output = zeno::CallSubnetNode(Graph.get(), "fa438882-tower", 4, std::pair<const char*, zeno::zany>{ "TowerHeight", std::make_shared<zeno::NumericObject>(18) }, std::pair<const char*, zeno::zany>{ "TowerRadius", std::make_shared<zeno::NumericObject>(2) }, std::pair<const char*, zeno::zany>{ "TowerPillars", std::make_shared<zeno::NumericObject>(6) }, std::pair<const char*, zeno::zany>{ "TowerPillarHeight", std::make_shared<zeno::NumericObject>(3) });
+	auto Output = zeno::CallSubnetNode_Mesh(Graph.get(), "fa438882-tower", 4, std::pair<const char*, zeno::zany>{ "TowerHeight", std::make_shared<zeno::NumericObject>(18) }, std::pair<const char*, zeno::zany>{ "TowerRadius", std::make_shared<zeno::NumericObject>(2) }, std::pair<const char*, zeno::zany>{ "TowerPillars", std::make_shared<zeno::NumericObject>(6) }, std::pair<const char*, zeno::zany>{ "TowerPillarHeight", std::make_shared<zeno::NumericObject>(3) });
+	std::error_code Err;
+	auto Data = msgpack::unpack<zeno::unreal::Mesh>(reinterpret_cast<uint8*>(Output.data), Output.length - 1, Err);
+	UE_LOG(LogTemp, Error, TEXT("Out Num: %llu"), Data.vertices.size());
 }
 
 void FZenoEmbedGraphEditorExtenderService::ImportZslFile()
