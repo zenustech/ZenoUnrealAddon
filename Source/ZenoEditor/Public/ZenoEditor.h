@@ -11,4 +11,7 @@ public:
 
 private:
     void RegisterActorFactory() const;
+    
+    static void RegisterDetailPanelCustomization();
+    static void UnregisterDetailPanelCustomization();
 };

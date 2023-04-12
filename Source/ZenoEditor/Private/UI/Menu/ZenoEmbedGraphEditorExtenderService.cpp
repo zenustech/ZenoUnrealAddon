@@ -76,11 +76,13 @@ void FZenoEmbedGraphEditorExtenderService::Debug()
 	auto Graph = zeno::getSession().createGraph();
 	std::map<std::string, zeno::zany> Inputs, Outputs;
 	Graph->loadGraph(TCHAR_TO_ANSI(*Json));
-	// auto Output = zeno::CallSubnetNode(Graph.get(), "fa438882-tower", 4, std::pair<const char*, zeno::zany>{ "TowerHeight", std::make_shared<zeno::NumericObject>(18) }, std::pair<const char*, zeno::zany>{ "TowerRadius", std::make_shared<zeno::NumericObject>(2) }, std::pair<const char*, zeno::zany>{ "TowerPillars", std::make_shared<zeno::NumericObject>(6) }, std::pair<const char*, zeno::zany>{ "TowerPillarHeight", std::make_shared<zeno::NumericObject>(3) });
-	auto Output = zeno::CallSubnetNode_Mesh(Graph.get(), "fa438882-tower", 4, std::pair<const char*, zeno::zany>{ "TowerHeight", std::make_shared<zeno::NumericObject>(18) }, std::pair<const char*, zeno::zany>{ "TowerRadius", std::make_shared<zeno::NumericObject>(2) }, std::pair<const char*, zeno::zany>{ "TowerPillars", std::make_shared<zeno::NumericObject>(6) }, std::pair<const char*, zeno::zany>{ "TowerPillarHeight", std::make_shared<zeno::NumericObject>(3) });
+	auto JsonBuffer = zeno::GetGraphInputParams(Graph.get());
 	std::error_code Err;
-	auto Data = msgpack::unpack<zeno::unreal::Mesh>(reinterpret_cast<uint8*>(Output.data), Output.length - 1, Err);
-	UE_LOG(LogTemp, Error, TEXT("Out Num: %llu"), Data.vertices.size());
+	auto Params = msgpack::unpack<zeno::unreal::SubnetNodeParamList>(reinterpret_cast<uint8*>(JsonBuffer.data), JsonBuffer.length - 1, Err);
+	// auto Output = zeno::CallSubnetNode(Graph.get(), "fa438882-tower", 4, std::pair<const char*, zeno::zany>{ "TowerHeight", std::make_shared<zeno::NumericObject>(18) }, std::pair<const char*, zeno::zany>{ "TowerRadius", std::make_shared<zeno::NumericObject>(2) }, std::pair<const char*, zeno::zany>{ "TowerPillars", std::make_shared<zeno::NumericObject>(6) }, std::pair<const char*, zeno::zany>{ "TowerPillarHeight", std::make_shared<zeno::NumericObject>(3) });
+	// auto Output = zeno::CallSubnetNode_Mesh(Graph.get(), "fa438882-tower", 4, std::pair<const char*, zeno::zany>{ "TowerHeight", std::make_shared<zeno::NumericObject>(18) }, std::pair<const char*, zeno::zany>{ "TowerRadius", std::make_shared<zeno::NumericObject>(2) }, std::pair<const char*, zeno::zany>{ "TowerPillars", std::make_shared<zeno::NumericObject>(6) }, std::pair<const char*, zeno::zany>{ "TowerPillarHeight", std::make_shared<zeno::NumericObject>(3) });
+	// auto Data = msgpack::unpack<zeno::unreal::Mesh>(reinterpret_cast<uint8*>(Output.data), Output.length - 1, Err);
+	UE_LOG(LogTemp, Error, TEXT("Out Num: %llu"), Params.params.size());
 }
 
 void FZenoEmbedGraphEditorExtenderService::ImportZslFile()
