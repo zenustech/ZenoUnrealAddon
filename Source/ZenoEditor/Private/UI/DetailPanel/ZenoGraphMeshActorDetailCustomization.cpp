@@ -44,10 +44,7 @@ void FZenoGraphMeshActorDetailCustomization::CustomizeDetails(IDetailLayoutBuild
 	[
 		SNew(SButton)
 		.Text(LOCTEXT("Generate", "Generate"))
-		.OnClicked_Lambda([this, MeshActor]
-		{
-			return this->DoMeshGenerate(MeshActor);
-		})
+		.OnClicked_Raw(this, &FZenoGraphMeshActorDetailCustomization::DoMeshGenerate, MeshActor)
 	];
 }
 
@@ -65,7 +62,8 @@ void FZenoGraphMeshActorDetailCustomization::BuildParamList_Slate(const zeno::un
 	{
 		FString ParamName = FString(Pair.first.c_str());
 		const zeno::unreal::EParamType ParamType = static_cast<zeno::unreal::EParamType>(Pair.second);
-		ParamTypeMap.Add(FName(), ParamType);
+		ParamTypeMap.Add(FName(ParamName), ParamType);
+		TSharedPtr<SZenoGenericInputBox> Box;
 		Slate_InputPanel
 		->AddSlot()
 		[
@@ -77,10 +75,11 @@ void FZenoGraphMeshActorDetailCustomization::BuildParamList_Slate(const zeno::un
 			]
 			+ SHorizontalBox::Slot()
 			[
-				SNew(SZenoGenericInputBox)
+				SAssignNew(Box, SZenoGenericInputBox)
 				.ParamType(Pair.second)
 			]
 		];
+		Slate_ParamInputBox.Add(FName(ParamName), Box.ToSharedRef());
 	}
 }
 
@@ -88,7 +87,7 @@ FReply FZenoGraphMeshActorDetailCustomization::DoMeshGenerate(AZenoGraphMeshActo
 {
 	if (CriticalSection.TryLock())
 	{
-		AsyncTask(ENamedThreads::AnyBackgroundHiPriTask, [this, TargetActor]
+		AsyncTask(ENamedThreads::GameThread, [this, TargetActor]
 		{
 			if (!IsValid(TargetActor))
 			{
@@ -130,10 +129,21 @@ FReply FZenoGraphMeshActorDetailCustomization::DoMeshGenerate(AZenoGraphMeshActo
 				RawMesh.WedgeColors.SetNumZeroed(NumWedge);
 				// TODO [darc] : support UV :
 				RawMesh.WedgeTexCoords[0].SetNumZeroed(NumWedge);
-				TargetActor->StaticMesh = NewObject<UStaticMesh>(TargetActor);
+				TargetActor->StaticMesh = NewObject<UStaticMesh>(TargetActor, UStaticMesh::StaticClass(), MakeUniqueObjectName(TargetActor, UStaticMesh::StaticClass(), FName("StaticMesh")), RF_Public|RF_Standalone);
 				TargetActor->StaticMesh->PreEditChange(nullptr);
+				TargetActor->StaticMesh->ImportVersion = LastVersion;
+				TargetActor->StaticMesh->NaniteSettings.bEnabled = false;
 				FStaticMeshSourceModel& SourceModel = TargetActor->StaticMesh->AddSourceModel();
-				SourceModel.SaveRawMesh(RawMesh);
+				{
+					 SourceModel.BuildSettings.bRecomputeNormals = false;
+					 SourceModel.BuildSettings.bRecomputeTangents = false;
+					 SourceModel.BuildSettings.bRemoveDegenerates = false;
+					 SourceModel.BuildSettings.bComputeWeightedNormals = false;
+					 SourceModel.BuildSettings.bUseMikkTSpace = false;
+					 SourceModel.BuildSettings.bUseFullPrecisionUVs = true;
+					 SourceModel.BuildSettings.bUseHighPrecisionTangentBasis = true;
+					 SourceModel.SaveRawMesh(RawMesh);
+				}
 				TargetActor->StaticMesh->PostEditChange();
 				TargetActor->StaticMesh->Build();
 				TargetActor->StaticMeshComponent->SetStaticMesh(TargetActor->StaticMesh);
