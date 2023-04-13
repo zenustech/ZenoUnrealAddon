@@ -113,7 +113,8 @@ FReply FZenoGraphMeshActorDetailCustomization::DoMeshGenerate(AZenoGraphMeshActo
 				RawMesh.WedgeIndices.Reserve(MeshData.triangles.size());
 				for (const auto& Vertex : MeshData.vertices)
 				{
-					RawMesh.VertexPositions.Add( { Vertex[0], Vertex[1], Vertex[2] } );
+					// to Z upward
+					RawMesh.VertexPositions.Add( { Vertex[0], Vertex[2], Vertex[1] } );
 				}
 				for (const auto& Triangle : MeshData.triangles)
 				{
@@ -135,18 +136,21 @@ FReply FZenoGraphMeshActorDetailCustomization::DoMeshGenerate(AZenoGraphMeshActo
 				TargetActor->StaticMesh->NaniteSettings.bEnabled = false;
 				FStaticMeshSourceModel& SourceModel = TargetActor->StaticMesh->AddSourceModel();
 				{
-					 SourceModel.BuildSettings.bRecomputeNormals = false;
-					 SourceModel.BuildSettings.bRecomputeTangents = false;
-					 SourceModel.BuildSettings.bRemoveDegenerates = false;
-					 SourceModel.BuildSettings.bComputeWeightedNormals = false;
-					 SourceModel.BuildSettings.bUseMikkTSpace = false;
-					 SourceModel.BuildSettings.bUseFullPrecisionUVs = true;
-					 SourceModel.BuildSettings.bUseHighPrecisionTangentBasis = true;
-					 SourceModel.SaveRawMesh(RawMesh);
+					SourceModel.BuildSettings.bRecomputeNormals = false;
+				    SourceModel.BuildSettings.bRecomputeTangents = false;
+					SourceModel.BuildSettings.bRemoveDegenerates = false;
+					SourceModel.BuildSettings.bComputeWeightedNormals = false;
+					SourceModel.BuildSettings.bUseMikkTSpace = false;
+					SourceModel.BuildSettings.bUseFullPrecisionUVs = true;
+					SourceModel.BuildSettings.bUseHighPrecisionTangentBasis = true;
+					SourceModel.SaveRawMesh(RawMesh);
 				}
 				TargetActor->StaticMesh->PostEditChange();
-				TargetActor->StaticMesh->Build();
-				TargetActor->StaticMeshComponent->SetStaticMesh(TargetActor->StaticMesh);
+
+				UStaticMeshComponent* StaticMeshComponent = NewObject<UStaticMeshComponent>(TargetActor, UStaticMeshComponent::StaticClass(), MakeUniqueObjectName(TargetActor, UStaticMeshComponent::StaticClass(), FName("StaticMeshComponent")), RF_Public|RF_Standalone);
+				StaticMeshComponent->StaticMeshImportVersion = LastVersion;
+				StaticMeshComponent->SetStaticMesh(TargetActor->StaticMesh);
+				TargetActor->SetMeshComponent(StaticMeshComponent);
 			}
 		});
 		CriticalSection.Unlock();

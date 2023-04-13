@@ -6,6 +6,9 @@
 
 AZenoGraphBaseActor::AZenoGraphBaseActor(const FObjectInitializer& ObjectInitializer)
 {
+	USceneComponent* SceneComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComponent"));
+	AddOwnedComponent(SceneComponent);
+	SetRootComponent(SceneComponent);
 }
 
 void AZenoGraphBaseActor::BeginPlay()
@@ -16,8 +19,10 @@ void AZenoGraphBaseActor::BeginPlay()
 
 void AZenoGraphMeshActor::OnConstruction(const FTransform& Transform)
 {
-	StaticMeshComponent = NewObject<UStaticMeshComponent>(this);
-	SetRootComponent(StaticMeshComponent);
+	if (IsValid(StaticMeshComponent))
+	{
+		StaticMeshComponent->AttachToComponent(RootComponent, { EAttachmentRule::KeepRelative, true });
+	} 
 }
 
 #if WITH_EDITOR
@@ -32,6 +37,28 @@ AZenoGraphMeshActor::AZenoGraphMeshActor(const FObjectInitializer& ObjectInitial
 {
 	PrimaryActorTick.bCanEverTick = true;
 }
+
+#if WITH_EDITOR
+void AZenoGraphMeshActor::SetMeshComponent(UStaticMeshComponent* InStaticMeshComponent)
+{
+	PreEditChange(nullptr);
+	if (StaticMeshComponent == InStaticMeshComponent)
+		return;
+	if (IsValid(StaticMeshComponent))
+	{
+		StaticMeshComponent->DestroyComponent(false);
+		RemoveOwnedComponent(StaticMeshComponent);
+	}
+	StaticMeshComponent = InStaticMeshComponent;
+	AddOwnedComponent(InStaticMeshComponent);
+	StaticMeshComponent->AttachToComponent(RootComponent, { EAttachmentRule::KeepRelative, true });
+	RootComponent->RegisterComponent();
+	UpdateComponentTransforms();
+	Modify(false);
+	MarkPackageDirty();
+	PostEditChange();
+}
+#endif // WITH_EDITOR
 
 void AZenoGraphBaseActor::Tick(float DeltaTime)
 {

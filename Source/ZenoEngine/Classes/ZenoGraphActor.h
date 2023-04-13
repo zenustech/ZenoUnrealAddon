@@ -37,10 +37,12 @@ protected:
 	virtual void OnConstruction(const FTransform& Transform) override;
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	void SetMeshComponent(UStaticMeshComponent* InStaticMeshComponent);
 #endif // WITH_EDITOR
 
 public:
 	AZenoGraphMeshActor(const FObjectInitializer& ObjectInitializer);
+
 
 protected:
 	UPROPERTY(VisibleAnywhere, Category = "Zeno | Debug", DisplayName = "Mesh Data")
