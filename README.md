@@ -15,3 +15,9 @@ Using <a href="https://jb.gg/OpenSourceSupport"><img src="https://resources.jetb
 4. Setup vcpkg at `C:\vcpkg` and install dependencies following [Build Zeno](https://github.com/zenustech/zeno/blob/master/docs/BUILD_EXT.md).
 
 5. Regenerate your proejct files.
+
+## Screenshot
+
+**Procedural Mesh**
+
+<img src="https://s1.locimg.com/2023/04/14/f794d2cbba3a0.gif" alt="Procedural Mesh" title="Procedural Mesh" />
