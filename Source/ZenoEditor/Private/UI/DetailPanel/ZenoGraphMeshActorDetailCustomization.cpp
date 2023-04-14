@@ -150,7 +150,7 @@ FReply FZenoGraphMeshActorDetailCustomization::DoMeshGenerate(AZenoGraphMeshActo
 				}
 				TargetActor->StaticMesh->PostEditChange();
 
-				UStaticMeshComponent* StaticMeshComponent = NewObject<UStaticMeshComponent>(TargetActor, UStaticMeshComponent::StaticClass(), MakeUniqueObjectName(TargetActor, UStaticMeshComponent::StaticClass(), FName("StaticMeshComponent")), RF_Public|RF_Standalone);
+				UStaticMeshComponent* StaticMeshComponent = NewObject<UStaticMeshComponent>(TargetActor, UStaticMeshComponent::StaticClass(), MakeUniqueObjectName(TargetActor, UStaticMeshComponent::StaticClass(), FName("StaticMeshComponent")), RF_Public);
 				StaticMeshComponent->StaticMeshImportVersion = LastVersion;
 				StaticMeshComponent->SetStaticMesh(TargetActor->StaticMesh);
 				TargetActor->SetMeshComponent(StaticMeshComponent);
