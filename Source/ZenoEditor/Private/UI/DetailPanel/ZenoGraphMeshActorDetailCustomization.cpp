@@ -136,16 +136,11 @@ FReply FZenoGraphMeshActorDetailCustomization::DoMeshGenerate(AZenoGraphMeshActo
 				TargetActor->StaticMesh = NewObject<UStaticMesh>(TargetActor, UStaticMesh::StaticClass(), MakeUniqueObjectName(TargetActor, UStaticMesh::StaticClass(), FName("StaticMesh")), RF_Public);
 				TargetActor->StaticMesh->PreEditChange(nullptr);
 				TargetActor->StaticMesh->ImportVersion = LastVersion;
-				TargetActor->StaticMesh->NaniteSettings.bEnabled = false;
+				TargetActor->StaticMesh->NaniteSettings = TargetActor->NaniteSettings;
 				FStaticMeshSourceModel& SourceModel = TargetActor->StaticMesh->AddSourceModel();
 				{
-					SourceModel.BuildSettings.bRecomputeNormals = false;
-				    SourceModel.BuildSettings.bRecomputeTangents = false;
-					SourceModel.BuildSettings.bRemoveDegenerates = false;
-					SourceModel.BuildSettings.bComputeWeightedNormals = false;
-					SourceModel.BuildSettings.bUseMikkTSpace = false;
-					SourceModel.BuildSettings.bUseFullPrecisionUVs = true;
-					SourceModel.BuildSettings.bUseHighPrecisionTangentBasis = true;
+					SourceModel.BuildSettings = TargetActor->BuildSettings;
+					SourceModel.ReductionSettings = TargetActor->ReductionSettings;
 					SourceModel.SaveRawMesh(RawMesh);
 				}
 				TargetActor->StaticMesh->PostEditChange();

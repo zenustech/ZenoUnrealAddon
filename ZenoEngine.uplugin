@@ -27,7 +27,7 @@
 		},
 		{
 			"Name": "ZenoEditor",
-			"Type": "EditorAndProgram",
+			"Type": "Editor",
 			"LoadingPhase": "PostEngineInit"
 		}
 	]

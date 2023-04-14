@@ -45,11 +45,22 @@ public:
 
 
 protected:
-	UPROPERTY(VisibleAnywhere, Category = "Zeno | Debug", DisplayName = "Mesh Data")
+	UPROPERTY(VisibleAnywhere, Category = "Zeno", DisplayName = "Mesh Data", AdvancedDisplay)
 	UStaticMesh* StaticMesh;
 
-	UPROPERTY(VisibleAnywhere, Category = "Zeno | Debug", DisplayName = "Mesh Component")
+	UPROPERTY(VisibleAnywhere, Category = "Zeno", DisplayName = "Mesh Component", AdvancedDisplay)
 	UStaticMeshComponent* StaticMeshComponent;
+
+#if WITH_EDITORONLY_DATA
+	UPROPERTY(EditAnywhere, Category= " Zeno | Build")
+	FMeshNaniteSettings NaniteSettings;
+
+	UPROPERTY(EditAnywhere, Category= " Zeno | Build")
+	FMeshBuildSettings BuildSettings;
+	
+	UPROPERTY(EditAnywhere, Category= " Zeno | Build")
+	FMeshReductionSettings ReductionSettings;
+#endif // WITH_EDITORONLY_DATA
 	
 	friend class UZenoGraphAssetActorFactory;
 	friend class FZenoGraphMeshActorDetailCustomization;

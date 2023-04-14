@@ -20,6 +20,7 @@ AActor* UZenoGraphAssetActorFactory::SpawnActor(UObject* InAsset, ULevel* InLeve
 	}
 	AZenoGraphMeshActor* NewActor = Cast<AZenoGraphMeshActor>(Super::SpawnActor(InAsset, InLevel, InTransform, InSpawnParams));
 	NewActor->ZenoGraphAsset = DuplicateObject(Asset, NewActor);
+	NewActor->ZenoGraphAsset->ClearFlags(RF_Standalone);
 
 	return NewActor;
 }
