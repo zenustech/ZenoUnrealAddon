@@ -28,7 +28,7 @@ void FZenoGraphMeshActorDetailCustomization::CustomizeDetails(IDetailLayoutBuild
 {
 	TArray<TWeakObjectPtr<UObject>> Objects;
 	DetailBuilder.GetObjectsBeingCustomized(Objects);
-	IDetailCategoryBuilder& ZenoBuilder = DetailBuilder.EditCategory("Zeno");
+	IDetailCategoryBuilder& ZenoBuilder = DetailBuilder.EditCategory("Zeno", LOCTEXT("Zeno", "Zeno"), ECategoryPriority::Variable);
 	if (Objects.IsEmpty()) return;
 	const TWeakObjectPtr<UObject>& Object = Objects[0];
 	AZenoGraphMeshActor* MeshActor = Cast<AZenoGraphMeshActor>(Object.Get());

@@ -22,7 +22,7 @@ protected:
 	virtual void BeginPlay() override;
 
 protected:
-	UPROPERTY(EditAnywhere, Category = "Zeno | Graph", DisplayName = "Graph Data")
+	UPROPERTY(EditAnywhere, Category = Zeno, DisplayName = "Graph Data", AdvancedDisplay)
 	UZenoGraphAsset* ZenoGraphAsset;
 
 	friend class UZenoGraphAssetActorFactory;
@@ -45,20 +45,20 @@ public:
 
 
 protected:
-	UPROPERTY(VisibleAnywhere, Category = "Zeno", DisplayName = "Mesh Data", AdvancedDisplay)
+	UPROPERTY(VisibleAnywhere, Category = Zeno, DisplayName = "Mesh Data", AdvancedDisplay)
 	UStaticMesh* StaticMesh;
 
-	UPROPERTY(VisibleAnywhere, Category = "Zeno", DisplayName = "Mesh Component", AdvancedDisplay)
+	UPROPERTY(VisibleAnywhere, Category = Zeno, DisplayName = "Mesh Component", AdvancedDisplay)
 	UStaticMeshComponent* StaticMeshComponent;
 
 #if WITH_EDITORONLY_DATA
-	UPROPERTY(EditAnywhere, Category= " Zeno | Build")
+	UPROPERTY(EditAnywhere, Category = Zeno, AdvancedDisplay)
 	FMeshNaniteSettings NaniteSettings;
 
-	UPROPERTY(EditAnywhere, Category= " Zeno | Build")
+	UPROPERTY(EditAnywhere, Category = Zeno, AdvancedDisplay)
 	FMeshBuildSettings BuildSettings;
 	
-	UPROPERTY(EditAnywhere, Category= " Zeno | Build")
+	UPROPERTY(EditAnywhere, Category = Zeno, AdvancedDisplay)
 	FMeshReductionSettings ReductionSettings;
 #endif // WITH_EDITORONLY_DATA
 	
