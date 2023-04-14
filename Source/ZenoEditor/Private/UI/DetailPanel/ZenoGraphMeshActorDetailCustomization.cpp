@@ -133,7 +133,7 @@ FReply FZenoGraphMeshActorDetailCustomization::DoMeshGenerate(AZenoGraphMeshActo
 				RawMesh.WedgeColors.SetNumZeroed(NumWedge);
 				// TODO [darc] : support UV :
 				RawMesh.WedgeTexCoords[0].SetNumZeroed(NumWedge);
-				TargetActor->StaticMesh = NewObject<UStaticMesh>(TargetActor, UStaticMesh::StaticClass(), MakeUniqueObjectName(TargetActor, UStaticMesh::StaticClass(), FName("StaticMesh")), RF_Public|RF_Standalone);
+				TargetActor->StaticMesh = NewObject<UStaticMesh>(TargetActor, UStaticMesh::StaticClass(), MakeUniqueObjectName(TargetActor, UStaticMesh::StaticClass(), FName("StaticMesh")), RF_Public);
 				TargetActor->StaticMesh->PreEditChange(nullptr);
 				TargetActor->StaticMesh->ImportVersion = LastVersion;
 				TargetActor->StaticMesh->NaniteSettings.bEnabled = false;
