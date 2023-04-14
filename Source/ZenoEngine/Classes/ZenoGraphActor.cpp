@@ -48,6 +48,7 @@ void AZenoGraphMeshActor::SetMeshComponent(UStaticMeshComponent* InStaticMeshCom
 	{
 		StaticMeshComponent->DestroyComponent(false);
 		RemoveOwnedComponent(StaticMeshComponent);
+		StaticMeshComponent->ReleaseResources();
 	}
 	StaticMeshComponent = InStaticMeshComponent;
 	AddOwnedComponent(InStaticMeshComponent);
@@ -55,7 +56,6 @@ void AZenoGraphMeshActor::SetMeshComponent(UStaticMeshComponent* InStaticMeshCom
 	RootComponent->RegisterComponent();
 	UpdateComponentTransforms();
 	Modify(false);
-	MarkPackageDirty();
 	PostEditChange();
 }
 #endif // WITH_EDITOR
