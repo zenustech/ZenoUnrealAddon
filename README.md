@@ -20,4 +20,4 @@ Using <a href="https://jb.gg/OpenSourceSupport"><img src="https://resources.jetb
 
 **Procedural Mesh**
 
-<img src="https://s1.locimg.com/2023/04/14/f794d2cbba3a0.gif" alt="Procedural Mesh" title="Procedural Mesh" />
+[![Procedural Mesh](https://s1.locimg.com/2023/04/14/f794d2cbba3a0.gif)](https://s1.locimg.com/2023/04/14/f794d2cbba3a0.gif)
