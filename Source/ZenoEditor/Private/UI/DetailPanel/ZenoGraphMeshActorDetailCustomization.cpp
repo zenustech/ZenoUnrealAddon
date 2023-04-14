@@ -116,10 +116,6 @@ FReply FZenoGraphMeshActorDetailCustomization::DoMeshGenerate(AZenoGraphMeshActo
 				{
 					// to Z upward
 					auto [X, Z, Y] = Vertex;
-					if (FMath::Abs(X.data()) > 200.f || FMath::Abs(Y.data()) > 200.f)
-					{
-						UE_LOG(LogTemp, Warning, TEXT("adadad: %f %f %f (%llu)"), X.data(), Y.data(), Z.data(), Idx);
-					}
 					RawMesh.VertexPositions.Add( { X.data(), Y.data(), Z.data() } );
 					Idx++;
 				}
