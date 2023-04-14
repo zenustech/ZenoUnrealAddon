@@ -111,10 +111,17 @@ FReply FZenoGraphMeshActorDetailCustomization::DoMeshGenerate(AZenoGraphMeshActo
 				FRawMesh RawMesh;
 				RawMesh.VertexPositions.Reserve(MeshData.vertices.size());
 				RawMesh.WedgeIndices.Reserve(MeshData.triangles.size());
+				size_t Idx = 0;
 				for (const auto& Vertex : MeshData.vertices)
 				{
 					// to Z upward
-					RawMesh.VertexPositions.Add( { Vertex[0], Vertex[2], Vertex[1] } );
+					auto [X, Z, Y] = Vertex;
+					if (FMath::Abs(X.data()) > 200.f || FMath::Abs(Y.data()) > 200.f)
+					{
+						UE_LOG(LogTemp, Warning, TEXT("adadad: %f %f %f (%llu)"), X.data(), Y.data(), Z.data(), Idx);
+					}
+					RawMesh.VertexPositions.Add( { X.data(), Y.data(), Z.data() } );
+					Idx++;
 				}
 				for (const auto& Triangle : MeshData.triangles)
 				{
