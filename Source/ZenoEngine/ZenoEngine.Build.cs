@@ -7,7 +7,6 @@ public class ZenoEngine : ModuleRules
 	public ZenoEngine(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-		bUseRTTI = true;
 		
 		PublicIncludePaths.AddRange(
 			new string[] {

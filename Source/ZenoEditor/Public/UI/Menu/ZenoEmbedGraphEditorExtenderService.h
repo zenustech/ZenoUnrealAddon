@@ -20,4 +20,5 @@ protected:
 
 	// Actions
 	void Debug();
+	void ImportZslFile();
 };

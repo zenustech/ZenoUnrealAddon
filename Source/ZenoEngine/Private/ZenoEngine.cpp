@@ -11,12 +11,23 @@
 void FZenoEngineModule::StartupModule()
 {
 	FString BaseDir = IPluginManager::Get().FindPlugin("ZenoEngine")->GetBaseDir();
-
+	MapShaderDirectory(BaseDir);
 }
 
 void FZenoEngineModule::ShutdownModule()
 {
 }
+
+void FZenoEngineModule::MapShaderDirectory(const FString& BaseDir)
+{
+	ShaderDirectory = FPaths::Combine(
+		BaseDir,
+		TEXT("Shaders")
+	);
+	AddShaderSourceDirectoryMapping(VirtualShaderPath, ShaderDirectory);
+}
+
+FString FZenoEngineModule::VirtualShaderPath = "/Plugin/ZenoEngine";
 
 #undef LOCTEXT_NAMESPACE
 	

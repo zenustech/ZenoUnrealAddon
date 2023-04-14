@@ -36,7 +36,7 @@ void FVATEditorExtenderService::Unregister()
 
 void FVATEditorExtenderService::ExtendMenuBar(FMenuBarBuilder& Builder)
 {
-	Builder.AddPullDownMenu(LOCTEXT("Zeno", "Zeno"), LOCTEXT("ZenoTooltip", "Zeno Tools"), FNewMenuDelegate::CreateRaw(this, &FVATEditorExtenderService::ExtendVATPullDownMenu), ZenoHookLabel, ZenoHookLabel);
+	Builder.AddPullDownMenu(LOCTEXT("Zeno", "Zeno"), LOCTEXT("ZenoTooltip", "Zeno Tools"), FNewMenuDelegate::CreateRaw(this, &FVATEditorExtenderService::ExtendVATPullDownMenu), ZenoVATHookLabel, ZenoVATHookLabel);
 }
 
 void FVATEditorExtenderService::ExtendVATPullDownMenu(FMenuBuilder& Builder)

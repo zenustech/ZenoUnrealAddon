@@ -7,3 +7,5 @@ if(@FORCE_RELEASE_RUNTIME@)
     string(REPLACE "/MDd" "/MD" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
     string(REPLACE "/MTd" "/MT" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 endif()
+
+include(C:/vcpkg/scripts/buildsystems/vcpkg.cmake)

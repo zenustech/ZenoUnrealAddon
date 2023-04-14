@@ -10,4 +10,5 @@ public:
 public:
 	TSharedPtr<FUICommandInfo> Debug;
 	TSharedPtr<FUICommandInfo> ImportWavefrontMesh;
+	TSharedPtr<FUICommandInfo> ImportZslFile;
 };

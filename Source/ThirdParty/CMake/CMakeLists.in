@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.10)
 
 #using undocumented cmake functionality to force global on imported targets
-function(add_library)
-    set(_args ${ARGN})
-    if ("${_args}" MATCHES ";IMPORTED")
-        list(APPEND _args GLOBAL)
-    endif()
-    _add_library(${_args})
-endfunction()
+#function(add_library)
+#    set(_args ${ARGN})
+#    if ("${_args}" MATCHES ";IMPORTED")
+#        list(APPEND _args GLOBAL)
+#    endif()
+#    _add_library(${_args})
+#endfunction()
 
 function(_ue4_get_target_link_libraries addTarget target_file_list target_linker_file_list target_directories)
     foreach(target ${ARGN})
