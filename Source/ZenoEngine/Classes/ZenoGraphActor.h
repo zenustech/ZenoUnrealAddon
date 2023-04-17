@@ -60,6 +60,9 @@ protected:
 	
 	UPROPERTY(EditAnywhere, Category = Zeno, AdvancedDisplay)
 	FMeshReductionSettings ReductionSettings;
+
+	UPROPERTY(EditAnywhere, Category = Zeno, DisplayName = "Material")
+	UMaterialInterface* MeshMaterial;
 #endif // WITH_EDITORONLY_DATA
 	
 	friend class UZenoGraphAssetActorFactory;

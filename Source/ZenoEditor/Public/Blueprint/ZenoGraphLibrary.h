@@ -34,4 +34,6 @@ public:
 	static zeno::unreal::SubnetNodeParamList GetGraphParamList(UZenoGraphAsset* Graph);
 
 	static EZenoParamType ConvertParamType(zeno::unreal::EParamType OriginParamType);
+
+	static zeno::unreal::EParamType ConvertParamType(EZenoParamType OriginParamType);
 };

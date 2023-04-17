@@ -101,8 +101,9 @@ FReply FZenoGraphMeshActorDetailCustomization::DoMeshGenerate(AZenoGraphMeshActo
 				zeno::unreal::NodeParamInput Inputs;
 				for (const auto& SlateUI : Slate_ParamInputBox)
 				{
-					 try { Inputs.data.try_emplace(TCHAR_TO_ANSI(*SlateUI.Key.ToString()), SlateUI.Value->GetDataUnsafe<float>()); } catch (...) {}
-					 try { Inputs.data.try_emplace(TCHAR_TO_ANSI(*SlateUI.Key.ToString()), SlateUI.Value->GetDataUnsafe<int32>()); } catch (...) {}
+					try { Inputs.data.try_emplace(TCHAR_TO_ANSI(*SlateUI.Key.ToString()), SlateUI.Value->GetDataUnsafe<float>()); } catch (...) {}
+					try { Inputs.data.try_emplace(TCHAR_TO_ANSI(*SlateUI.Key.ToString()), SlateUI.Value->GetDataUnsafe<int32>()); } catch (...) {}
+					// std::shared_ptr<zeno::IObject> InputObject = zeno::unreal::ZenoObjectExactorManager::Get().Exact(UZenoGraphLibrary::ConvertParamType(SlateUI.Value->GetDataType()), SlateUI.Value->GetData());
 				}
 				std::vector<uint8> Buffer = msgpack::pack(Inputs);
 				zeno::SimpleCharBuffer OutBuffer = zeno::Run_Mesh(Graph.get(), { reinterpret_cast<char*>(Buffer.data()), Buffer.size() });
@@ -143,6 +144,7 @@ FReply FZenoGraphMeshActorDetailCustomization::DoMeshGenerate(AZenoGraphMeshActo
 					SourceModel.ReductionSettings = TargetActor->ReductionSettings;
 					SourceModel.SaveRawMesh(RawMesh);
 				}
+				TargetActor->StaticMesh->AddMaterial(TargetActor->MeshMaterial);
 				TargetActor->StaticMesh->PostEditChange();
 
 				UStaticMeshComponent* StaticMeshComponent = NewObject<UStaticMeshComponent>(TargetActor, UStaticMeshComponent::StaticClass(), MakeUniqueObjectName(TargetActor, UStaticMeshComponent::StaticClass(), FName("StaticMeshComponent")), RF_Public);

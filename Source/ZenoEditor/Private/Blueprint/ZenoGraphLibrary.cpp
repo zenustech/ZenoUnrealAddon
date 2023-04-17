@@ -33,14 +33,14 @@ zeno::unreal::SubnetNodeParamList  UZenoGraphLibrary::GetGraphParamList(UZenoGra
 	ensure(zeno::LoadGraphChecked(ZenoGraph.get(), TCHAR_TO_ANSI(*Graph->ZenoActionRecordExportedData)));
 
 	std::error_code Err;
-	zeno::SimpleCharBuffer MsgBuffer = zeno::GetGraphInputParams(ZenoGraph.get());
+	const zeno::SimpleCharBuffer MsgBuffer = zeno::GetGraphInputParams(ZenoGraph.get());
 	zeno::unreal::SubnetNodeParamList Params = msgpack::unpack<zeno::unreal::SubnetNodeParamList>(reinterpret_cast<uint8*>(MsgBuffer.data), MsgBuffer.length - 1, Err);
 	ensure(!Err);
 
 	return Params;
 }
 
-EZenoParamType UZenoGraphLibrary::ConvertParamType(zeno::unreal::EParamType OriginParamType)
+EZenoParamType UZenoGraphLibrary::ConvertParamType(const zeno::unreal::EParamType OriginParamType)
 {
 	switch (OriginParamType)
 	{
@@ -50,5 +50,20 @@ EZenoParamType UZenoGraphLibrary::ConvertParamType(zeno::unreal::EParamType Orig
 		return EZenoParamType::Integer;
 	default:
 		return EZenoParamType::Invalid;
+	}
+}
+
+zeno::unreal::EParamType UZenoGraphLibrary::ConvertParamType(const EZenoParamType OriginParamType)
+{
+	using EParamType = zeno::unreal::EParamType;
+	
+	switch (OriginParamType)
+	{
+	case EZenoParamType::Float:
+		return EParamType::Float;
+	case EZenoParamType::Integer:
+		return EParamType::Integer;
+	default:
+		return EParamType::Invalid;
 	}
 }
