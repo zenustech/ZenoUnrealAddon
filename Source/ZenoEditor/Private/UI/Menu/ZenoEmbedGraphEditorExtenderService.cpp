@@ -43,7 +43,7 @@ FZenoEmbedGraphEditorExtenderService& FZenoEmbedGraphEditorExtenderService::Get(
 
 void FZenoEmbedGraphEditorExtenderService::ExtendTopMenuBar(FMenuBarBuilder& Builder)
 {
-	Builder.AddPullDownMenu(LOCTEXT("Zeno", "Zeno"), LOCTEXT("ZenoTooltip", "Zeno Tools"), FNewMenuDelegate::CreateRaw(this, &FZenoEmbedGraphEditorExtenderService::ExtendEmbedPullDownMenu), ZenoGraphHookLabel, ZenoGraphHookLabel);
+	Builder.AddPullDownMenu(LOCTEXT("Zeno", "Zeno Graph"), LOCTEXT("ZenoTooltip", "Zeno Tools"), FNewMenuDelegate::CreateRaw(this, &FZenoEmbedGraphEditorExtenderService::ExtendEmbedPullDownMenu), ZenoGraphHookLabel, ZenoGraphHookLabel);
 }
 
 void FZenoEmbedGraphEditorExtenderService::ExtendEmbedPullDownMenu(FMenuBuilder& Builder)
