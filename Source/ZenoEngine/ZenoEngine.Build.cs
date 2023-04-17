@@ -58,5 +58,13 @@ public class ZenoEngine : ModuleRules
 				// ... add any modules that your module loads dynamically here ...
 			}
 			);
+		
+        #if UE_5_2_OR_LATER
+        PublicDefinitions.AddRange(new string[]
+        {
+            "UE_5_2_OR_LATER=1",
+        });
+        #endif
+        
 	}
 }

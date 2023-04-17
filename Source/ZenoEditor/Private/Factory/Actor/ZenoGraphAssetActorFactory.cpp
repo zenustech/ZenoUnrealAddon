@@ -37,7 +37,11 @@ void UZenoGraphAssetActorFactory::PostCreateBlueprint(UObject* Asset, AActor* CD
 
 bool UZenoGraphAssetActorFactory::CanCreateActorFrom(const FAssetData& AssetData, FText& OutErrorMsg)
 {
+#ifdef UE_5_2_OR_LATER
 	return UZenoGraphAsset::StaticClass() == AssetData.GetClass(EResolveClass::Yes);
+#else
+	return UZenoGraphAsset::StaticClass() == AssetData.GetClass();
+#endif
 }
 
 #undef LOCTEXT_NAMESPACE
