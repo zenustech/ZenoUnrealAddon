@@ -6,16 +6,17 @@
 #include <zeno/unreal/ZenoUnrealTypes.h>
 
 #include "CoreMinimal.h"
+#include "Utilities/ZenoEngineTypes.h"
 #include "Widgets/SCompoundWidget.h"
 
 class ZENOEDITOR_API SZenoGenericInputBox : public SBox
 {
 	
 public:
-	using EParamType = zeno::unreal::EParamType;
+	using EParamType = EZenoParamType;
 	
 	SLATE_BEGIN_ARGS(SZenoGenericInputBox)
-		: _ParamType(static_cast<int8>(zeno::unreal::EParamType::Invalid))
+		: _ParamType(static_cast<int8>(EParamType::Invalid))
 	{}
 		SLATE_ARGUMENT(int8, ParamType)
 	SLATE_END_ARGS()

@@ -17,7 +17,12 @@ public class ZenoEditor : ModuleRules
         PrivateDependencyModuleNames.AddRange(
             new string[]
             {
+                "Core",
                 "CoreUObject",
+                "ApplicationCore",
+                "InputCore",
+                "Json",
+                "ImageWrapper",
                 "Engine",
                 "Slate",
                 "UnrealEd",
@@ -34,6 +39,7 @@ public class ZenoEditor : ModuleRules
                 "DeveloperSettings",
                 "ContentBrowser",
                 "Kismet",
+                "PropertyEditor",
             }
         );
         

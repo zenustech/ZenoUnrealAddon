@@ -9,6 +9,7 @@
 
 #include "ZenoGraphAsset.h"
 #include "ThirdParty/msgpack.h"
+#include "Utilities/ZenoEngineTypes.h"
 
 std::shared_ptr<zeno::Graph> UZenoGraphLibrary::GetGraphFromJson(const char* Json)
 {
@@ -37,4 +38,17 @@ zeno::unreal::SubnetNodeParamList  UZenoGraphLibrary::GetGraphParamList(UZenoGra
 	ensure(!Err);
 
 	return Params;
+}
+
+EZenoParamType UZenoGraphLibrary::ConvertParamType(zeno::unreal::EParamType OriginParamType)
+{
+	switch (OriginParamType)
+	{
+	case zeno::unreal::EParamType::Float:
+		return EZenoParamType::Float;
+	case zeno::unreal::EParamType::Integer:
+		return EZenoParamType::Integer;
+	default:
+		return EZenoParamType::Invalid;
+	}
 }

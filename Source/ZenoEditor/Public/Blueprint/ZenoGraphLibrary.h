@@ -7,6 +7,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
+#include "Utilities/ZenoEngineTypes.h"
 #include "ZenoGraphLibrary.generated.h"
 
 namespace zeno
@@ -31,4 +32,6 @@ public:
 	static bool IsValidGraph(UZenoGraphAsset* Graph);
 
 	static zeno::unreal::SubnetNodeParamList GetGraphParamList(UZenoGraphAsset* Graph);
+
+	static EZenoParamType ConvertParamType(zeno::unreal::EParamType OriginParamType);
 };

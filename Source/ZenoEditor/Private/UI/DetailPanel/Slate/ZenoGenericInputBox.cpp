@@ -4,6 +4,8 @@
 #include "ZenoGenericInputBox.h"
 
 #include "SlateOptMacros.h"
+#include "UI/EnumComboBox.h"
+#include "Blueprint/ZenoGraphLibrary.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
@@ -11,13 +13,25 @@ void SZenoGenericInputBox::Construct(const FArguments& InArgs)
 {
 	ChildSlot
 	[
-		SAssignNew(InputBox, SEditableTextBox)
-		.OnTextChanged_Raw(this, &SZenoGenericInputBox::OnInputTextChanged)
-		.OnTextCommitted_Raw(this, &SZenoGenericInputBox::OnInputTextCommitted)
+		SNew(SVerticalBox)
+		+ SVerticalBox::Slot()
+		[
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+			[
+				SNew(SEnumComboBox)
+				.EnumClassPath("/Script/ZenoEngine.EZenoParamType")
+			]
+			+ SHorizontalBox::Slot()
+			[
+				SAssignNew(InputBox, SEditableTextBox)
+				.OnTextChanged_Raw(this, &SZenoGenericInputBox::OnInputTextChanged)
+				.OnTextCommitted_Raw(this, &SZenoGenericInputBox::OnInputTextCommitted)
+			]
+		]
 	];
-
 	
-	ParamType = static_cast<zeno::unreal::EParamType>(InArgs._ParamType);
+	ParamType = UZenoGraphLibrary::ConvertParamType(static_cast<zeno::unreal::EParamType>(InArgs._ParamType));
 	switch (ParamType)
 	{
 		case EParamType::Float:
