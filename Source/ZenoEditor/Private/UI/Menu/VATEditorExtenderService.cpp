@@ -42,7 +42,6 @@ void FVATEditorExtenderService::ExtendMenuBar(FMenuBarBuilder& Builder)
 void FVATEditorExtenderService::ExtendVATPullDownMenu(FMenuBuilder& Builder)
 {
 	Builder.AddMenuEntry(FZenoEditorCommand::Get().ImportWavefrontMesh);
-	Builder.AddMenuEntry(FZenoEditorCommand::Get().Debug);
 }
 
 void FVATEditorExtenderService::MapAction()

@@ -49,7 +49,6 @@ void FZenoEmbedGraphEditorExtenderService::ExtendTopMenuBar(FMenuBarBuilder& Bui
 void FZenoEmbedGraphEditorExtenderService::ExtendEmbedPullDownMenu(FMenuBuilder& Builder)
 {
 	Builder.AddMenuEntry(FZenoEditorCommand::Get().ImportZslFile);
-	Builder.AddMenuEntry(FZenoEditorCommand::Get().Debug);
 }
 
 void FZenoEmbedGraphEditorExtenderService::MapAction()
