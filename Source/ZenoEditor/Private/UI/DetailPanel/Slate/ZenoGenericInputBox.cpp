@@ -11,6 +11,8 @@ BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 void SZenoGenericInputBox::Construct(const FArguments& InArgs)
 {
+	ParamType = static_cast<EParamType>(InArgs._ParamType);
+	
 	ChildSlot
 	[
 		SNew(SVerticalBox)

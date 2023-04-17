@@ -44,7 +44,11 @@ public:
 	{
 		return std::any_cast<T>(GetData());
 	}
-	
+
+	EParamType GetDataType() const
+	{
+		return ParamType;
+	}
 
 protected:
 	virtual void OnInputTextChanged(const FText& TextToChange);
