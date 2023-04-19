@@ -31,7 +31,7 @@ bool FZenoLiveLinkSource::RequestSourceShutdown()
 
 void FZenoLiveLinkSource::Update()
 {
-	// TODO [darc] : Update text :
+	// TODO [darc] : Do tick :
 }
 
 FZenoLiveLinkSetting& FZenoLiveLinkSource::GetMutableConnectionSetting()
