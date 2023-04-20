@@ -12,6 +12,12 @@ FZenoLiveLinkSource::FZenoLiveLinkSource()
 	SourceMachineName = FText::Format(LOCTEXT("ZenoSourceMachineName", "{0}:{1}"), FText::FromString(GetConnectionSetting().IPAddress), FText::AsNumber(GetConnectionSetting().HTTPPortNumber, &FNumberFormattingOptions::DefaultNoGrouping()));
 }
 
+FZenoLiveLinkSource::FZenoLiveLinkSource(const FGuid SessionId)
+	: FZenoLiveLinkSource()
+{
+	SessionGuid = SessionId;
+}
+
 void FZenoLiveLinkSource::ReceiveClient(ILiveLinkClient* InClient, FGuid InSourceGuid)
 {
 	Client = InClient;
@@ -20,18 +26,35 @@ void FZenoLiveLinkSource::ReceiveClient(ILiveLinkClient* InClient, FGuid InSourc
 
 bool FZenoLiveLinkSource::IsSourceStillValid() const
 {
-	return false;
+	return SessionGuid.IsValid();
 }
 
 bool FZenoLiveLinkSource::RequestSourceShutdown()
 {
-	// TODO [darc] : Shutdown client :
+	UZenoLiveLinkClientSubsystem* Subsystem = GEngine->GetEngineSubsystem<UZenoLiveLinkClientSubsystem>();
+	Subsystem->RequestCloseSession(SessionGuid);
+	SessionGuid.Invalidate();
 	return true;
 }
 
 void FZenoLiveLinkSource::Update()
 {
 	// TODO [darc] : Do tick :
+}
+
+FText FZenoLiveLinkSource::GetSourceStatus() const
+{
+	return SourceStatus;
+}
+
+FText FZenoLiveLinkSource::GetSourceType() const
+{
+	return SourceType;
+}
+
+FText FZenoLiveLinkSource::GetSourceMachineName() const
+{
+	return SourceMachineName;
 }
 
 FZenoLiveLinkSetting& FZenoLiveLinkSource::GetMutableConnectionSetting()

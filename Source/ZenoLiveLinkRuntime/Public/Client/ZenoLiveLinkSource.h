@@ -10,12 +10,17 @@ class ZENOLIVELINKRUNTIME_API FZenoLiveLinkSource : public ILiveLinkSource, publ
 {
 public:
 	FZenoLiveLinkSource();
+	explicit FZenoLiveLinkSource(FGuid SessionId);
 
 	// ~Impl ILiveLinkSource Start
 	virtual void ReceiveClient(ILiveLinkClient* InClient, FGuid InSourceGuid) override;
 	virtual bool IsSourceStillValid() const override;
 	virtual bool RequestSourceShutdown() override;
 	virtual void Update() override;
+
+	virtual FText GetSourceStatus() const override;
+	virtual FText GetSourceType() const override;
+	virtual FText GetSourceMachineName() const override;
 	// ~Impl ILiveLinkSource End
 
 protected:
@@ -39,5 +44,7 @@ protected:
 	 * @brief Name of subjects from zeno
 	 */
 	TSet<FName> EncounteredSubjects;
+
+	FGuid SessionGuid;
 	
 };

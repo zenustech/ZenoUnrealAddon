@@ -10,6 +10,7 @@ public class ZenoLiveLinkRuntime : ModuleRules
             new string[]
             {
                 "Core",
+                "InputCore",
             }
         );
 
@@ -21,7 +22,6 @@ public class ZenoLiveLinkRuntime : ModuleRules
                 "Slate",
                 "SlateCore",
                 "LiveLinkInterface",
-                "InputCore",
             }
         );
     }

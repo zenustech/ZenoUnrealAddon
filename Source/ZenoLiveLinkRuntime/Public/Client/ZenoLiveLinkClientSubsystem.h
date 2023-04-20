@@ -7,6 +7,7 @@
 #include "Subsystems/EngineSubsystem.h"
 #include "ZenoLiveLinkClientSubsystem.generated.h"
 
+class UZenoLiveLinkSession;
 class FZenoLiveLinkSource;
 
 UCLASS()
@@ -18,9 +19,18 @@ public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 
+	FZenoLiveLinkSetting& GetZenoLiveLinkSetting();
+	const FZenoLiveLinkSetting& GetZenoLiveLinkSetting() const;
+
+	FGuid NewSession(const FZenoLiveLinkSetting& InConnectionSetting);
+	bool RequestCloseSession(FGuid InGuid);
+
 private:
 	UPROPERTY(EditAnywhere, Category = Zeno, DisplayName = "Connection Settings")
 	FZenoLiveLinkSetting ConnectionSetting;
+
+	UPROPERTY(VisibleAnywhere, AdvancedDisplay, DisplayName = "Connection Sessions")
+	TMap<FGuid, UZenoLiveLinkSession*> ConnectionSessions;
 
 	friend FZenoLiveLinkSource;
 };
