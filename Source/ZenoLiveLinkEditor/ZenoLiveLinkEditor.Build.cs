@@ -19,7 +19,8 @@ public class ZenoLiveLinkEditor : ModuleRules
                 "CoreUObject",
                 "Engine",
                 "Slate",
-                "SlateCore"
+                "SlateCore",
+                "ZenoLiveLinkRuntime",
             }
         );
     }

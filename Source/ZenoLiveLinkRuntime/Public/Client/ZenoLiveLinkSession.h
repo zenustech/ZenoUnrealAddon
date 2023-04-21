@@ -6,6 +6,11 @@
 #include "ZenoLiveLinkTypes.h"
 #include "UObject/Object.h"
 #include <atomic>
+THIRD_PARTY_INCLUDES_START
+#include "ThirdParty/httplib.h"
+#include "zeno/unreal/ZenoUnrealTypes.h"
+THIRD_PARTY_INCLUDES_END
+
 #include "ZenoLiveLinkSession.generated.h"
 
 UCLASS()
@@ -22,7 +27,7 @@ public:
 	 * @param ConnectionSetting 
 	 */
 	void Init(const FZenoLiveLinkSetting& ConnectionSetting);
-	
+
 protected:
 	std::atomic<bool> bInitialized;
 	
@@ -31,6 +36,10 @@ protected:
 	
 	UPROPERTY(EditAnywhere, Category = Zeno)
 	FZenoLiveLinkSetting Settings;
+
+	TOptional<httplib::Client> HttpClient;
+
+	TMap<FString, zeno::unreal::SubjectContainer> OwnedSubjects;
 
 public:
 	static UZenoLiveLinkSession* CreateSession(const FZenoLiveLinkSetting& ConnectionSetting, FGuid Guid);

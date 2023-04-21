@@ -1,7 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-
-#include "Client/ZenoLiveLinkSession.h"
+﻿#include "Client/ZenoLiveLinkSession.h"
 
 UZenoLiveLinkSession::UZenoLiveLinkSession()
 {
@@ -14,6 +11,7 @@ void UZenoLiveLinkSession::Init(const FZenoLiveLinkSetting& ConnectionSetting)
 	
 	Settings = ConnectionSetting;
 
+	HttpClient = httplib::Client(std::string { TCHAR_TO_ANSI(*FString::Printf(TEXT("http://%s:%d"), *Settings.IPAddress, Settings.HTTPPortNumber)) });
 	// TODO [darc] : Request for session key :
 }
 
