@@ -8,7 +8,7 @@
 #include <atomic>
 THIRD_PARTY_INCLUDES_START
 #include "ThirdParty/httplib.h"
-#include "zeno/unreal/ZenoUnrealTypes.h"
+#include "zeno/unreal/ZenoRemoteTypes.h"
 THIRD_PARTY_INCLUDES_END
 
 #include "ZenoLiveLinkSession.generated.h"
@@ -39,7 +39,7 @@ protected:
 
 	TOptional<httplib::Client> HttpClient;
 
-	TMap<FString, zeno::unreal::SubjectContainer> OwnedSubjects;
+	TMap<FString, zeno::remote::SubjectContainer> OwnedSubjects;
 
 public:
 	static UZenoLiveLinkSession* CreateSession(const FZenoLiveLinkSetting& ConnectionSetting, FGuid Guid);
