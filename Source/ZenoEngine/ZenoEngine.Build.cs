@@ -30,15 +30,11 @@ public class ZenoEngine : ModuleRules
 				"Slate",
 				"SlateCore",
 				"CoreUObject",
-				"Projects",
-				"UObjectPlugin",
-				"DesktopPlatform",
 				"RawMesh",
-				"MeshUtilities",
-				"UObjectPlugin",
 				"Renderer",
 				"RenderCore",
 				"InputCore",
+				"Projects",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
