@@ -4,7 +4,7 @@
 #include "ZenoGenericInputBox.h"
 
 #include "SlateOptMacros.h"
-#include "UI/EnumComboBox.h"
+#include "UI/Common/EnumComboBox.h"
 #include "Blueprint/ZenoGraphLibrary.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION

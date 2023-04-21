@@ -36,7 +36,8 @@ AZenoGraphMeshActor::AZenoGraphMeshActor(const FObjectInitializer& ObjectInitial
 	: AZenoGraphBaseActor(ObjectInitializer)
 {
 	PrimaryActorTick.bCanEverTick = true;
-	
+
+#if WITH_EDITORONLY_DATA
 	BuildSettings.bRecomputeNormals = true;
 	BuildSettings.bRecomputeTangents = true;
 	BuildSettings.bRemoveDegenerates = true;
@@ -46,6 +47,7 @@ AZenoGraphMeshActor::AZenoGraphMeshActor(const FObjectInitializer& ObjectInitial
 	BuildSettings.bUseHighPrecisionTangentBasis = false;
 
 	NaniteSettings.bEnabled = false;
+#endif // WITH_EDITORONLY_DATA
 }
 
 #if WITH_EDITOR

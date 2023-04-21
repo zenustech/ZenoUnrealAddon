@@ -11,7 +11,9 @@ void UZenoLiveLinkSession::Init(const FZenoLiveLinkSetting& ConnectionSetting)
 	
 	Settings = ConnectionSetting;
 
+#if WITH_EDITORONLY_DATA
 	HttpClient = httplib::Client(std::string { TCHAR_TO_ANSI(*FString::Printf(TEXT("http://%s:%d"), *Settings.IPAddress, Settings.HTTPPortNumber)) });
+#endif // WITH_EDITORONLY_DATA
 	// TODO [darc] : Request for session key :
 }
 

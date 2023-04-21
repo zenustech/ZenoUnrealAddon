@@ -3,8 +3,10 @@
 
 #include "Client/Slate/SZenoLiveLinkCreationPanel.h"
 
+#if WITH_EDITOR
 #include "IStructureDetailsView.h"
 #include "PropertyEditorModule.h"
+#endif // WITH_EDITOR
 #include "SlateOptMacros.h"
 #include "Client/ZenoLiveLinkClientSubsystem.h"
 #include "Client/ZenoLiveLinkTypes.h"

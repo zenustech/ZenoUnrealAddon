@@ -7,7 +7,9 @@
 #include "UObject/Object.h"
 #include <atomic>
 THIRD_PARTY_INCLUDES_START
+#if WITH_EDITOR
 #include "ThirdParty/httplib.h"
+#endif // WITH_EDITOR
 #include "zeno/unreal/ZenoRemoteTypes.h"
 THIRD_PARTY_INCLUDES_END
 
@@ -37,7 +39,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = Zeno)
 	FZenoLiveLinkSetting Settings;
 
+#if WITH_EDITORONLY_DATA
 	TOptional<httplib::Client> HttpClient;
+#endif // WITH_EDITORONLY_DATA
 
 	TMap<FString, zeno::remote::SubjectContainer> OwnedSubjects;
 

@@ -1,4 +1,4 @@
-﻿#include "UI/EnumComboBox.h"
+﻿#include "UI/Common/EnumComboBox.h"
 
 #define LOCTEXT_NAMESPACE "SEnumComboBox"
 

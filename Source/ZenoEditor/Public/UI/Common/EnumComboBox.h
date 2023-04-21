@@ -6,7 +6,7 @@
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/Input/SComboBox.h"
 
-class ZENOENGINE_API SEnumComboBox : public SBox
+class ZENOEDITOR_API SEnumComboBox : public SBox
 {
 public:
 	SLATE_BEGIN_ARGS(SEnumComboBox)
