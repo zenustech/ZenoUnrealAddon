@@ -35,7 +35,9 @@ public:
 
 	TAsyncResult<zeno::remote::Diff> GetDiffFromRemote(int32 LocalVersion = 0) const;
 
-	TAsyncResult<zeno::remote::SubjectContainerList> GetDataFromRemote(const TArray<FString>& InSubjectNames);
+	TAsyncResult<zeno::remote::SubjectContainerList> GetDataFromRemote(const TArray<FString>& InSubjectNames) const;
+
+	TAsyncResult<bool> SetSubjectToRemote(zeno::remote::SubjectContainerList& InList) const;
 
 protected:
 	FRequest CreateNewRequest(const FString& InPath, EZenoHttpVerb InVerb = EZenoHttpVerb::Get, const TArray<FZenoLiveLinkKeyValuePair>& InParam = {}) const;

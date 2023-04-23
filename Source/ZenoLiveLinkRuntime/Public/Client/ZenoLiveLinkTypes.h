@@ -66,3 +66,14 @@ struct ZENOLIVELINKRUNTIME_API FZenoLiveLinkKeyValuePair
 		return FString::Printf(TEXT("%s=%s"), *InSelf.Key, *InSelf.Value);
 	}
 };
+
+template <typename T>
+struct TWrappedPrimitiveType
+{
+	T Data;
+
+	TWrappedPrimitiveType(T InData) : Data(InData) {}
+
+	T operator*() { return Data; }
+	T operator=(T NewData) { return Data = NewData; }
+};
