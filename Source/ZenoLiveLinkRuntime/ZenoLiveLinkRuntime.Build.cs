@@ -23,10 +23,11 @@ public class ZenoLiveLinkRuntime : ModuleRules
                 "Slate",
                 "SlateCore",
                 "LiveLinkInterface",
+                "HTTP",
             }
         );
         
-        // For shared header (ZenoUnrealTypes.h)
+        // For shared header (ZenoRemoteTypes.h)
         // Pay attention, this module shouldn't use exported symbols from Zeno.
         PrivateIncludePaths.AddRange(new string[]
         {

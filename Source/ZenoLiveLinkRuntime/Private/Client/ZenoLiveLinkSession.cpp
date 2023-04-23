@@ -10,10 +10,22 @@ void UZenoLiveLinkSession::Init(const FZenoLiveLinkSetting& ConnectionSetting)
 	bInitialized = true;
 	
 	Settings = ConnectionSetting;
+	
+	HttpClient = NewObject<UZenoHttpClient>();
+	HttpClient->SetBaseEndpoint(FString::Printf(TEXT("http%s://%s:%d"), Settings.Protocol == EZenoHttpProtocolType::Http ? TEXT("") : TEXT("s"), *Settings.IPAddress, Settings.HTTPPortNumber));
+	AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [this]
+	{
+		const auto Future = HttpClient->GetDiffFromRemote();
+		Future.Wait();
+		const auto Res = Future.Get();
+		int32 Output = 0;
+		if (Res.IsSet())
+		{
+			Output = Res->data.size();
+		}
+		UE_LOG(LogTemp, Warning, TEXT("abab: %d"), Output);
+	});
 
-#if WITH_EDITORONLY_DATA
-	HttpClient = httplib::Client(std::string { TCHAR_TO_ANSI(*FString::Printf(TEXT("http://%s:%d"), *Settings.IPAddress, Settings.HTTPPortNumber)) });
-#endif // WITH_EDITORONLY_DATA
 	// TODO [darc] : Request for session key :
 }
 

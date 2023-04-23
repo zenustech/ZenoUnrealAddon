@@ -6,10 +6,9 @@
 #include "ZenoLiveLinkTypes.h"
 #include "UObject/Object.h"
 #include <atomic>
+
+#include "ZenoHttpClient.h"
 THIRD_PARTY_INCLUDES_START
-#if WITH_EDITOR
-#include "ThirdParty/httplib.h"
-#endif // WITH_EDITOR
 #include "zeno/unreal/ZenoRemoteTypes.h"
 THIRD_PARTY_INCLUDES_END
 
@@ -33,15 +32,14 @@ public:
 protected:
 	std::atomic<bool> bInitialized;
 	
-	UPROPERTY(VisibleAnywhere, AdvancedDisplay)
+	UPROPERTY(VisibleAnywhere, AdvancedDisplay, Category = Zeno)
 	FGuid Guid;
 	
 	UPROPERTY(EditAnywhere, Category = Zeno)
 	FZenoLiveLinkSetting Settings;
 
-#if WITH_EDITORONLY_DATA
-	TOptional<httplib::Client> HttpClient;
-#endif // WITH_EDITORONLY_DATA
+	UPROPERTY(VisibleAnywhere, AdvancedDisplay, Category = Zeno)
+	UZenoHttpClient* HttpClient;
 
 	TMap<FString, zeno::remote::SubjectContainer> OwnedSubjects;
 
