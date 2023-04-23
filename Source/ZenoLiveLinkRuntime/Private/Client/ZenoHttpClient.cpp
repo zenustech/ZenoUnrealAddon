@@ -17,29 +17,29 @@ void UZenoHttpClient::SetBaseEndpoint(const FString& InBaseEndpoint)
 	BaseURL = InBaseEndpoint;
 }
 
-TSharedFuture<TOptional<zeno::remote::Diff>> UZenoHttpClient::GetDiffFromRemote(int32 LocalVersion/* = 0 */)
+UZenoHttpClient::TAsyncResult<zeno::remote::Diff> UZenoHttpClient::GetDiffFromRemote(int32 LocalVersion/* = 0 */) const
 {
-	const FRequest Request = CreateNewRequest("/subject/diff", EZenoHttpVerb::Get, { { "client_version", "client_version" } });
-	TSharedRef<TPromise<TOptional<zeno::remote::Diff>>> Promise = MakeShared<TPromise<TOptional<zeno::remote::Diff>>>();
-	TSharedFuture<TOptional<zeno::remote::Diff>> OutFuture = Promise->GetFuture().Share();
-	Request->OnProcessRequestComplete().BindLambda([Promise] (
-		FHttpRequestPtr Req,
-		FHttpResponsePtr Res,
-		bool ConnectedSuccessfully) mutable 
+	const FRequest Request = CreateNewRequest("/subject/diff", EZenoHttpVerb::Get, { { "client_version", FString::Printf(TEXT("%d"), LocalVersion) } });
+	TSharedPromise<zeno::remote::Diff> Promise = CreateNewPromise<zeno::remote::Diff>();
+	TAsyncResult<zeno::remote::Diff> OutFuture = Promise->GetFuture().Share();
+	Request->OnProcessRequestComplete().BindLambda(BuildProcessResponse(Promise));
+	Request->ProcessRequest();
+	return OutFuture;
+}
+
+UZenoHttpClient::TAsyncResult<zeno::remote::SubjectContainerList> UZenoHttpClient::GetDataFromRemote(
+	const TArray<FString>& InSubjectNames)
+{
+	TArray<FZenoLiveLinkKeyValuePair> Params;
+	Params.Reserve(InSubjectNames.Num());
+	for (const FString& Name : InSubjectNames)
 	{
-		TOptional<zeno::remote::Diff> Result;
-		if (ConnectedSuccessfully)
-		{
-			const TArray<uint8>& Content = Res->GetContent();
-			std::error_code Err;
-			Result = msgpack::unpack<zeno::remote::Diff>(Content.GetData(), Content.Num(), Err);
-			if (Err)
-			{
-				Result.Reset();
-			}
-		}
-		Promise->SetValue(Result);
-	});
+		Params.Add({ "key", Name });
+	}
+	const FRequest Request = CreateNewRequest("/subject/fetch", EZenoHttpVerb::Get, Params);
+	TSharedPromise<zeno::remote::SubjectContainerList> Promise = CreateNewPromise<zeno::remote::SubjectContainerList>();
+	TAsyncResult<zeno::remote::SubjectContainerList> OutFuture = Promise->GetFuture().Share();
+	Request->OnProcessRequestComplete().BindLambda(BuildProcessResponse(Promise));
 	Request->ProcessRequest();
 	return OutFuture;
 }
