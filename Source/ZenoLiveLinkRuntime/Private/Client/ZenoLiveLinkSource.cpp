@@ -1,7 +1,9 @@
 ﻿#include "Client/ZenoLiveLinkSource.h"
 
+#include "ILiveLinkClient.h"
 #include "Client/ZenoLiveLinkClientSubsystem.h"
 #include "Client/ZenoLiveLinkSession.h"
+#include "Client/Role/LiveLinkZenoRemoteRole.h"
 
 #define LOCTEXT_NAMESPACE "FZenoLiveLinkSource"
 
@@ -99,12 +101,21 @@ void FZenoLiveLinkSource::AsyncUpdateSubjectList()
 			UE_LOG(LogTemp, Error, TEXT("Http request failed, skipping sync."));
 			return;
 		}
-		EncounteredSubjects.Reset();
+		
 		for (const std::string& Name : Diff->data)
 		{
 			EncounteredSubjects.Add(FName { Name.c_str() });
 		}
 		CurrentHistoryIndex = Diff->CurrentHistory;
+
+		// Push updated subject to live link
+		for (const FName& Name : EncounteredSubjects)
+		{
+			FLiveLinkStaticDataStruct StaticData(FLiveLinkZenoDummyStaticData::StaticStruct());
+			FLiveLinkFrameDataStruct FrameData(FLiveLinkZenoDummyFrameData::StaticStruct());
+			Client->PushSubjectStaticData_AnyThread({ SourceGuid, Name }, ULiveLinkZenoDummyRole::StaticClass(), MoveTemp(StaticData));
+			Client->PushSubjectFrameData_AnyThread({ SourceGuid, Name }, MoveTemp(FrameData));
+		}
 	});
 }
 

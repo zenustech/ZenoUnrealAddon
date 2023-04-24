@@ -86,4 +86,5 @@ struct TWrappedPrimitiveType
 
 using FLiveLinkZenoDummyStaticData = FLiveLinkBaseStaticData;
 using FLiveLinkZenoDummyFrameData = FLiveLinkBaseFrameData;
-using FLiveLInkZenoDummyBlueprintData = FLiveLinkBaseBlueprintData;
+using FLiveLinkZenoDummyBlueprintData = FLiveLinkBaseBlueprintData;
+using ULiveLinkZenoDummyRole = class ULiveLinkZenoRemoteRole;
