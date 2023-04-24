@@ -24,6 +24,7 @@ public:
 
 	FGuid NewSession(const FZenoLiveLinkSetting& InConnectionSetting);
 	bool RequestCloseSession(FGuid InGuid);
+	UZenoLiveLinkSession* GetSession(FGuid InGuid);
 
 private:
 	UPROPERTY(EditAnywhere, Category = Zeno, DisplayName = "Connection Settings")

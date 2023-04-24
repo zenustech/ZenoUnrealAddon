@@ -17,6 +17,11 @@ void UZenoLiveLinkSession::Init(const FZenoLiveLinkSetting& ConnectionSetting)
 	// TODO [darc] : Request for session key :
 }
 
+UZenoHttpClient* UZenoLiveLinkSession::GetClient() const
+{
+	return HttpClient;
+}
+
 UZenoLiveLinkSession* UZenoLiveLinkSession::CreateSession(const FZenoLiveLinkSetting& ConnectionSetting, const FGuid Guid)
 {
 	UZenoLiveLinkSession* NewSession = NewObject<UZenoLiveLinkSession>();

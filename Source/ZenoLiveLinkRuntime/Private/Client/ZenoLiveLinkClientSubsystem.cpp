@@ -41,3 +41,12 @@ bool UZenoLiveLinkClientSubsystem::RequestCloseSession(FGuid InGuid)
 	ConnectionSessions.Remove(InGuid);
 	return true;
 }
+
+UZenoLiveLinkSession* UZenoLiveLinkClientSubsystem::GetSession(FGuid InGuid)
+{
+	if (ConnectionSessions.Contains(InGuid))
+	{
+		return ConnectionSessions[InGuid];
+	}
+	return nullptr;
+}

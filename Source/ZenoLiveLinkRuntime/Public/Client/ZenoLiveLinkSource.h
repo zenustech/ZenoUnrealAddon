@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "ILiveLinkSource.h"
 
+class UZenoLiveLinkSession;
 struct FZenoLiveLinkSetting;
 
 /**
@@ -22,6 +23,13 @@ public:
 	virtual FText GetSourceType() const override;
 	virtual FText GetSourceMachineName() const override;
 	// ~Impl ILiveLinkSource End
+
+	UZenoLiveLinkSession* GetSession() const;
+
+	/** Check does this source contain specified subject name */
+	bool HasSubject(FName InName) const;
+
+	void AsyncUpdateSubjectList();
 
 protected:
 	static FZenoLiveLinkSetting& GetMutableConnectionSetting();
@@ -46,5 +54,9 @@ protected:
 	TSet<FName> EncounteredSubjects;
 
 	FGuid SessionGuid;
+
+	FCriticalSection UpdateSubjectListLock;
+	double LastUpdateSubjectListTime = .0;
+	int32 CurrentHistoryIndex = 0;
 	
 };

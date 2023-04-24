@@ -1,4 +1,5 @@
 #pragma once
+#include "LiveLinkTypes.h"
 
 #include "ZenoLiveLinkTypes.generated.h"
 
@@ -35,11 +36,11 @@ struct ZENOLIVELINKRUNTIME_API FZenoLiveLinkSetting
 	GENERATED_BODY()
 
 	/** IP address of the zeno source */
-	UPROPERTY(EditAnywhere, Category = "Connection Settings")
+	UPROPERTY(EditAnywhere, Category = "Connection Settings", DisplayName = "Host Address")
 	FString IPAddress = TEXT("127.0.0.1");
 
 	/** TCP port number */
-	UPROPERTY(EditAnywhere, Category = "Connection Settings")
+	UPROPERTY(EditAnywhere, Category = "Connection Settings", DisplayName = "Port")
 	uint16 HTTPPortNumber = 23343;
 
 	/** While deploy zeno server to public, it might behind reserve proxy */
@@ -49,6 +50,11 @@ struct ZENOLIVELINKRUNTIME_API FZenoLiveLinkSetting
 	/** Auth token */
 	UPROPERTY(EditAnywhere, Category = "Connection Settings")
 	FString Token = TEXT("ZENO_DEFAULT_TOKEN");
+
+	/** Subject list update interval. In millisecond(s) */
+	UPROPERTY(EditAnywhere, Category = "Connection Settings", meta = (Units = "ms"))
+	int32 UpdateInterval = 3000;
+	
 };
 
 USTRUCT(BlueprintType)
@@ -77,3 +83,7 @@ struct TWrappedPrimitiveType
 	T operator*() { return Data; }
 	T operator=(T NewData) { return Data = NewData; }
 };
+
+using FLiveLinkZenoDummyStaticData = FLiveLinkBaseStaticData;
+using FLiveLinkZenoDummyFrameData = FLiveLinkBaseFrameData;
+using FLiveLInkZenoDummyBlueprintData = FLiveLinkBaseBlueprintData;

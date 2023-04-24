@@ -29,6 +29,8 @@ public:
 	 */
 	void Init(const FZenoLiveLinkSetting& ConnectionSetting);
 
+	UZenoHttpClient* GetClient() const;
+
 protected:
 	std::atomic<bool> bInitialized;
 	
