@@ -21,6 +21,7 @@ public class ZenoLiveLinkEditor : ModuleRules
                 "Slate",
                 "SlateCore",
                 "ZenoLiveLinkRuntime",
+                "ZenoEditor",
             }
         );
     }

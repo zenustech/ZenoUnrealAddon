@@ -43,6 +43,7 @@ public class ZenoEditor : ModuleRules
                 "MeshUtilities",
 				"DesktopPlatform",
 				"UObjectPlugin",
+                "ZenoLiveLinkRuntime",
             }
         );
         
