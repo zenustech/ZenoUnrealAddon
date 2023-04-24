@@ -2,3 +2,7 @@
 
 
 #include "Blueprint/Panel/ZenoLandscapeObject.h"
+
+UZenoLandscapeObject::UZenoLandscapeObject()
+{
+}

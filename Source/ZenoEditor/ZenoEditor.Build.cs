@@ -45,6 +45,7 @@ public class ZenoEditor : ModuleRules
 				"UObjectPlugin",
                 "ZenoLiveLinkRuntime",
                 "EditorFramework",
+                "LiveLinkInterface",
             }
         );
         

@@ -1,4 +1,6 @@
 #pragma once
+#include <zeno/unreal/ZenoRemoteTypes.h>
+
 #include "LiveLinkTypes.h"
 
 #include "ZenoLiveLinkTypes.generated.h"

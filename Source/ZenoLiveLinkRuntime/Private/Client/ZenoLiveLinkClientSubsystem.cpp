@@ -50,3 +50,15 @@ UZenoLiveLinkSession* UZenoLiveLinkClientSubsystem::GetSession(FGuid InGuid)
 	}
 	return nullptr;
 }
+
+UZenoLiveLinkSession* UZenoLiveLinkClientSubsystem::FindSessionWithSubject(const FName& InName)
+{
+	for (const auto& Pair : ConnectionSessions)
+	{
+		if (IsValid(Pair.Value) && Pair.Value->IsInitialized() && Pair.Value->HasSubject(InName.ToString()))
+		{
+			return Pair.Value;
+		}
+	}
+	return nullptr;
+}

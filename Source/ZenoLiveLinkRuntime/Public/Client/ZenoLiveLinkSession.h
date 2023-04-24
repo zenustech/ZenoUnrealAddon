@@ -31,6 +31,10 @@ public:
 
 	UZenoHttpClient* GetClient() const;
 
+	bool IsInitialized() const;
+
+	bool HasSubject(const FString& InName) const;
+
 protected:
 	std::atomic<bool> bInitialized;
 	

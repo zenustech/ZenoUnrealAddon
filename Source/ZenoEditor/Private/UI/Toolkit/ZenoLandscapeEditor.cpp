@@ -40,7 +40,7 @@ void UZenoLandscapeEditor::Register()
 	GLevelEditorModeTools().OnEditorModeIDChanged().AddUObject(this, &UZenoLandscapeEditor::OnEditorModeChanged);
 }
 
-void UZenoLandscapeEditor::OnEditorModeChanged(const FEditorModeID& InModeID, const bool bIsEnteringMode) const
+void UZenoLandscapeEditor::OnEditorModeChanged(const FEditorModeID& InModeID, const bool bIsEnteringMode)
 {
 	if (InModeID == FBuiltinEditorModes::EM_Landscape)
 	{
@@ -54,6 +54,7 @@ void UZenoLandscapeEditor::OnEditorModeChanged(const FEditorModeID& InModeID, co
 			{
 				Tab->RequestCloseTab();
 			}
+			MakeDockTab();
 		}
 	}
 }

@@ -19,7 +19,7 @@ public:
 	virtual void Init() override;
 	virtual void Register() override;
 
-	void OnEditorModeChanged(const FEditorModeID& InModeID, bool bIsEnteringMode) const;
+	void OnEditorModeChanged(const FEditorModeID& InModeID, bool bIsEnteringMode);
 
 private:
 	UPROPERTY(VisibleAnywhere, Category = Zeno)

@@ -22,6 +22,16 @@ UZenoHttpClient* UZenoLiveLinkSession::GetClient() const
 	return HttpClient;
 }
 
+bool UZenoLiveLinkSession::IsInitialized() const
+{
+	return bInitialized.load();
+}
+
+bool UZenoLiveLinkSession::HasSubject(const FString& InName) const
+{
+	return OwnedSubjects.Contains(InName);
+}
+
 UZenoLiveLinkSession* UZenoLiveLinkSession::CreateSession(const FZenoLiveLinkSetting& ConnectionSetting, const FGuid Guid)
 {
 	UZenoLiveLinkSession* NewSession = NewObject<UZenoLiveLinkSession>();
