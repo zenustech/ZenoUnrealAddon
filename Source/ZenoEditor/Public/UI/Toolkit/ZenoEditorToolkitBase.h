@@ -4,7 +4,7 @@
 #include "UObject/Object.h"
 #include "ZenoEditorToolkitBase.generated.h"
 
-UCLASS()
+UCLASS(Abstract)
 class ZENOEDITOR_API UZenoEditorToolkitBase : public UObject
 {
 	GENERATED_BODY()
@@ -46,11 +46,16 @@ public:
 	virtual void Register();
 	virtual void Unregister();
 
-private:
+	/**
+	 * @brief Called on register
+	 */
+	virtual void Init();
+
+protected:
 	TMap<FName, TSharedRef<FUICommandInfo>> SubModes;
 	FName CurrentMode;
 
-	UPROPERTY(Category = Zeno)
+	UPROPERTY(VisibleAnywhere, Category = Zeno)
 	UObject* PropertyObject;
 
 	TSharedPtr<SDockTab> Slate_ToolkitDockTab;

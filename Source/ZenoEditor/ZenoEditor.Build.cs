@@ -44,6 +44,7 @@ public class ZenoEditor : ModuleRules
 				"DesktopPlatform",
 				"UObjectPlugin",
                 "ZenoLiveLinkRuntime",
+                "EditorFramework",
             }
         );
         

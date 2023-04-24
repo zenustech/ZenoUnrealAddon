@@ -48,7 +48,7 @@ bool UZenoEditorToolkitBase::CheckPropertyVisibility(const FPropertyAndParent& I
 	{
 		TArray<FString> ShowForModes;
 		Property.GetMetaData(ShowForModesName).ParseIntoArray(ShowForModes, TEXT(","), true);
-		if (ShowForModes.Contains(GetCurrentMode()))
+		if (ShowForModes.Contains(GetCurrentMode().ToString()))
 		{
 			return true;
 		}
@@ -135,11 +135,17 @@ void UZenoEditorToolkitBase::Register()
 	)
 	.SetDisplayName(GetDisplayName())
 	.SetMenuType(ETabSpawnerMenuType::Hidden);
+	Init();
 }
 
 void UZenoEditorToolkitBase::Unregister()
 {
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(GetUniqueName());
+}
+
+void UZenoEditorToolkitBase::Init()
+{
+	PURE_VIRTUAL(UZenoEditorToolkitBase::Init);
 }
 
 #undef LOCTEXT_NAMESPACE

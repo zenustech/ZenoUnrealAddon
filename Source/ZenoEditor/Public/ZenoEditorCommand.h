@@ -11,4 +11,6 @@ public:
 	TSharedPtr<FUICommandInfo> Debug;
 	TSharedPtr<FUICommandInfo> ImportWavefrontMesh;
 	TSharedPtr<FUICommandInfo> ImportZslFile;
+	// Landscape
+	TSharedPtr<FUICommandInfo> ImportHeightField;
 };
