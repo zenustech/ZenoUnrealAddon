@@ -17,17 +17,16 @@ void UZenoHttpClient::SetBaseEndpoint(const FString& InBaseEndpoint)
 	BaseURL = InBaseEndpoint;
 }
 
-UZenoHttpClient::TAsyncResult<zeno::remote::Diff> UZenoHttpClient::GetDiffFromRemote(int32 LocalVersion/* = 0 */) const
+TSharedPromise<zeno::remote::Diff> UZenoHttpClient::GetDiffFromRemote(int32 LocalVersion/* = 0 */) const
 {
 	const FRequest Request = CreateNewRequest("/subject/diff", EZenoHttpVerb::Get, { { "client_version", FString::Printf(TEXT("%d"), LocalVersion) } });
 	const TSharedPromise<zeno::remote::Diff> Promise = CreateNewPromise<zeno::remote::Diff>();
-	TAsyncResult<zeno::remote::Diff> OutFuture = Promise->GetFuture().Share();
 	Request->OnProcessRequestComplete().BindLambda(BuildProcessResponse(Promise));
 	Request->ProcessRequest();
-	return OutFuture;
+	return Promise;
 }
 
-UZenoHttpClient::TAsyncResult<zeno::remote::SubjectContainerList> UZenoHttpClient::GetDataFromRemote(
+TSharedPromise<zeno::remote::SubjectContainerList> UZenoHttpClient::GetDataFromRemote(
 	const TArray<FString>& InSubjectNames) const
 {
 	TArray<FZenoLiveLinkKeyValuePair> Params;
@@ -38,18 +37,16 @@ UZenoHttpClient::TAsyncResult<zeno::remote::SubjectContainerList> UZenoHttpClien
 	}
 	const FRequest Request = CreateNewRequest("/subject/fetch", EZenoHttpVerb::Get, Params);
 	const TSharedPromise<zeno::remote::SubjectContainerList> Promise = CreateNewPromise<zeno::remote::SubjectContainerList>();
-	TAsyncResult<zeno::remote::SubjectContainerList> OutFuture = Promise->GetFuture().Share();
 	Request->OnProcessRequestComplete().BindLambda(BuildProcessResponse(Promise));
 	Request->ProcessRequest();
-	return OutFuture;
+	return Promise;
 }
 
-UZenoHttpClient::TAsyncResult<bool> UZenoHttpClient::SetSubjectToRemote(
+TSharedPromise<bool> UZenoHttpClient::SetSubjectToRemote(
 	zeno::remote::SubjectContainerList& InList) const
 {
 	const FRequest Request = CreateNewRequest("/subject/push", EZenoHttpVerb::Post);
 	const TSharedPromise<bool> Promise = CreateNewPromise<bool>();
-	TAsyncResult<bool> OutFuture = Promise->GetFuture().Share();
 	std::vector<uint8> Buffer = msgpack::pack(InList);
 	const TArray UBuffer { Buffer.data(), static_cast<TArray<uint8>::SizeType>(Buffer.size()) };
 	Request->SetContent(UBuffer);
@@ -66,7 +63,7 @@ UZenoHttpClient::TAsyncResult<bool> UZenoHttpClient::SetSubjectToRemote(
 		Promise->SetValue(Result);
 	});
 	Request->ProcessRequest();
-	return OutFuture;
+	return Promise;
 }
 
 UZenoHttpClient::FRequest UZenoHttpClient::CreateNewRequest(const FString& InPath, EZenoHttpVerb InVerb/* = EZenoHttpVerb::Get */, const TArray<FZenoLiveLinkKeyValuePair>& InParam/* = {} */) const

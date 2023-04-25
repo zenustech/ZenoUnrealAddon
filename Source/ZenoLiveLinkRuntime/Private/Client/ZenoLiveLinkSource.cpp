@@ -88,7 +88,8 @@ void FZenoLiveLinkSource::AsyncUpdateSubjectList()
 	{
 		FScopeLock Lock { &UpdateSubjectListLock };
 		UZenoLiveLinkSession* Session = GetSession();
-		const UZenoHttpClient::TAsyncResult<zeno::remote::Diff> FutureDiff = Session->GetClient()->GetDiffFromRemote(CurrentHistoryIndex);
+		const TSharedPromise<zeno::remote::Diff> PromiseDiff = Session->GetClient()->GetDiffFromRemote(CurrentHistoryIndex);
+		const TResultFuture<zeno::remote::Diff> FutureDiff = PromiseDiff->GetFuture();
 		FutureDiff.WaitFor(FTimespan::FromSeconds(5)); // TODO [darc] : remove hardcoded timeout :
 		if (!FutureDiff.IsReady())
 		{

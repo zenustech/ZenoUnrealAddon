@@ -88,24 +88,25 @@ TSharedPromise<T> UZenoLiveLinkClientSubsystem::TryLoadSubjectRemotely(const FNa
 		return Promise;
 	}
 
-	UZenoHttpClient::TAsyncResult<zeno::remote::SubjectContainerList> List = Client->GetDataFromRemote({ InName.ToString() });
-
-	AsyncTask(ENamedThreads::AnyBackgroundHiPriTask, [List, Promise, InName, RequiredSubjectType]
+	TSharedPromise<zeno::remote::SubjectContainerList> List = Client->GetDataFromRemote({ InName.ToString() });
+	List->GetFuture().Then([Promise, InName, RequiredSubjectType] (TResultFuture<zeno::remote::SubjectContainerList> Result)
 	{
-		List.WaitFor(FTimespan::FromSeconds(5));
-		if (!List.IsReady())
+		if (!Result.IsReady() || !Result.Get().IsSet())
 		{
 			UE_LOG(LogTemp, Error, TEXT("Failed to fetch from zeno."));
 			Promise->EmplaceValue();
 			return;
 		}
-		
-		for (const auto& Subject : List.Get()->Data)
+		// Holding this with reference will lead to bug value. WTF?
+		zeno::remote::SubjectContainerList DataList = Result.Get().GetValue();
+		for (int32 Idx = 0; Idx < DataList.Data.size(); ++Idx)
 		{
-			if (FString{ Subject.Name.c_str() }.Equals(InName.ToString()) && Subject.Type == static_cast<uint16>(RequiredSubjectType))
+			const auto& [Name, Type, Data] = DataList.Data[Idx];
+			const int16 FuckYouUE = Type - static_cast<int16>(RequiredSubjectType);
+			if ( FString { Name.c_str() }.Equals(InName.ToString()) && FuckYouUE == 0)
 			{
 				std::error_code Err;
-				T Res = msgpack::unpack<T>(Subject.Data.data(), Subject.Data.size(), Err);
+				T Res = msgpack::unpack<T>(Data.data(), Data.size(), Err);
 				if (!Err)
 				{
 					Promise->EmplaceValue(MoveTempIfPossible(Res));
