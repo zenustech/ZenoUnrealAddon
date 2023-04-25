@@ -79,5 +79,6 @@ UZenoHttpClient::FRequest UZenoHttpClient::CreateNewRequest(const FString& InPat
 	const FString ParamString = ParamString.JoinBy(InParam, TEXT("&"), FZenoLiveLinkKeyValuePair::ToString);
 	NewRequest->SetURL(FString::Printf(TEXT("%s%s%s%s"), *BaseURL, *InPath, InParam.IsEmpty() ? TEXT("") : TEXT("?"), *ParamString));
 	NewRequest->SetHeader(TEXT("Content-Type"), TEXT("application/x-zeno-msgpack"));
+	NewRequest->SetTimeout(5.0f);
 	return NewRequest;
 }

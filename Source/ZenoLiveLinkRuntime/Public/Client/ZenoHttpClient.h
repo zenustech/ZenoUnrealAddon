@@ -82,3 +82,13 @@ auto UZenoHttpClient::BuildProcessResponse(TSharedPromise<T> Context)
 		Context->SetValue(Result);
 	};
 }
+
+template <typename T>
+using TAsyncResult = UZenoHttpClient::TAsyncResult<T>;
+
+template <typename T>
+using TSharedPromise = UZenoHttpClient::TSharedPromise<T>;
+
+template <typename T>
+using TResultFuture = TFuture<TOptional<T>>;
+

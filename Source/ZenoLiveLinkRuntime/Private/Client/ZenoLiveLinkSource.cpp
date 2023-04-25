@@ -87,7 +87,7 @@ void FZenoLiveLinkSource::AsyncUpdateSubjectList()
 	AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [this]
 	{
 		FScopeLock Lock { &UpdateSubjectListLock };
-		const UZenoLiveLinkSession* Session = GetSession();
+		UZenoLiveLinkSession* Session = GetSession();
 		const UZenoHttpClient::TAsyncResult<zeno::remote::Diff> FutureDiff = Session->GetClient()->GetDiffFromRemote(CurrentHistoryIndex);
 		FutureDiff.WaitFor(FTimespan::FromSeconds(5)); // TODO [darc] : remove hardcoded timeout :
 		if (!FutureDiff.IsReady())
@@ -108,13 +108,16 @@ void FZenoLiveLinkSource::AsyncUpdateSubjectList()
 		}
 		CurrentHistoryIndex = Diff->CurrentHistory;
 
-		// Push updated subject to live link
 		for (const FName& Name : EncounteredSubjects)
 		{
+			// Push updated subject to live link
 			FLiveLinkStaticDataStruct StaticData(FLiveLinkZenoDummyStaticData::StaticStruct());
 			FLiveLinkFrameDataStruct FrameData(FLiveLinkZenoDummyFrameData::StaticStruct());
 			Client->PushSubjectStaticData_AnyThread({ SourceGuid, Name }, ULiveLinkZenoDummyRole::StaticClass(), MoveTemp(StaticData));
 			Client->PushSubjectFrameData_AnyThread({ SourceGuid, Name }, MoveTemp(FrameData));
+
+			// Sync with session
+			Session->OwnedSubjects.Add(Name.ToString());
 		}
 	});
 }

@@ -51,5 +51,6 @@ protected:
 
 public:
 	static UZenoLiveLinkSession* CreateSession(const FZenoLiveLinkSetting& ConnectionSetting, FGuid Guid);
-	
+
+	friend class FZenoLiveLinkSource;
 };

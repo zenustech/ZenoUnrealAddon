@@ -50,7 +50,7 @@ public:
 	UZenoLiveLinkSession* FindSessionWithSubject(const FName& InName);
 
 	template <typename T>
-	TSharedPtr<T> TryLoadSubjectRemotely(const FName& InName);
+	TSharedPromise<T> TryLoadSubjectRemotely(const FName& InName);
 
 private:
 	UPROPERTY(EditAnywhere, Category = Zeno, DisplayName = "Connection Settings")
@@ -63,51 +63,58 @@ private:
 };
 
 template <typename T>
-TSharedPtr<T> UZenoLiveLinkClientSubsystem::TryLoadSubjectRemotely(const FName& InName)
+TSharedPromise<T> UZenoLiveLinkClientSubsystem::TryLoadSubjectRemotely(const FName& InName)
 {
+	TSharedPromise<T> Promise = MakeShared<TPromise<TOptional<T>>>();
+	
 	CONSTEXPR zeno::remote::ESubjectType RequiredSubjectType = zeno::remote::TGetClassSubjectType<T>::Value;
 	if (RequiredSubjectType == zeno::remote::ESubjectType::Invalid || RequiredSubjectType >= zeno::remote::ESubjectType::Num)
 	{
-		return nullptr;
+		Promise->EmplaceValue();
+		return Promise;
 	}
 
 	const UZenoLiveLinkSession* Session = FindSessionWithSubject(InName);
 	if (!IsValid(Session))
 	{
-		return nullptr;
+		Promise->EmplaceValue();
+		return Promise;
 	}
 
 	const UZenoHttpClient* Client = Session->GetClient();
 	if (!IsValid(Client))
 	{
-		return nullptr;
+		Promise->EmplaceValue();
+		return Promise;
 	}
 
 	UZenoHttpClient::TAsyncResult<zeno::remote::SubjectContainerList> List = Client->GetDataFromRemote({ InName.ToString() });
 
-	List.WaitFor(FTimespan::FromSeconds(5));
-	if (!List.IsReady())
+	AsyncTask(ENamedThreads::AnyBackgroundHiPriTask, [List, Promise, InName, RequiredSubjectType]
 	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to fetch from zeno."));
-		return nullptr;
-	}
-	if (!List.Get().IsSet())
-	{
-		UE_LOG(LogTemp, Error, TEXT("Failed to fetch from zeno."));
-		return nullptr;
-	}
-	for (const auto& Subject : List.Get()->Data)
-	{
-		if (FString{ Subject.Name.c_str() }.Equals(InName.ToString()) && Subject.Type == static_cast<uint16>(RequiredSubjectType))
+		List.WaitFor(FTimespan::FromSeconds(5));
+		if (!List.IsReady())
 		{
-			std::error_code Err;
-			T Res = msgpack::unpack<T>(Subject.Data.data(), Subject.Data.size(), Err);
-			if (!Err)
+			UE_LOG(LogTemp, Error, TEXT("Failed to fetch from zeno."));
+			Promise->EmplaceValue();
+			return;
+		}
+		
+		for (const auto& Subject : List.Get()->Data)
+		{
+			if (FString{ Subject.Name.c_str() }.Equals(InName.ToString()) && Subject.Type == static_cast<uint16>(RequiredSubjectType))
 			{
-				return MakeShared<T>(MoveTemp(Res));
+				std::error_code Err;
+				T Res = msgpack::unpack<T>(Subject.Data.data(), Subject.Data.size(), Err);
+				if (!Err)
+				{
+					Promise->EmplaceValue(MoveTempIfPossible(Res));
+					return;
+				}
 			}
 		}
-	}
-	
-	return nullptr;
+		Promise->EmplaceValue();
+	});
+
+	return Promise;
 }
