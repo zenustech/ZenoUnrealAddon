@@ -39,11 +39,11 @@ public:
 
 	TSharedPromise<bool> SetSubjectToRemote(zeno::remote::SubjectContainerList& InList) const;
 
-protected:
-	FRequest CreateNewRequest(const FString& InPath, EZenoHttpVerb InVerb = EZenoHttpVerb::Get, const TArray<FZenoLiveLinkKeyValuePair>& InParam = {}) const;
-
 	template <typename T>
 	static TSharedPromise<T> CreateNewPromise();
+	
+protected:
+	FRequest CreateNewRequest(const FString& InPath, EZenoHttpVerb InVerb = EZenoHttpVerb::Get, const TArray<FZenoLiveLinkKeyValuePair>& InParam = {}) const;
 
 	template <typename T>
 	static auto BuildProcessResponse(TSharedPromise<T> Context);
@@ -91,4 +91,3 @@ using TSharedPromise = UZenoHttpClient::TSharedPromise<T>;
 
 template <typename T>
 using TResultFuture = TFuture<TOptional<T>>;
-

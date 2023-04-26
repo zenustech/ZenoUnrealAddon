@@ -46,6 +46,8 @@ public class ZenoEditor : ModuleRules
                 "ZenoLiveLinkRuntime",
                 "EditorFramework",
                 "LiveLinkInterface",
+                "Landscape",
+                "LandscapeEditor",
             }
         );
         
