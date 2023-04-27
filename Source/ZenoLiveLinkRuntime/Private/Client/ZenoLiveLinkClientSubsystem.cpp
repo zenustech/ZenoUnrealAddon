@@ -62,3 +62,9 @@ UZenoLiveLinkSession* UZenoLiveLinkClientSubsystem::FindSessionWithSubject(const
 	}
 	return nullptr;
 }
+
+UZenoLiveLinkSession* UZenoLiveLinkClientSubsystem::GetSessionFallback()
+{
+	if (ConnectionSessions.IsEmpty()) return nullptr;
+	return ConnectionSessions.begin()->Value;
+}

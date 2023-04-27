@@ -49,6 +49,12 @@ public:
 	 */
 	UZenoLiveLinkSession* FindSessionWithSubject(const FName& InName);
 
+	/**
+	 * @brief Get a fallback session
+	 * @return return nullptr if Sessions if empty
+	 */
+	UZenoLiveLinkSession* GetSessionFallback();
+
 	template <typename T>
 	TSharedPromise<T> TryLoadSubjectRemotely(const FName& InName);
 
@@ -65,6 +71,7 @@ private:
 template <typename T>
 TSharedPromise<T> UZenoLiveLinkClientSubsystem::TryLoadSubjectRemotely(const FName& InName)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(UZenoLiveLinkClientSubsystem::TryLoadSubjectRemotely);
 	TSharedPromise<T> Promise = MakeShared<TPromise<TOptional<T>>>();
 	
 	CONSTEXPR zeno::remote::ESubjectType RequiredSubjectType = zeno::remote::TGetClassSubjectType<T>::Value;

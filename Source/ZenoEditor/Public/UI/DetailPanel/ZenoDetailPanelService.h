@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-class FZenoDetailPanelServiceManager
+class ZENOEDITOR_API FZenoDetailPanelServiceManager
 {
 public:
 	static FZenoDetailPanelServiceManager& Get();
@@ -14,6 +14,8 @@ public:
 
 private:
 	TMap<FName, FOnGetDetailCustomizationInstance> DetailCustomizations;
+
+	bool bInitialized = false;
 
 	friend class FZenoEditorModule;
 };

@@ -2,7 +2,7 @@
 
 #include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
-#include "ZenoDetailPanelService.h"
+#include "UI/DetailPanel/ZenoDetailPanelService.h"
 #include "ZenoGraphActor.h"
 #include "ZenoGraphAsset.h"
 #include "Blueprint/ZenoGraphLibrary.h"

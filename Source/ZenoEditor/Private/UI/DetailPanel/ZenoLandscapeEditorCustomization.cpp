@@ -6,7 +6,7 @@
 #include "Landscape.h"
 #include "LandscapeProxy.h"
 #include "SlateOptMacros.h"
-#include "ZenoDetailPanelService.h"
+#include "UI/DetailPanel/ZenoDetailPanelService.h"
 #include "Blueprint/ZenoEditorLandscapeLibrary.h"
 #include "Blueprint/Panel/ZenoLandscapeObject.h"
 #include "Client/ZenoLiveLinkClientSubsystem.h"
@@ -47,8 +47,9 @@ void FZenoLandscapeEditorCustomization::CustomizeDetails(IDetailLayoutBuilder& D
 				.OnClicked_Static(&FZenoLandscapeEditorCustomization::ApplyLandscapeImport, Object)
 			]
 		];
-		
-		// Watch subject key change
+
+		// Watch subject key change.
+		// Then we can automatically set landscape actor's attribute.
 		{
 			TSharedRef<IPropertyHandle> QuadsPerSectionHandle = DetailBuilder.GetProperty(
 				GET_MEMBER_NAME_CHECKED(UZenoLandscapeObject, ImportLandscape_QuadsPerSection));

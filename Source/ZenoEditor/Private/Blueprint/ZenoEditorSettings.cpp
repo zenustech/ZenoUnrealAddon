@@ -23,6 +23,7 @@ const UZenoEditorSettings* UZenoEditorSettings::Get()
 
 UMaterialInstance* UZenoEditorSettings::CreateBasicVATMaterialInstance(const FString& InName, const FString& PackagePath)
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(UZenoEditorSettings::CreateBasicVATMaterialInstance);
 	const FString SavePath = UZenoCommonBlueprintLibrary::OpenContentPicker(InName, PackagePath);
 
 	if (!SavePath.IsEmpty())

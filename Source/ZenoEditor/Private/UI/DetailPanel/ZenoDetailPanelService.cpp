@@ -1,4 +1,4 @@
-﻿#include "ZenoDetailPanelService.h"
+﻿#include "UI/DetailPanel/ZenoDetailPanelService.h"
 
 FZenoDetailPanelServiceManager& FZenoDetailPanelServiceManager::Get()
 {
@@ -9,6 +9,7 @@ FZenoDetailPanelServiceManager& FZenoDetailPanelServiceManager::Get()
 void FZenoDetailPanelServiceManager::Register()
 {
 	FZenoDetailPanelServiceManager& Manager = Get();
+	Manager.bInitialized = true;
 	FPropertyEditorModule& PropertyEditorModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	for (const auto& Pair : Manager.DetailCustomizations)
 	{
@@ -30,4 +31,10 @@ void FZenoDetailPanelServiceManager::RegisterDetailCustomization(const FName& In
                                                                  const FOnGetDetailCustomizationInstance& DetailCustomization)
 {
 	DetailCustomizations.Add(InName, DetailCustomization);
+
+	if (bInitialized)
+	{
+		FPropertyEditorModule& PropertyEditorModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+		PropertyEditorModule.RegisterCustomClassLayout(InName, DetailCustomization);
+	}
 }
