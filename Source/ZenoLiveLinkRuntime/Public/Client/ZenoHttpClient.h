@@ -1,9 +1,8 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-#pragma once
+﻿#pragma once
 
 #include <system_error>
-#include <zeno/unreal/ZenoRemoteTypes.h>
+
+#include "zeno/unreal/ZenoRemoteTypes.h"
 
 #include "CoreMinimal.h"
 #include "ZenoLiveLinkTypes.h"
