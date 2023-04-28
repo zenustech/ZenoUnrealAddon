@@ -1,9 +1,9 @@
-﻿#include "Landscape/ZenoPCGVolumeComponent.h"
+﻿#include "PCG/ZenoPCGVolumeComponent.h"
 #include <zeno/unreal/ZenoRemoteTypes.h>
 
 #include "LandscapeEdit.h"
 #include "LandscapeProxy.h"
-#include "Landscape/ZenoLandscapeHelper.h"
+#include "PCG/ZenoLandscapeHelper.h"
 
 UZenoPCGVolumeComponent::UZenoPCGVolumeComponent(const FObjectInitializer& InObjectInitializer)
 {
@@ -44,9 +44,29 @@ TSharedPtr<zeno::remote::HeightField> UZenoPCGVolumeComponent::GetLandscapeHeigh
 	TArray<uint16> HeightData;
 	// TODO [darc] : Supporting multiple landscapes :
 	TWeakObjectPtr<ALandscapeProxy> LandscapeProxy = Landscapes[0];
-	if (LandscapeProxy.IsValid()) {}
+	if (!LandscapeProxy.IsValid())
+	{
+		return nullptr;
+	}
+
+	FBox ActorBoundInLandscapeSpace = ActorBounds.TransformBy(LandscapeProxy->GetActorTransform());
+	FTransform LandscapeTransform = LandscapeProxy->LandscapeActorToWorld();
+	ActorBoundInLandscapeSpace = ActorBoundInLandscapeSpace.InverseTransformBy(LandscapeTransform);
+	FVector LandscapeScale = LandscapeProxy->GetActorScale3D();
+	FBox LandscapeBound = Zeno::Helper::GetLandscapeBounds(LandscapeProxy.Get());
+
 	FLandscapeEditDataInterface EditDataInterface(LandscapeProxy->GetLandscapeInfo(), false);
-	int32 MinX = static_cast<int32>(ActorBounds.Min.X), MinY = static_cast<int32>(ActorBounds.Min.Y), MaxX = static_cast<int32>(ActorBounds.Max.X), MaxY = static_cast<int32>(ActorBounds.Max.Y);
+
+	int32 MinX = FMath::FloorToInt(ActorBoundInLandscapeSpace.Min.X / LandscapeScale.X),
+		MinY = FMath::FloorToInt(ActorBoundInLandscapeSpace.Min.Y / LandscapeScale.Y),
+		MaxX = FMath::CeilToInt(ActorBoundInLandscapeSpace.Max.X / LandscapeScale.X),
+		MaxY = FMath::CeilToInt(ActorBoundInLandscapeSpace.Max.Y / LandscapeScale.Y);
+
+	MinX = FMath::Max(MinX, LandscapeBound.Min.X / LandscapeScale.X);
+	MinY = FMath::Max(MinY, LandscapeBound.Min.Y / LandscapeScale.Y);
+	MaxX = FMath::Min(MaxX, LandscapeBound.Max.X / LandscapeScale.X);
+	MaxY = FMath::Min(MaxY, LandscapeBound.Max.Y / LandscapeScale.Y);
+	
 	const int32 VertsX = MaxX - MinX + 1, VertsY = MaxY - MinY + 1;
 	HeightData.AddZeroed(VertsX * VertsY);
 	EditDataInterface.GetHeightData(MinX, MinY, MaxX, MaxY, HeightData.GetData(), 0);

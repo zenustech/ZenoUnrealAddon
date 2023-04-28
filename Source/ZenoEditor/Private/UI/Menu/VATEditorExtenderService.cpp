@@ -50,12 +50,6 @@ void FVATEditorExtenderService::MapAction()
 	CommandList->MapAction(FZenoEditorCommand::Get().ImportWavefrontMesh, FExecuteAction::CreateRaw(this, &FVATEditorExtenderService::ImportWavefrontObjFile));
 }
 
-FVATEditorExtenderService& FVATEditorExtenderService::Get()
-{
-	static FVATEditorExtenderService Service;
-	return Service;
-}
-
 void FVATEditorExtenderService::Debug()
 {
 	TArray<FString> Files;

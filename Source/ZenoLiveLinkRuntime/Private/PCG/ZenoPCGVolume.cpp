@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Landscape/ZenoPCGVolume.h"
+#include "PCG/ZenoPCGVolume.h"
 
 #include "Builders/CubeBuilder.h"
 #include "Components/BrushComponent.h"

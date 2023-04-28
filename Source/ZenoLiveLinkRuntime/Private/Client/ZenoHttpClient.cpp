@@ -17,6 +17,31 @@ void UZenoHttpClient::SetBaseEndpoint(const FString& InBaseEndpoint)
 	BaseURL = InBaseEndpoint;
 }
 
+void UZenoHttpClient::FetchSessionKey(const FString& InToken)
+{
+	const FRequest Request = CreateNewRequest("/auth", EZenoHttpVerb::Get);
+	Request->SetHeader(TEXT("X-Zeno-Token"), InToken);
+	Request->OnProcessRequestComplete().BindLambda([this]
+	(	
+		FHttpRequestPtr Req,
+		FHttpResponsePtr Res,
+		bool ConnectedSuccessfully
+	) mutable
+	{
+		if (ConnectedSuccessfully && IsValid(this))
+		{
+			 const TArray<uint8>& Content = Res->GetContent();
+			 SessionKey = FString { Content.Num(), reinterpret_cast<const ANSICHAR*>(Content.GetData()) };
+		}
+	});
+	Request->ProcessRequest();
+}
+
+bool UZenoHttpClient::HasValidSession() const
+{
+	return !SessionKey.IsEmpty();
+}
+
 TSharedPromise<zeno::remote::Diff> UZenoHttpClient::GetDiffFromRemote(int32 LocalVersion/* = 0 */) const
 {
 	const FRequest Request = CreateNewRequest("/subject/diff", EZenoHttpVerb::Get, { { "client_version", FString::Printf(TEXT("%d"), LocalVersion) } });
@@ -77,5 +102,6 @@ UZenoHttpClient::FRequest UZenoHttpClient::CreateNewRequest(const FString& InPat
 	NewRequest->SetURL(FString::Printf(TEXT("%s%s%s%s"), *BaseURL, *InPath, InParam.IsEmpty() ? TEXT("") : TEXT("?"), *ParamString));
 	NewRequest->SetHeader(TEXT("Content-Type"), TEXT("application/x-zeno-msgpack"));
 	NewRequest->SetTimeout(5.0f);
+	NewRequest->SetHeader(TEXT("X-Zeno-SessionKey"), SessionKey);
 	return NewRequest;
 }

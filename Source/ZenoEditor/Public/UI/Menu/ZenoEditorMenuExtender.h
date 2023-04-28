@@ -25,7 +25,18 @@ protected:
 	inline static FName ZenoGraphHookLabel = "ZenoGraph";
 };
 
-class FZenoEditorMenuExtender final : public IZenoEditorExtenderService
+template <typename T>
+class TGetFromThis
+{
+public:
+	inline static T& Get()
+	{
+		static T StaticT;
+		return StaticT;
+	}
+};
+
+class FZenoEditorMenuExtender final : public IZenoEditorExtenderService, public TGetFromThis<FZenoEditorMenuExtender>
 {
 public:
 	virtual void Register() override;
@@ -35,9 +46,6 @@ public:
 
 private:
 	TMap<FName, IZenoEditorExtenderService*> Services;
-	
-public:
-	static FZenoEditorMenuExtender& Get();
 };
 
 #define REGISTER_EDITOR_EXTENDER_SERVICE(Name, Service) struct FStaticInitForZenoEditorExtenderNamed##Service \

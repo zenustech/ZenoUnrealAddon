@@ -1,6 +1,7 @@
 ﻿#include "Client/ZenoLiveLinkSource.h"
 
 #include "ILiveLinkClient.h"
+#include "Async/Async.h"
 #include "Client/ZenoLiveLinkClientSubsystem.h"
 #include "Client/ZenoLiveLinkSession.h"
 #include "Client/Role/LiveLinkZenoRemoteRole.h"
@@ -44,13 +45,22 @@ bool FZenoLiveLinkSource::RequestSourceShutdown()
 
 void FZenoLiveLinkSource::Update()
 {
+	if (UNLIKELY(!SessionGuid.IsValid()))
+	{
+		return;
+	}
 	const double CurrentTime = FPlatformTime::Seconds();
 	const double TimePassed = CurrentTime - LastUpdateSubjectListTime;
-	if (TimePassed > GetConnectionSetting().UpdateInterval / 1000 && UpdateSubjectListLock.TryLock())
+	const bool bIsRunningUpdate = UpdateSubjectListLock.TryLock();
+	if (TimePassed > GetConnectionSetting().UpdateInterval / 1000 && bIsRunningUpdate && GetSession()->GetClient()->HasValidSession()) // TODO [darc] : fix dead lock here :
 	{
 		UpdateSubjectListLock.Unlock();
 		LastUpdateSubjectListTime = CurrentTime;
 		AsyncUpdateSubjectList();
+	}
+	if (bIsRunningUpdate)
+	{
+		UpdateSubjectListLock.Unlock();
 	}
 }
 
@@ -84,7 +94,7 @@ bool FZenoLiveLinkSource::HasSubject(const FName InName) const
 
 void FZenoLiveLinkSource::AsyncUpdateSubjectList()
 {
-	AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [this]
+	AsyncTask(ENamedThreads::AnyHiPriThreadNormalTask, [this]
 	{
 		FScopeLock Lock { &UpdateSubjectListLock };
 		UZenoLiveLinkSession* Session = GetSession();

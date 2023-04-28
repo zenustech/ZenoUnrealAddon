@@ -33,6 +33,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetBaseEndpoint(const FString& InBaseEndpoint);
 
+	UFUNCTION(BlueprintCallable)
+	void FetchSessionKey(const FString& InToken);
+
+	bool HasValidSession() const;
+
 	TSharedPromise<zeno::remote::Diff> GetDiffFromRemote(int32 LocalVersion = 0) const;
 
 	TSharedPromise<zeno::remote::SubjectContainerList> GetDataFromRemote(const TArray<FString>& InSubjectNames) const;
@@ -51,6 +56,9 @@ protected:
 private:
 	UPROPERTY(VisibleAnywhere, Category = Zeno)
 	FString BaseURL;
+
+	UPROPERTY(VisibleAnywhere, Category = Zeno, AdvancedDisplay)
+	FString SessionKey;
 };
 
 template <typename T>

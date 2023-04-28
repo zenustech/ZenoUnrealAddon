@@ -20,6 +20,7 @@ void FZenoDetailPanelServiceManager::Register()
 void FZenoDetailPanelServiceManager::Unregister()
 {
 	FZenoDetailPanelServiceManager& Manager = Get();
+	Manager.bInitialized = false;
 	FPropertyEditorModule& PropertyEditorModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	for (const auto& Pair : Manager.DetailCustomizations)
 	{

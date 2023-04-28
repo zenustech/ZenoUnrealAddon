@@ -13,7 +13,7 @@ namespace zeno::remote
 }
 
 UCLASS(ClassGroup=(Zeno), meta=(BlueprintSpawnableComponent, PrioritizeCategories = "PCG"), BlueprintType)
-class ZENOLIVELINKEDITOR_API UZenoPCGVolumeComponent : public UActorComponent
+class ZENOLIVELINKRUNTIME_API UZenoPCGVolumeComponent : public UActorComponent
 {
 	GENERATED_BODY()
 

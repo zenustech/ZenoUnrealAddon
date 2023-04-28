@@ -3,9 +3,10 @@
 #include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
+#include "LandscapeComponent.h"
 #include "Client/ZenoLiveLinkClientSubsystem.h"
-#include "Landscape/ZenoPCGVolume.h"
-#include "Landscape/ZenoPCGVolumeComponent.h"
+#include "PCG/ZenoPCGVolume.h"
+#include "PCG/ZenoPCGVolumeComponent.h"
 #include "UI/DetailPanel/ZenoDetailPanelService.h"
 
 #define LOCTEXT_NAMESPACE "FZenoPCGActorDetailCustomization"
@@ -37,16 +38,24 @@ void FZenoPCGActorDetailCustomization::CustomizeDetails(IDetailLayoutBuilder& De
 				.OnClicked_Lambda([Volume] ()
 				{
 					UZenoLiveLinkClientSubsystem* Client = GEngine->GetEngineSubsystem<UZenoLiveLinkClientSubsystem>();
-					zeno::remote::HeightField HeightField = *Volume->PCGComponent->GetLandscapeHeightData();
-					zeno::remote::SubjectContainer Subject {
-						{ TCHAR_TO_ANSI(*Volume->SubjectName) },
-						static_cast<uint16>(zeno::remote::ESubjectType::HeightField),
-						msgpack::pack(HeightField),
-					};
-					zeno::remote::SubjectContainerList List {
-						{ Subject, },
-					};
-					Client->GetSessionFallback()->GetClient()->SetSubjectToRemote(List);
+					const auto HeightFieldPtr = Volume->PCGComponent->GetLandscapeHeightData();
+					if (!HeightFieldPtr)
+					{
+						return FReply::Handled();
+					}
+					if (const UZenoLiveLinkSession* Session = Client->GetSessionFallback(); IsValid(Session))
+					{
+						zeno::remote::HeightField HeightField = *HeightFieldPtr;
+						zeno::remote::SubjectContainer Subject {
+							{ TCHAR_TO_ANSI(*Volume->SubjectName) },
+							static_cast<uint16>(zeno::remote::ESubjectType::HeightField),
+							msgpack::pack(HeightField),
+						};
+						zeno::remote::SubjectContainerList List {
+							{ Subject, },
+						};
+						Session->GetClient()->SetSubjectToRemote(List);
+					}
 					return FReply::Handled();
 				})
 				[

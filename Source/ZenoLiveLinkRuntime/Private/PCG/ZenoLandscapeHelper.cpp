@@ -1,6 +1,8 @@
-﻿#include "Landscape/ZenoLandscapeHelper.h"
+﻿#include "PCG/ZenoLandscapeHelper.h"
 
+#if WITH_EDITOR
 #include "Editor.h"
+#endif // WITH_EDITOR
 #include "Landscape.h"
 #include "LandscapeProxy.h"
 

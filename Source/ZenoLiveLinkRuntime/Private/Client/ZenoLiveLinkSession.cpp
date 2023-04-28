@@ -13,8 +13,7 @@ void UZenoLiveLinkSession::Init(const FZenoLiveLinkSetting& ConnectionSetting)
 	
 	HttpClient = NewObject<UZenoHttpClient>();
 	HttpClient->SetBaseEndpoint(FString::Printf(TEXT("http%s://%s:%d"), Settings.Protocol == EZenoHttpProtocolType::Http ? TEXT("") : TEXT("s"), *Settings.IPAddress, Settings.HTTPPortNumber));
-
-	// TODO [darc] : Request for session key :
+	HttpClient->FetchSessionKey(ConnectionSetting.Token);
 }
 
 UZenoHttpClient* UZenoLiveLinkSession::GetClient() const

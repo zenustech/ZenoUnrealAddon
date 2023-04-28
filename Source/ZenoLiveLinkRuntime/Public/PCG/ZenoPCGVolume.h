@@ -8,7 +8,7 @@
 class UZenoPCGVolumeComponent;
 
 UCLASS(BlueprintType)
-class ZENOLIVELINKEDITOR_API AZenoPCGVolume : public AVolume
+class ZENOLIVELINKRUNTIME_API AZenoPCGVolume : public AVolume
 {
 	GENERATED_BODY()
 

@@ -35,12 +35,6 @@ void FZenoEmbedGraphEditorExtenderService::Unregister()
 	FZenoEditorExtenderServiceBase::Unregister();
 }
 
-FZenoEmbedGraphEditorExtenderService& FZenoEmbedGraphEditorExtenderService::Get()
-{
-	static FZenoEmbedGraphEditorExtenderService Service;
-	return Service;
-}
-
 void FZenoEmbedGraphEditorExtenderService::ExtendTopMenuBar(FMenuBarBuilder& Builder)
 {
 	Builder.AddPullDownMenu(LOCTEXT("Zeno", "Zeno Graph"), LOCTEXT("ZenoTooltip", "Zeno Tools"), FNewMenuDelegate::CreateRaw(this, &FZenoEmbedGraphEditorExtenderService::ExtendEmbedPullDownMenu), ZenoGraphHookLabel, ZenoGraphHookLabel);
@@ -120,5 +114,3 @@ void FZenoEmbedGraphEditorExtenderService::ImportZslFile()
 }
 
 #undef LOCTEXT_NAMESPACE
-
-REGISTER_EDITOR_EXTENDER_SERVICE("Embed", FZenoEmbedGraphEditorExtenderService);

@@ -58,5 +58,5 @@ protected:
 	FCriticalSection UpdateSubjectListLock;
 	double LastUpdateSubjectListTime = .0;
 	int32 CurrentHistoryIndex = 0;
-	
+
 };

@@ -11,22 +11,36 @@ public class ZenoLiveLinkRuntime : ModuleRules
             new string[]
             {
                 "Core",
+                "CoreUObject",
                 "InputCore",
+                "HTTP",
+                "Foliage",
+                "Landscape",
             }
         );
 
         PrivateDependencyModuleNames.AddRange(
             new string[]
             {
-                "CoreUObject",
                 "Engine",
                 "Slate",
                 "SlateCore",
                 "LiveLinkInterface",
-                "HTTP",
             }
         );
         
+        
+		if (Target.bBuildEditor == true)
+		{
+			 PrivateDependencyModuleNames.AddRange(
+				  new string[]
+				  {
+					  "UnrealEd",
+					  "Settings",
+					  "SourceControl",
+				  }
+			 );
+		}
         // For shared header (ZenoRemoteTypes.h)
         // Pay attention, this module shouldn't use exported symbols from Zeno.
         PrivateIncludePaths.AddRange(new string[]

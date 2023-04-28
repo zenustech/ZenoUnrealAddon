@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "ZenoEditorMenuExtender.h"
 
-class FZenoEmbedGraphEditorExtenderService final : public FZenoEditorExtenderServiceBase
+class FZenoEmbedGraphEditorExtenderService final : public FZenoEditorExtenderServiceBase, public TGetFromThis<FZenoEmbedGraphEditorExtenderService>
 {
 public:
 	FZenoEmbedGraphEditorExtenderService();
@@ -9,8 +9,6 @@ public:
 	virtual void Register() override;
 	virtual void Unregister() override;
 	
-	static FZenoEmbedGraphEditorExtenderService& Get();
-
 private:
 	void ExtendTopMenuBar(FMenuBarBuilder& Builder);
 	void ExtendEmbedPullDownMenu(FMenuBuilder& Builder);
