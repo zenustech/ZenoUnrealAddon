@@ -54,7 +54,7 @@ FBox Zeno::Helper::GetLandscapeBounds(const ALandscapeProxy* InLandscapeProxy)
 {
 	check(InLandscapeProxy);
 
-	if (const ALandscape* Landscape = Cast<const ALandscape>(InLandscapeProxy))
+	if (const ALandscape* Landscape = Cast<const ALandscape>(InLandscapeProxy); Landscape && Landscape->GetLandscapeGuid().IsValid())
 	{
 		if (Landscape->GetLandscapeInfo() == nullptr)
 		{
