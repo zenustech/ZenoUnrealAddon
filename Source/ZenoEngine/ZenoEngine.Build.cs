@@ -1,5 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
+using System.IO;
 using UnrealBuildTool;
 
 public class ZenoEngine : ModuleRules
@@ -61,6 +62,11 @@ public class ZenoEngine : ModuleRules
             "UE_5_2_OR_LATER=1",
         });
         #endif
+		
+        PublicSystemIncludePaths.AddRange(new string[]
+        {
+			Path.Join(PluginDirectory, "Source/ThirdParty/Zeno/projects/UnrealTool/include"),
+        });
         
 	}
 }
