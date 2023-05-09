@@ -17,6 +17,7 @@ public class ZenoLiveLinkRuntime : ModuleRules
                 "HTTP",
                 "Foliage",
                 "Landscape",
+                "ZenoEngine",
             }
         );
 

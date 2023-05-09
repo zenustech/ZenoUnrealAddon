@@ -1,6 +1,8 @@
 ﻿#include "Utilities/ZenoEngineTypes.h"
 
-#include <zeno/unreal/ZenoRemoteTypes.h>
+#include "Input/ZenoInputFloat.h"
+#include "Input/ZenoInputInteger.h"
+#include "Input/ZenoInputParameter.h"
 
 FZenoInputParameterDescriptor FZenoInputParameterDescriptor::FromZenoType(
 	const zeno::remote::ParamDescriptor& Descriptor)
@@ -11,11 +13,15 @@ FZenoInputParameterDescriptor FZenoInputParameterDescriptor::FromZenoType(
 	};
 }
 
-FZenoOutputParameterDescriptor FZenoOutputParameterDescriptor::FromZenoType(
-	const zeno::remote::ParamDescriptor& Descriptor)
+UZenoInputParameter* FZenoInputParameterDescriptor::CreateInputParameter(UObject* Outer) const
 {
-	return {
-		Descriptor.Name.c_str(),
-		static_cast<EZenoSubjectType>(Descriptor.Type),
-	};
+	if (Type == EZenoParamType::Float)
+	{
+		return UZenoInputFloat::CreateInputParameter(Outer, Name, .0f);
+	}
+	if (Type == EZenoParamType::Integer)
+	{
+		return UZenoInputInteger::CreateInputParameter(Outer, Name, 0);
+	}
+	return nullptr;
 }

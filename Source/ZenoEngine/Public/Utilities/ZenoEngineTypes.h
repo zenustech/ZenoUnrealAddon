@@ -2,8 +2,12 @@
 
 #pragma once
 
+#include <zeno/unreal/ZenoRemoteTypes.h>
+
 #include "CoreMinimal.h"
 #include "ZenoEngineTypes.generated.h"
+
+class UZenoInputParameter;
 
 // Forward declaration
 namespace zeno::remote
@@ -14,7 +18,7 @@ namespace zeno::remote
 /**
  * Copy of zeno::remote::EParamType
  */
-UENUM(BlueprintType)
+UENUM()
 enum class EZenoParamType : int8
 {
 	Invalid = -1,
@@ -26,7 +30,7 @@ enum class EZenoParamType : int8
 /**
  * Copy of zeno::remote::ESubjectType
  */
-UENUM(BlueprintType)
+UENUM()
 enum class EZenoSubjectType : int16
 {
     Invalid = -1,
@@ -39,40 +43,47 @@ enum class EZenoSubjectType : int16
  * Copy of zeno::remote::ParamDescriptor
  */
 USTRUCT(BlueprintType)
-struct FZenoInputParameterDescriptor
+struct ZENOENGINE_API FZenoInputParameterDescriptor
 {
 	GENERATED_BODY()
 
 	/** Parameter name. */
-	UPROPERTY(Category = Zeno, DisplayName = "Param Name")
+	UPROPERTY(VisibleAnywhere, Category = Zeno, DisplayName = "Param Name")
 	FString Name;
 
 	/** Parameter type. */
-	UPROPERTY(Category = Zeno, DisplayName = "Param Type")
+	UPROPERTY(VisibleAnywhere, Category = Zeno, DisplayName = "Param Type")
 	EZenoParamType Type;
 
 	/** Convert from zeno::remote::ParamDescriptor to FZenoInputParameterDescriptor. */
-	UFUNCTION(BlueprintCallable, Category = Zeno)
 	static FZenoInputParameterDescriptor FromZenoType(const zeno::remote::ParamDescriptor& Descriptor);
+
+	/** Create a new UZenoInputParameter from this descriptor. */
+	UZenoInputParameter* CreateInputParameter(UObject* Object) const;
 };
 
 /**
  * Copy of zeno::remote::ParamDescriptor
  */
 USTRUCT(BlueprintType)
-struct FZenoOutputParameterDescriptor
+struct ZENOENGINE_API FZenoOutputParameterDescriptor
 {
 	GENERATED_BODY()
 
 	/** Parameter name. */
-	UPROPERTY(Category = Zeno, DisplayName = "Param Name")
+	UPROPERTY(VisibleAnywhere, Category = Zeno, DisplayName = "Param Name")
 	FString Name;
 
 	/** Parameter type. */
-	UPROPERTY(Category = Zeno, DisplayName = "Param Type")
+	UPROPERTY(VisibleAnywhere, Category = Zeno, DisplayName = "Param Type")
 	EZenoSubjectType Type;
 
 	/** Convert from zeno::remote::ParamDescriptor to FZenoOutputParameterDescriptor. */
-	UFUNCTION(BlueprintCallable, Category = Zeno)
-	static FZenoOutputParameterDescriptor FromZenoType(const zeno::remote::ParamDescriptor& Descriptor);
+	FORCEINLINE static FZenoOutputParameterDescriptor FromZenoType(const zeno::remote::ParamDescriptor& Descriptor)
+	{
+		return {
+			Descriptor.Name.c_str(),
+			static_cast<EZenoSubjectType>(Descriptor.Type),
+		};
+	}
 };

@@ -22,6 +22,7 @@ public class ZenoLiveLinkEditor : ModuleRules
                 "SlateCore",
                 "ZenoLiveLinkRuntime",
                 "ZenoEditor",
+                "ZenoEngine",
                 "UnrealEd",
                 "Foliage",
                 "Landscape",

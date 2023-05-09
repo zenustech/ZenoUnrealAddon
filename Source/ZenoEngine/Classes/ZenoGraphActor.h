@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "ZenoGraphActor.generated.h"
 
+class UZenoInputParameter;
 class UZenoGraphAsset;
 
 UCLASS()
@@ -26,6 +27,7 @@ protected:
 	UZenoGraphAsset* ZenoGraphAsset;
 
 	friend class UZenoGraphAssetActorFactory;
+	friend class FZenoGraphMeshActorDetailCustomization;
 };
 
 UCLASS()
@@ -42,7 +44,6 @@ protected:
 
 public:
 	AZenoGraphMeshActor(const FObjectInitializer& ObjectInitializer);
-
 
 protected:
 	UPROPERTY(VisibleAnywhere, Category = Zeno, DisplayName = "Mesh Data", AdvancedDisplay)
@@ -63,8 +64,11 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = Zeno, DisplayName = "Material")
 	UMaterialInterface* MeshMaterial;
-#endif // WITH_EDITORONLY_DATA
 	
+	UPROPERTY(EditAnywhere, Category = Zeno, DisplayName = "Input Data", EditFixedSize)
+	TArray<UZenoInputParameter*> InputParameters;
+#endif // WITH_EDITORONLY_DATA
+
 	friend class UZenoGraphAssetActorFactory;
 	friend class FZenoGraphMeshActorDetailCustomization;
 };

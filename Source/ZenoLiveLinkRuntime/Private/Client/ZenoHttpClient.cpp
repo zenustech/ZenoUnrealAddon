@@ -91,6 +91,44 @@ TSharedPromise<bool> UZenoHttpClient::SetSubjectToRemote(
 	return Promise;
 }
 
+TSharedPromise<bool> UZenoHttpClient::RunGraph(zeno::remote::GraphRunInfo& RunInfo) const
+{
+	const FRequest Request = CreateNewRequest("/graph/run", EZenoHttpVerb::Post);
+	const TSharedPromise<bool> Promise = CreateNewPromise<bool>();
+	std::vector<uint8> Buffer = msgpack::pack(RunInfo);
+	const TArray UBuffer { Buffer.data(), static_cast<TArray<uint8>::SizeType>(Buffer.size()) };
+	Request->SetContent(UBuffer);
+	Request->OnProcessRequestComplete().BindLambda([Promise] (
+		FHttpRequestPtr Req,
+		FHttpResponsePtr Res,
+		bool ConnectedSuccessfully) mutable
+	{
+		TOptional Result{ false };
+		if (ConnectedSuccessfully)
+		{
+			Result = Res->GetResponseCode() == 204;
+		}
+		Promise->SetValue(Result);
+	});
+	Request->ProcessRequest();
+	return Promise;
+}
+
+TSharedPromise<zeno::remote::GraphInfo> UZenoHttpClient::TryParseGraphInfo(const FString& InGraphJson) const
+{
+	const FRequest Request = CreateNewRequest("/graph/parse", EZenoHttpVerb::Post);
+	const TSharedPromise<zeno::remote::GraphInfo> Promise = CreateNewPromise<zeno::remote::GraphInfo>();
+
+	const TArray<uint8> Data { InGraphJson.GetCharArray() };
+	Request->SetContent(Data);
+
+	Request->OnProcessRequestComplete().BindLambda(BuildProcessResponse(Promise));
+
+	Request->ProcessRequest();
+
+	return Promise;
+}
+
 UZenoHttpClient::FRequest UZenoHttpClient::CreateNewRequest(const FString& InPath, EZenoHttpVerb InVerb/* = EZenoHttpVerb::Get */, const TArray<FZenoLiveLinkKeyValuePair>& InParam/* = {} */) const
 {
 	FHttpModule& HttpModule = FHttpModule::Get();

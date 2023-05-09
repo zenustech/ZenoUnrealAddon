@@ -6,6 +6,7 @@
 #include "UObject/Object.h"
 #include "ZenoGraphAsset.generated.h"
 
+struct FZenoOutputParameterDescriptor;
 struct FZenoInputParameterDescriptor;
 
 UCLASS(BlueprintType)
@@ -24,7 +25,7 @@ public:
 
 	/** Output parameter descriptors. */
 	UPROPERTY(VisibleAnywhere, Category = "Zeno", DisplayName = "Output Parameter Descriptors")
-	TArray<FZenoInputParameterDescriptor> OutputParameterDescriptors;
+	TArray<FZenoOutputParameterDescriptor> OutputParameterDescriptors;
 
 	/** File path using to reimport from. */
 	UPROPERTY(EditAnywhere, Category = "Zeno", DisplayName = "Reimport Path", AdvancedDisplay)
