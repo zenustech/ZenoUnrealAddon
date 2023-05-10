@@ -3,6 +3,7 @@
 
 #include "Client/ZenoLiveLinkClientSubsystem.h"
 
+#include "RawMesh.h"
 #include "Client/ZenoLiveLinkSession.h"
 
 void UZenoLiveLinkClientSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -67,4 +68,40 @@ UZenoLiveLinkSession* UZenoLiveLinkClientSubsystem::GetSessionFallback()
 {
 	if (ConnectionSessions.IsEmpty()) return nullptr;
 	return ConnectionSessions.begin()->Value;
+}
+
+FRawMesh UZenoLiveLinkClientSubsystem::ConvertZenoMeshToRawMesh(const zeno::remote::Mesh& InZenoMesh)
+{
+	FRawMesh RawMesh;
+
+	// Fill vertices and triangles
+	RawMesh.VertexPositions.Reserve(InZenoMesh.vertices.size());
+	RawMesh.WedgeIndices.Reserve(InZenoMesh.triangles.size());
+	for (const auto& Vertex : InZenoMesh.vertices)
+	{
+		const auto& X = Vertex[0];
+		const auto& Y = Vertex[1];
+		const auto& Z = Vertex[2];
+		RawMesh.VertexPositions.Add( { X.data(), Y.data(), Z.data() });
+	}
+	for (const auto& Triangle : InZenoMesh.triangles)
+	{
+		RawMesh.WedgeIndices.Add(Triangle[0]);
+		RawMesh.WedgeIndices.Add(Triangle[1]);
+		RawMesh.WedgeIndices.Add(Triangle[2]);
+	}
+	const SIZE_T NumFace = InZenoMesh.triangles.size();
+	const SIZE_T NumWedge = RawMesh.WedgeIndices.Num();
+	// TODO [darc] : check if we need to fill other data like normals, tangents, UVs, colors, etc. :
+	// TODO [darc] : check NumFace == NumWedge / 3 :
+	// Leave other data empty for now. Set zeroed to bypass check.
+	RawMesh.FaceMaterialIndices.SetNumZeroed(NumFace);
+	RawMesh.FaceSmoothingMasks.SetNumZeroed(NumFace);
+	RawMesh.WedgeTangentX.SetNumZeroed(NumWedge);
+	RawMesh.WedgeTangentY.SetNumZeroed(NumWedge);
+	RawMesh.WedgeTangentZ.SetNumZeroed(NumWedge);
+	RawMesh.WedgeColors.SetNumZeroed(NumWedge);
+	RawMesh.WedgeTexCoords[0].SetNumZeroed(NumWedge);
+
+	return RawMesh;
 }

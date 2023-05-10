@@ -4,7 +4,7 @@
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
 #include "SlateOptMacros.h"
-#include "ZenoGraphActor.h"
+#include "Actor/ZenoGraphActor.h"
 #include "ZenoGraphAsset.h"
 #include "Async/Async.h"
 #include "Client/ZenoLiveLinkClientSubsystem.h"
@@ -51,12 +51,15 @@ void FZenoGraphMeshActorDetailCustomization::CustomizeDetails(IDetailLayoutBuild
 					{
 						RunInfo.Values.Values.push_back(Input->GatherParamValue());
 					}
-					AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [Session, RunInfo] () mutable
+					Session->GetClient()->RunGraph(RunInfo)->GetFuture().Then([MeshActor] (const TResultFuture<bool>& Future)
 					{
-						  Session->GetClient()->RunGraph(RunInfo)->GetFuture().Then([] (const TResultFuture<bool>& Result)
-						  {
-							  UE_LOG(LogTemp, Error, TEXT("123: %d %d"), Result.Get().IsSet(), Result.Get().Get(false));
-						  });
+						if (!IsValid(MeshActor)) return;
+						FGCObjectScopeGuard ScopeGuard1 { MeshActor };
+						const bool Result = Future.Get().Get(false);
+						if (Result)
+						{
+							MeshActor->OnGraphRunCompleted();
+						}
 					});
 				}
 				return FReply::Handled();

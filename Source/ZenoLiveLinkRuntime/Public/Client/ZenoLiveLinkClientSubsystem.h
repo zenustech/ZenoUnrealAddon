@@ -58,6 +58,8 @@ public:
 	template <typename T>
 	TSharedPromise<T> TryLoadSubjectRemotely(const FName& InName);
 
+	static struct FRawMesh ConvertZenoMeshToRawMesh(const zeno::remote::Mesh& InZenoMesh);
+
 private:
 	UPROPERTY(EditAnywhere, Category = Zeno, DisplayName = "Connection Settings")
 	FZenoLiveLinkSetting ConnectionSetting;

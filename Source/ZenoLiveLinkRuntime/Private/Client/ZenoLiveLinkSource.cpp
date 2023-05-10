@@ -94,6 +94,7 @@ bool FZenoLiveLinkSource::HasSubject(const FName InName) const
 
 void FZenoLiveLinkSource::AsyncUpdateSubjectList()
 {
+	// TODO [darc] : Refactor this function, remove the thread blocking. :
 	AsyncTask(ENamedThreads::AnyHiPriThreadNormalTask, [this]
 	{
 		FScopeLock Lock { &UpdateSubjectListLock };

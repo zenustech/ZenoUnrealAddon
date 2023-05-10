@@ -10,7 +10,7 @@ class UZenoInputParameter;
 class UZenoGraphAsset;
 
 UCLASS()
-class ZENOENGINE_API AZenoGraphBaseActor : public AActor
+class ZENOLIVELINKRUNTIME_API AZenoGraphBaseActor : public AActor
 {
 	GENERATED_BODY()
 
@@ -31,7 +31,7 @@ protected:
 };
 
 UCLASS()
-class ZENOENGINE_API AZenoGraphMeshActor : public AZenoGraphBaseActor
+class ZENOLIVELINKRUNTIME_API AZenoGraphMeshActor : public AZenoGraphBaseActor
 {
 	GENERATED_BODY()
 
@@ -40,6 +40,7 @@ protected:
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	void SetMeshComponent(UStaticMeshComponent* InStaticMeshComponent);
+	void OnGraphRunCompleted();
 #endif // WITH_EDITOR
 
 public:

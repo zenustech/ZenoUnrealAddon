@@ -1,5 +1,5 @@
 ﻿#include "Factory/Actor/ZenoGraphAssetActorFactory.h"
-#include "ZenoGraphActor.h"
+#include "Actor/ZenoGraphActor.h"
 #include "ZenoGraphAsset.h"
 #include "Utilities/ZenoEngineTypes.h"
 
