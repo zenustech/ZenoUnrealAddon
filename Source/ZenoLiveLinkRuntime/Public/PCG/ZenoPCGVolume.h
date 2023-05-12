@@ -19,13 +19,19 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Zeno)
 	UZenoPCGVolumeComponent* PCGComponent;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Zeno)
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Category = Zeno)
 	FString SubjectName;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Zeno, AdvancedDisplay)
+	TObjectPtr<UStaticMeshComponent> StaticMeshComponent;
 
 #if WITH_EDITOR
 	virtual void PostActorCreated() override;
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	virtual bool GetReferencedContentObjects(TArray<UObject*>& Objects) const override;
+	
+	virtual void OnGeneratedNewMesh(FRawMesh& RawMesh);
+	virtual void SetStaticMeshComponent(UStaticMeshComponent* InStaticMeshComponent);
 #endif // WITH_EDITOR
 
 protected:

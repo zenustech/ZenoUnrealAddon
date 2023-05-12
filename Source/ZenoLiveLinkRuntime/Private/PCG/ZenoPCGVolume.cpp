@@ -3,12 +3,14 @@
 
 #include "PCG/ZenoPCGVolume.h"
 
+#include "RawMesh.h"
 #include "Builders/CubeBuilder.h"
 #include "Components/BrushComponent.h"
 #include "Engine/Polys.h"
 
 AZenoPCGVolume::AZenoPCGVolume(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
+	, SubjectName("ReservedName_Landscape")
 {
 	PCGComponent = ObjectInitializer.CreateDefaultSubobject<UZenoPCGVolumeComponent>(this, TEXT("PCG Component"));
 
@@ -58,6 +60,64 @@ bool AZenoPCGVolume::GetReferencedContentObjects(TArray<UObject*>& Objects) cons
 }
 
 #if WITH_EDITOR
+void AZenoPCGVolume::OnGeneratedNewMesh(FRawMesh& RawMesh)
+{
+	if (RawMesh.WedgeIndices.IsEmpty())
+	{
+		return;
+	}
+	UStaticMesh* StaticMesh = NewObject<UStaticMesh>(this, UStaticMesh::StaticClass(),
+	                                                 MakeUniqueObjectName(
+		                                                 this, UStaticMesh::StaticClass(), FName("StaticMesh")),
+	                                                 RF_Public | RF_Standalone);
+	StaticMesh->PreEditChange(nullptr);
+	StaticMesh->ImportVersion = LastVersion;
+	FStaticMeshSourceModel& SourceModel = StaticMesh->AddSourceModel();
+	SourceModel.SaveRawMesh(RawMesh);
+	StaticMesh->PostEditChange();
+
+	UStaticMeshComponent* NewStaticMeshComponent = NewObject<UStaticMeshComponent>(
+		this, UStaticMeshComponent::StaticClass(),
+		MakeUniqueObjectName(this, UStaticMeshComponent::StaticClass(), FName("StaticMeshComponent")),
+		RF_Public | RF_Standalone);
+	NewStaticMeshComponent->StaticMeshImportVersion = LastVersion;
+	NewStaticMeshComponent->SetStaticMesh(StaticMesh);
+	SetStaticMeshComponent(NewStaticMeshComponent);
+}
+
+void AZenoPCGVolume::SetStaticMeshComponent(UStaticMeshComponent* InStaticMeshComponent)
+{
+	PreEditChange(nullptr);
+	if (!IsValid(InStaticMeshComponent) || StaticMeshComponent == InStaticMeshComponent)
+		return;
+	if (IsValid(StaticMeshComponent))
+	{
+		StaticMeshComponent->DestroyComponent(false);
+		RemoveOwnedComponent(StaticMeshComponent);
+		StaticMeshComponent->ReleaseResources();
+	}
+	StaticMeshComponent = InStaticMeshComponent;
+	AddOwnedComponent(InStaticMeshComponent);
+	StaticMeshComponent->AttachToComponent(GetRootComponent(), { EAttachmentRule::SnapToTarget, true });
+	GetRootComponent()->RegisterComponent();
+	
+	FVector BoundMin, BoundMax;
+	StaticMeshComponent->GetLocalBounds(BoundMin, BoundMax);
+	// Scale the mesh to fit the volume
+	const FBox VolumeBox = GetBrushComponent()->Bounds.GetBox();
+	const FVector VolumeSize = VolumeBox.GetSize();
+	const FVector MeshSize = BoundMax - BoundMin;
+	const FVector Scale = VolumeSize / MeshSize;
+	StaticMeshComponent->SetRelativeScale3D(Scale);
+	// Place the mesh at the center of the volume
+	const FVector Center = (BoundMax + BoundMin) / 2.0f;
+	StaticMeshComponent->SetRelativeLocation(-Center);
+	
+	UpdateComponentTransforms();
+	Modify(false);
+	PostEditChange();
+}
+
 void AZenoPCGVolume::BuildBrush()
 {
 	Brush = NewObject<UModel>(this, NAME_None, RF_Transactional);

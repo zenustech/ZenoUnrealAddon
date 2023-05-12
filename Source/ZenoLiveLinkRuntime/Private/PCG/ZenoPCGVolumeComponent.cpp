@@ -3,7 +3,11 @@
 
 #include "LandscapeEdit.h"
 #include "LandscapeProxy.h"
+#include "ZenoGraphAsset.h"
+#include "Components/BrushComponent.h"
 #include "PCG/ZenoLandscapeHelper.h"
+#include "PCG/ZenoPCGVolume.h"
+#include "Utilities/ZenoEngineTypes.h"
 
 UZenoPCGVolumeComponent::UZenoPCGVolumeComponent(const FObjectInitializer& InObjectInitializer)
 {
@@ -16,6 +20,19 @@ void UZenoPCGVolumeComponent::BeginPlay()
 
 void UZenoPCGVolumeComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
+	if (PropertyChangedEvent.Property && PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UZenoPCGVolumeComponent, ZenoGraph))
+	{
+		InputParameters.Reset();
+		UZenoGraphAsset* GraphAsset = ZenoGraph.LoadSynchronous();
+		for (const FZenoInputParameterDescriptor& Descriptor : GraphAsset->InputParameterDescriptors)
+		{
+			UZenoInputParameter* InputParameter = Descriptor.CreateInputParameter(this);
+			if (nullptr != InputParameter)
+			{
+				InputParameters.Add(InputParameter);
+			}
+		}
+	}
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 
@@ -28,10 +45,23 @@ TSharedPtr<zeno::remote::HeightField> UZenoPCGVolumeComponent::GetLandscapeHeigh
 		return nullptr;
 	}
 	
-	FVector Origin;
-	FVector Extent;
-	Actor->GetActorBounds(false, Origin, Extent);
-	const FBox ActorBounds = FBox::BuildAABB(Origin, Extent);
+	
+	FBox ActorBounds;
+	if (Actor->IsA<ALandscapeProxy>())
+	{
+		ActorBounds = Actor->GetComponentsBoundingBox(true);
+	}
+	else if (const AZenoPCGVolume* Volume = Cast<AZenoPCGVolume>(Actor); IsValid(Volume) && IsValid(Volume->GetBrushComponent()))
+	{
+		ActorBounds = Volume->GetBrushComponent()->Bounds.GetBox();
+	}
+	else
+	{
+		FVector Origin;
+		FVector Extent;
+		Actor->GetActorBounds(false, Origin, Extent);
+		ActorBounds = FBox::BuildAABB(Origin, Extent);
+	}
 
 	TArray<TWeakObjectPtr<ALandscapeProxy>> Landscapes = Zeno::Helper::GetLandscapeProxies(Actor->GetWorld(), ActorBounds);
 

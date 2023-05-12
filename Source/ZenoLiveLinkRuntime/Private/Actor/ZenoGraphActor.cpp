@@ -60,7 +60,7 @@ AZenoGraphMeshActor::AZenoGraphMeshActor(const FObjectInitializer& ObjectInitial
 void AZenoGraphMeshActor::SetMeshComponent(UStaticMeshComponent* InStaticMeshComponent)
 {
 	PreEditChange(nullptr);
-	if (StaticMeshComponent == InStaticMeshComponent)
+	if (!IsValid(InStaticMeshComponent) || StaticMeshComponent == InStaticMeshComponent)
 		return;
 	if (IsValid(StaticMeshComponent))
 	{

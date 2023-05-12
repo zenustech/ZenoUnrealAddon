@@ -98,6 +98,7 @@ TSharedPromise<bool> UZenoHttpClient::RunGraph(zeno::remote::GraphRunInfo& RunIn
 	std::vector<uint8> Buffer = msgpack::pack(RunInfo);
 	const TArray UBuffer { Buffer.data(), static_cast<TArray<uint8>::SizeType>(Buffer.size()) };
 	Request->SetContent(UBuffer);
+	Request->SetTimeout(120);
 	Request->OnProcessRequestComplete().BindLambda([Promise] (
 		FHttpRequestPtr Req,
 		FHttpResponsePtr Res,

@@ -7,6 +7,9 @@
 #include "ZenoPCGVolumeComponent.generated.h"
 
 
+class UZenoInputParameter;
+class UZenoGraphAsset;
+
 namespace zeno::remote
 {
 	struct HeightField;
@@ -29,4 +32,15 @@ protected:
 
 public:
 	TSharedPtr<zeno::remote::HeightField> GetLandscapeHeightData() const;
+
+protected:
+#if WITH_EDITORONLY_DATA
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Zeno, DisplayName = "PCG Graph")
+	TSoftObjectPtr<UZenoGraphAsset> ZenoGraph;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Zeno, DisplayName = "Input Data")
+	TArray<UZenoInputParameter*> InputParameters;
+
+	friend class FZenoPCGActorDetailCustomization;
+#endif // WITH_EDITORONLY_DATA
 };
