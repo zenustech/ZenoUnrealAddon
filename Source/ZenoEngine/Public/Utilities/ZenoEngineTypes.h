@@ -53,7 +53,7 @@ struct ZENOENGINE_API FZenoInputParameterDescriptor
 
 	/** Parameter type. */
 	UPROPERTY(VisibleAnywhere, Category = Zeno, DisplayName = "Param Type")
-	EZenoParamType Type;
+	EZenoParamType Type = EZenoParamType::Invalid;
 
 	/** Convert from zeno::remote::ParamDescriptor to FZenoInputParameterDescriptor. */
 	static FZenoInputParameterDescriptor FromZenoType(const zeno::remote::ParamDescriptor& Descriptor);
@@ -76,7 +76,7 @@ struct ZENOENGINE_API FZenoOutputParameterDescriptor
 
 	/** Parameter type. */
 	UPROPERTY(VisibleAnywhere, Category = Zeno, DisplayName = "Param Type")
-	EZenoSubjectType Type;
+	EZenoSubjectType Type = EZenoSubjectType::Invalid;
 
 	/** Convert from zeno::remote::ParamDescriptor to FZenoOutputParameterDescriptor. */
 	FORCEINLINE static FZenoOutputParameterDescriptor FromZenoType(const zeno::remote::ParamDescriptor& Descriptor)

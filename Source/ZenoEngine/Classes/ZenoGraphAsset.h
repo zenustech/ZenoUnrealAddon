@@ -1,11 +1,10 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
 #include "ZenoGraphAsset.generated.h"
 
+enum class EZenoSubjectType : int16;
 struct FZenoOutputParameterDescriptor;
 struct FZenoInputParameterDescriptor;
 
@@ -30,4 +29,7 @@ public:
 	/** File path using to reimport from. */
 	UPROPERTY(EditAnywhere, Category = "Zeno", DisplayName = "Reimport Path", AdvancedDisplay)
 	FString ReimportPath;
+
+	/** Find first output parameter descriptor with the given type. */
+	TOptional<const FZenoOutputParameterDescriptor> FindFirstOutputParameterDescriptor(const EZenoSubjectType Type) const;
 };
