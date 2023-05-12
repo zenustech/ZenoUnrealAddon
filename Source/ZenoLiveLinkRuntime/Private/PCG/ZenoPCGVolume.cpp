@@ -99,21 +99,25 @@ void AZenoPCGVolume::SetStaticMeshComponent(UStaticMeshComponent* InStaticMeshCo
 	StaticMeshComponent = InStaticMeshComponent;
 	AddOwnedComponent(InStaticMeshComponent);
 	StaticMeshComponent->AttachToComponent(GetRootComponent(), { EAttachmentRule::SnapToTarget, true });
-	GetRootComponent()->RegisterComponent();
-	
-	FVector BoundMin, BoundMax;
-	StaticMeshComponent->GetLocalBounds(BoundMin, BoundMax);
-	// Scale the mesh to fit the volume
-	const FBox VolumeBox = GetBrushComponent()->Bounds.GetBox();
-	const FVector VolumeSize = VolumeBox.GetSize();
-	const FVector MeshSize = BoundMax - BoundMin;
-	const FVector Scale = VolumeSize / MeshSize;
-	StaticMeshComponent->SetRelativeScale3D(Scale);
-	// Place the mesh at the center of the volume
-	const FVector Center = (BoundMax + BoundMin) / 2.0f;
-	StaticMeshComponent->SetRelativeLocation(-Center);
-	
+	StaticMeshComponent->RegisterComponent();
 	UpdateComponentTransforms();
+
+	FBox MeshBound = StaticMeshComponent->CalcBounds(StaticMeshComponent->GetComponentToWorld()).GetBox();
+	const FBox VolumeBox = GetBrushComponent()->CalcBounds(GetBrushComponent()->GetComponentToWorld()).GetBox();
+	// Scale the mesh to fit the volume
+	const FVector VolumeSize = VolumeBox.GetSize();
+	const FVector MeshSize = MeshBound.GetSize();
+	FVector Scale = VolumeSize / MeshSize;
+	Scale.Z = 1.0f;
+	StaticMeshComponent->SetRelativeScale3D(Scale);
+	// Update the mesh bounds
+	MeshBound = StaticMeshComponent->CalcBounds(StaticMeshComponent->GetComponentToWorld()).GetBox();
+	// Move mesh origin to the center of the volume
+	const FVector MeshCenter = MeshBound.GetCenter();
+	const FVector VolumeCenter = VolumeBox.GetCenter();
+	const FVector Offset = VolumeCenter - MeshCenter;
+	StaticMeshComponent->AddWorldOffset(Offset);
+	
 	Modify(false);
 	PostEditChange();
 }
