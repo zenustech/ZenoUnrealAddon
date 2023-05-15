@@ -30,8 +30,8 @@ public:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	virtual bool GetReferencedContentObjects(TArray<UObject*>& Objects) const override;
 	
-	virtual void OnGeneratedNewMesh(FRawMesh& RawMesh);
-	virtual void SetStaticMeshComponent(UStaticMeshComponent* InStaticMeshComponent);
+	virtual void OnGeneratedNewMesh(FRawMesh& RawMesh, const FVector4f& InBoundDiff);
+	virtual void SetStaticMeshComponent(UStaticMeshComponent* InStaticMeshComponent, const FVector4f& InBoundDiff);
 #endif // WITH_EDITOR
 
 protected:

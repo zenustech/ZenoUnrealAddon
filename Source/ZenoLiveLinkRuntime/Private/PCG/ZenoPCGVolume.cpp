@@ -60,7 +60,7 @@ bool AZenoPCGVolume::GetReferencedContentObjects(TArray<UObject*>& Objects) cons
 }
 
 #if WITH_EDITOR
-void AZenoPCGVolume::OnGeneratedNewMesh(FRawMesh& RawMesh)
+void AZenoPCGVolume::OnGeneratedNewMesh(FRawMesh& RawMesh, const FVector4f& InBoundDiff)
 {
 	if (RawMesh.WedgeIndices.IsEmpty())
 	{
@@ -82,10 +82,10 @@ void AZenoPCGVolume::OnGeneratedNewMesh(FRawMesh& RawMesh)
 		RF_Public | RF_Standalone);
 	NewStaticMeshComponent->StaticMeshImportVersion = LastVersion;
 	NewStaticMeshComponent->SetStaticMesh(StaticMesh);
-	SetStaticMeshComponent(NewStaticMeshComponent);
+	SetStaticMeshComponent(NewStaticMeshComponent, InBoundDiff);
 }
 
-void AZenoPCGVolume::SetStaticMeshComponent(UStaticMeshComponent* InStaticMeshComponent)
+void AZenoPCGVolume::SetStaticMeshComponent(UStaticMeshComponent* InStaticMeshComponent, const FVector4f& InBoundDiff)
 {
 	PreEditChange(nullptr);
 	if (!IsValid(InStaticMeshComponent) || StaticMeshComponent == InStaticMeshComponent)
@@ -108,6 +108,9 @@ void AZenoPCGVolume::SetStaticMeshComponent(UStaticMeshComponent* InStaticMeshCo
 	const FVector VolumeSize = VolumeBox.GetSize();
 	const FVector MeshSize = MeshBound.GetSize();
 	FVector Scale = VolumeSize / MeshSize;
+	// Adjust by the bound difference
+	Scale.X = Scale.X * (1 - FMath::Abs(InBoundDiff.X) - FMath::Abs(InBoundDiff.Y));
+	Scale.Y = Scale.Y * (1 - FMath::Abs(InBoundDiff.Z) - FMath::Abs(InBoundDiff.W));
 	Scale.Z = 1.0f;
 	StaticMeshComponent->SetRelativeScale3D(Scale);
 	// Update the mesh bounds
@@ -115,7 +118,9 @@ void AZenoPCGVolume::SetStaticMeshComponent(UStaticMeshComponent* InStaticMeshCo
 	// Move mesh origin to the center of the volume
 	const FVector MeshCenter = MeshBound.GetCenter();
 	const FVector VolumeCenter = VolumeBox.GetCenter();
-	const FVector Offset = VolumeCenter - MeshCenter;
+	FVector Offset = VolumeCenter - MeshCenter;
+	Offset.X = Offset.X - (Offset.X * InBoundDiff.Y);
+	Offset.Y = Offset.Y - (Offset.Y * InBoundDiff.W);
 	StaticMeshComponent->AddWorldOffset(Offset);
 	
 	Modify(false);

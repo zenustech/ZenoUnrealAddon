@@ -12,6 +12,7 @@
 #include "PCG/ZenoPCGVolumeComponent.h"
 #include "UI/DetailPanel/ZenoDetailPanelService.h"
 #include "UObject/GCObjectScopeGuard.h"
+#include <array>
 
 #define LOCTEXT_NAMESPACE "FZenoPCGActorDetailCustomization"
 
@@ -96,8 +97,9 @@ void FZenoPCGActorDetailCustomization::CustomizeDetails(IDetailLayoutBuilder& De
 													{
 														FGCObjectScopeGuard VolumeGuard2 { Volume };
 														const zeno::remote::Mesh MeshData = MeshFuture.Get().GetValue();
+														std::array<float, 4> BoundDiff = MeshData.GetBoundDiff();
 														FRawMesh RawMesh = UZenoLiveLinkClientSubsystem::ConvertZenoMeshToRawMesh(MeshData);
-														Volume->OnGeneratedNewMesh(RawMesh);
+														Volume->OnGeneratedNewMesh(RawMesh, FVector4f { BoundDiff[0], BoundDiff[1], BoundDiff[3], BoundDiff[2] });
 													}
 												});
 											}
