@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <memory>
+
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "ZenoPCGVolumeComponent.generated.h"
@@ -15,6 +17,8 @@ namespace zeno::remote
 	struct HeightField;
 }
 
+DECLARE_MULTICAST_DELEGATE(FZenoPCGVolumeComponentParameterChangedEvent);
+
 UCLASS(ClassGroup=(Zeno), meta=(BlueprintSpawnableComponent, PrioritizeCategories = "PCG"), BlueprintType)
 class ZENOLIVELINKRUNTIME_API UZenoPCGVolumeComponent : public UActorComponent
 {
@@ -24,6 +28,8 @@ public:
 	// Sets default values for this component's properties
 	UZenoPCGVolumeComponent(const FObjectInitializer& InObjectInitializer);
 
+	FZenoPCGVolumeComponentParameterChangedEvent ParameterChangedEvent;
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -31,7 +37,7 @@ protected:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 
 public:
-	TSharedPtr<zeno::remote::HeightField> GetLandscapeHeightData() const;
+	std::shared_ptr<zeno::remote::HeightField> GetLandscapeHeightData() const;
 
 protected:
 #if WITH_EDITORONLY_DATA
@@ -42,5 +48,6 @@ protected:
 	TArray<UZenoInputParameter*> InputParameters;
 
 	friend class FZenoPCGActorDetailCustomization;
+	friend class AZenoPCGVolume;
 #endif // WITH_EDITORONLY_DATA
 };

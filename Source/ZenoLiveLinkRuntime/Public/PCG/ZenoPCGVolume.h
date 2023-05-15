@@ -14,7 +14,6 @@ class ZENOLIVELINKRUNTIME_API AZenoPCGVolume : public AVolume
 
 public:
 	AZenoPCGVolume(const FObjectInitializer& ObjectInitializer);
-	
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Zeno)
 	UZenoPCGVolumeComponent* PCGComponent;
@@ -32,6 +31,8 @@ public:
 	
 	virtual void OnGeneratedNewMesh(FRawMesh& RawMesh, const FVector4f& InBoundDiff);
 	virtual void SetStaticMeshComponent(UStaticMeshComponent* InStaticMeshComponent, const FVector4f& InBoundDiff);
+
+	virtual void ExecutePCGGraph();
 #endif // WITH_EDITOR
 
 protected:

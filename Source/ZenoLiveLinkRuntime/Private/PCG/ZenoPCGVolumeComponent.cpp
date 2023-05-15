@@ -33,10 +33,14 @@ void UZenoPCGVolumeComponent::PostEditChangeProperty(FPropertyChangedEvent& Prop
 			}
 		}
 	}
+	if (PropertyChangedEvent.Property && PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UZenoPCGVolumeComponent, InputParameters))
+	{
+		ParameterChangedEvent.Broadcast();
+	}
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 
-TSharedPtr<zeno::remote::HeightField> UZenoPCGVolumeComponent::GetLandscapeHeightData() const
+std::shared_ptr<zeno::remote::HeightField> UZenoPCGVolumeComponent::GetLandscapeHeightData() const
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(UZenoPCGVolumeComponent::GetLandscapeHeightData);
 	const AActor* Actor = GetOwner();
@@ -70,7 +74,7 @@ TSharedPtr<zeno::remote::HeightField> UZenoPCGVolumeComponent::GetLandscapeHeigh
 		return nullptr;
 	}
 
-	TSharedRef<zeno::remote::HeightField> Result = MakeShared<zeno::remote::HeightField>();
+	std::shared_ptr<zeno::remote::HeightField> Result = std::make_shared<zeno::remote::HeightField>();
 	TArray<uint16> HeightData;
 	// TODO [darc] : Supporting multiple landscapes :
 	TWeakObjectPtr<ALandscapeProxy> LandscapeProxy = Landscapes[0];
