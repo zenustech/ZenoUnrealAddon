@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
+#include "UObject/GCObjectScopeGuard.h"
 #include "Modules/ModuleManager.h"
 
 class FZenoEditorModule : public IModuleInterface
@@ -12,6 +13,9 @@ public:
 private:
     void RegisterActorFactory() const;
     
-    static void RegisterDetailPanelCustomization();
-    static void UnregisterDetailPanelCustomization();
+    void RegisterDetailPanelCustomization();
+    void UnregisterDetailPanelCustomization();
+
+protected:
+    TSharedPtr<FGCObjectScopeGuard> LandscapeEditorGuard;
 };

@@ -1,5 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
+using System.IO;
 using UnrealBuildTool;
 
 public class ZenoEngine : ModuleRules
@@ -30,14 +31,11 @@ public class ZenoEngine : ModuleRules
 				"Slate",
 				"SlateCore",
 				"CoreUObject",
-				"Projects",
-				"UObjectPlugin",
-				"DesktopPlatform",
 				"RawMesh",
-				"MeshUtilities",
-				"UObjectPlugin",
 				"Renderer",
 				"RenderCore",
+				"InputCore",
+				"Projects",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -57,5 +55,18 @@ public class ZenoEngine : ModuleRules
 				// ... add any modules that your module loads dynamically here ...
 			}
 			);
+		
+        #if UE_5_2_OR_LATER
+        PublicDefinitions.AddRange(new string[]
+        {
+            "UE_5_2_OR_LATER=1",
+        });
+        #endif
+		
+        PublicSystemIncludePaths.AddRange(new string[]
+        {
+			Path.Join(PluginDirectory, "Source/ThirdParty/Zeno/projects/UnrealTool/include"),
+        });
+        
 	}
 }

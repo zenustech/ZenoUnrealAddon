@@ -47,9 +47,3 @@ void FZenoEditorMenuExtender::Add(const FName& InName, IZenoEditorExtenderServic
 {
 	Services.Add(InName, &Service);
 }
-
-FZenoEditorMenuExtender& FZenoEditorMenuExtender::Get()
-{
-	static FZenoEditorMenuExtender sExtender;
-	return sExtender;
-}

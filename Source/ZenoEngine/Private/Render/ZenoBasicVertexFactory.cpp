@@ -1,6 +1,10 @@
 ﻿#include "Render/ZenoBasicVertexFactory.h"
 
+#ifdef UE_5_2_OR_LATER
 #include "MaterialDomain.h"
+#else
+#include "MaterialShared.h"
+#endif
 #include "MeshMaterialShader.h"
 
 FZenoBasicVertexFactory::FZenoBasicVertexFactory(ERHIFeatureLevel::Type InFeatureLevel, const char* InDebugName)

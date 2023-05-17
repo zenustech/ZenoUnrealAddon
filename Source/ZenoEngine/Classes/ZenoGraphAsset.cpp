@@ -1,4 +1,16 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+﻿#include "ZenoGraphAsset.h"
 
+#include "Utilities/ZenoEngineTypes.h"
 
-#include "ZenoGraphAsset.h"
+TOptional<const FZenoOutputParameterDescriptor> UZenoGraphAsset::FindFirstOutputParameterDescriptor(
+	const EZenoSubjectType Type) const
+{
+	for (const auto& Descriptor : OutputParameterDescriptors)
+	{
+		if (Descriptor.Type == Type)
+		{
+			return Descriptor;
+		}
+	}
+	return {};
+}

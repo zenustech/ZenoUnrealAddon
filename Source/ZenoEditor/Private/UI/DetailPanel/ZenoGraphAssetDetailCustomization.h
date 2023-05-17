@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "IDetailCustomization.h"
-#include "ZenoDetailPanelService.h"
+#include "UI/DetailPanel/ZenoDetailPanelService.h"
 #include "ZenoGraphAsset.h"
 
 class FZenoGraphAssetDetailCustomization : public IDetailCustomization
