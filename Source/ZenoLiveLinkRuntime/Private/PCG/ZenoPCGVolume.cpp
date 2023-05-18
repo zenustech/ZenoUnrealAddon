@@ -181,11 +181,9 @@ void AZenoPCGVolume::ExecutePCGGraph()
 							              LoadSynchronous();
 						              if (!GraphInfo->OutputParameterDescriptors.IsEmpty())
 						              {
-							              const TOptional<const FZenoOutputParameterDescriptor> Output = GraphInfo->
-								              FindFirstOutputParameterDescriptor(EZenoSubjectType::Mesh);
-							              if (Output.IsSet())
+							              GraphInfo->ForEachOutputDescriptor<EZenoSubjectType::Mesh>(FZenoOutputDescriptorDelegate::CreateLambda([Volume] (const FZenoOutputParameterDescriptor& Descriptor)
 							              {
-								              const FString ResultName = Output.GetValue().Name;
+								              const FString ResultName = Descriptor.Name;
 								              UZenoLiveLinkClientSubsystem* LiveLinkSubsystem = GEngine->
 									              GetEngineSubsystem<UZenoLiveLinkClientSubsystem>();
 								              LiveLinkSubsystem->TryLoadSubjectRemotely<zeno::remote::Mesh>(
@@ -210,7 +208,7 @@ void AZenoPCGVolume::ExecutePCGGraph()
 												                               });
 										                               }
 									                               });
-							              }
+							              }));
 						              }
 					              }
 				              });

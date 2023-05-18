@@ -49,7 +49,6 @@ std::shared_ptr<zeno::remote::HeightField> UZenoPCGVolumeComponent::GetLandscape
 		return nullptr;
 	}
 	
-	
 	FBox ActorBounds;
 	if (Actor->IsA<ALandscapeProxy>())
 	{
@@ -75,53 +74,58 @@ std::shared_ptr<zeno::remote::HeightField> UZenoPCGVolumeComponent::GetLandscape
 	}
 
 	std::shared_ptr<zeno::remote::HeightField> Result = std::make_shared<zeno::remote::HeightField>();
-	TArray<uint16> HeightData;
+	
 	// TODO [darc] : Supporting multiple landscapes :
-	TWeakObjectPtr<ALandscapeProxy> LandscapeProxy = Landscapes[0];
-	if (!LandscapeProxy.IsValid())
+	ALandscapeProxy* LandscapeProxy = Landscapes[0].Get(false);
+	if (LandscapeProxy == nullptr)
 	{
+        UE_LOG(LogTemp, Warning, TEXT("No Landscape found within Actor bounds."));
 		return nullptr;
 	}
 
-	FBox ActorBoundInLandscapeSpace = ActorBounds.TransformBy(LandscapeProxy->GetActorTransform());
-	FTransform LandscapeTransform = LandscapeProxy->LandscapeActorToWorld();
-	ActorBoundInLandscapeSpace = ActorBoundInLandscapeSpace.InverseTransformBy(LandscapeTransform);
+	ActorBounds = ActorBounds.InverseTransformBy(LandscapeProxy->LandscapeActorToWorld());
 	FVector LandscapeScale = LandscapeProxy->GetActorScale3D();
-	FBox LandscapeBound = Zeno::Helper::GetLandscapeBounds(LandscapeProxy.Get());
-
-	FLandscapeEditDataInterface EditDataInterface(LandscapeProxy->GetLandscapeInfo(), false);
-
-	int32 MinX = FMath::FloorToInt(ActorBoundInLandscapeSpace.Min.X / LandscapeScale.X),
-		MinY = FMath::FloorToInt(ActorBoundInLandscapeSpace.Min.Y / LandscapeScale.Y),
-		MaxX = FMath::CeilToInt(ActorBoundInLandscapeSpace.Max.X / LandscapeScale.X),
-		MaxY = FMath::CeilToInt(ActorBoundInLandscapeSpace.Max.Y / LandscapeScale.Y);
-
-	MinX = FMath::Max(MinX, LandscapeBound.Min.X / LandscapeScale.X);
-	MinY = FMath::Max(MinY, LandscapeBound.Min.Y / LandscapeScale.Y);
-	MaxX = FMath::Min(MaxX, LandscapeBound.Max.X / LandscapeScale.X);
-	MaxY = FMath::Min(MaxY, LandscapeBound.Max.Y / LandscapeScale.Y);
+	FBox LandscapeBound = LandscapeProxy->GetComponentsBoundingBox().InverseTransformBy(LandscapeProxy->LandscapeActorToWorld());
 	
-	const int32 VertsX = MaxX - MinX + 1, VertsY = MaxY - MinY + 1;
-	HeightData.AddZeroed(VertsX * VertsY);
+	int32 MinX = FMath::FloorToInt((ActorBounds.Min.X));
+	int32 MinY = FMath::FloorToInt((ActorBounds.Min.Y));
+	int32 MaxX = FMath::CeilToInt((ActorBounds.Max.X));
+	int32 MaxY = FMath::CeilToInt((ActorBounds.Max.Y));
+
+	MinX = FMath::Clamp(MinX, 0, LandscapeBound.Min.X);
+	MinY = FMath::Clamp(MinY, 0, LandscapeBound.Min.Y);
+	MaxX = FMath::Clamp(MaxX, 0, LandscapeBound.Max.X);
+	MaxY = FMath::Clamp(MaxY, 0, LandscapeBound.Max.Y);
+
+	const size_t VertsX = MaxX - MinX + 1, VertsY = MaxY - MinY + 1;
+	
+	TArray<uint16> HeightData;
+	HeightData.SetNumZeroed(VertsX * VertsY);
+	
+	FLandscapeEditDataInterface EditDataInterface(LandscapeProxy->GetLandscapeInfo());
 	EditDataInterface.GetHeightData(MinX, MinY, MaxX, MaxY, HeightData.GetData(), 0);
 
 	if (MinX > MaxX || MinY > MaxY)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("No Landscape data found."));
 		return Result;
 	}
-	
+
 	Result->Data.resize(VertsY);
-	for (int32 X = 0; X < VertsX; ++X)
+	for (size_t Y = MinY; Y <= MaxY; ++Y)
 	{
-		auto& Vec = Result->Data[X];
-		Vec.resize(VertsY);
-		for (int32 Y = 0; Y < VertsY; ++Y)
+		for (size_t X = MinX; X <= MaxX; ++X)
 		{
-			Vec[Y] = HeightData[X + Y * VertsX];
+			size_t IdxX = X - MinX, IdxY = VertsY - (Y - MinY) - 1;
+			uint16 Height = HeightData[IdxX + (IdxY * (MaxX - MinX + 1))];
+			if (Result->Data[IdxY].size() == 0) Result->Data[IdxY].resize(VertsX);
+			Result->Data[IdxY][IdxX] = Height;
 		}
 	}
+	
 	Result->Nx = VertsX;
 	Result->Ny = VertsY;
-
+	Result->LandscapeScale = LandscapeScale.Z;
+	
 	return Result;
 }

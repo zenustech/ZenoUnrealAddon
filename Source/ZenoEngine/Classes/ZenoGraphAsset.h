@@ -2,11 +2,14 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
+#include "Utilities/ZenoEngineTypes.h"
 #include "ZenoGraphAsset.generated.h"
 
 enum class EZenoSubjectType : int16;
 struct FZenoOutputParameterDescriptor;
 struct FZenoInputParameterDescriptor;
+
+DECLARE_DELEGATE_OneParam(FZenoOutputDescriptorDelegate, const FZenoOutputParameterDescriptor&);
 
 UCLASS(BlueprintType)
 class ZENOENGINE_API UZenoGraphAsset : public UObject
@@ -32,4 +35,20 @@ public:
 
 	/** Find first output parameter descriptor with the given type. */
 	TOptional<const FZenoOutputParameterDescriptor> FindFirstOutputParameterDescriptor(const EZenoSubjectType Type) const;
+
+	template <EZenoSubjectType T>
+	void ForEachOutputDescriptor(const FZenoOutputDescriptorDelegate& Delegate) const;
 };
+
+template <EZenoSubjectType T>
+void UZenoGraphAsset::ForEachOutputDescriptor(const FZenoOutputDescriptorDelegate& Delegate) const
+{
+	constexpr EZenoSubjectType RequiredSubjectType = T;
+	for (const FZenoOutputParameterDescriptor& OutputParameterDescriptor : OutputParameterDescriptors)
+	{
+		if (OutputParameterDescriptor.Type == RequiredSubjectType)
+		{
+			bool _ = Delegate.ExecuteIfBound(OutputParameterDescriptor);
+		}
+	}
+}
