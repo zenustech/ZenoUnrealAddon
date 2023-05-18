@@ -116,7 +116,7 @@ std::shared_ptr<zeno::remote::HeightField> UZenoPCGVolumeComponent::GetLandscape
 	{
 		for (size_t X = MinX; X <= MaxX; ++X)
 		{
-			size_t IdxX = X - MinX, IdxY = (Y - MinY);
+			size_t IdxX = X - MinX, IdxY = VertsY - (Y - MinY) - 1;
 			uint16 Height = HeightData[IdxX + (IdxY * (MaxX - MinX + 1))];
 			if (Result->Data[IdxY].size() == 0) Result->Data[IdxY].resize(VertsX);
 			Result->Data[IdxY][IdxX] = Height;
@@ -125,6 +125,7 @@ std::shared_ptr<zeno::remote::HeightField> UZenoPCGVolumeComponent::GetLandscape
 	
 	Result->Nx = VertsX;
 	Result->Ny = VertsY;
+	Result->LandscapeScale = LandscapeScale.Z;
 	
 	return Result;
 }
