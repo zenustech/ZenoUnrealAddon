@@ -1,4 +1,4 @@
 [submodule "Source/ThirdParty/Zeno"]
 	path = Source/ThirdParty/Zeno
 	url = https://github.com/zenustech/zeno.git
-	branch = zeno2_fixbug
+	branch = master
