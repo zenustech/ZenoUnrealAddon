@@ -94,7 +94,11 @@ void UZenoEditorToolkitBase::MakeDockTab()
 			FCanExecuteAction::CreateUObject(this, &UZenoEditorToolkitBase::IsSubModeEnable, Cate.Key),
 			FIsActionChecked::CreateUObject(this, &UZenoEditorToolkitBase::IsInSubMode, Cate.Key),
 		});
+#ifdef UE_5_2_OR_LATER
 		CategoriesBuilder.AddToolbarStackButton(Cate.Value);
+#else
+		CategoriesBuilder.AddToolBarButton(Cate.Value);
+#endif
 	}
 	TabBox->AddSlot().AutoHeight() [ CategoriesBuilder.MakeWidget(nullptr, 20) ];
 	
