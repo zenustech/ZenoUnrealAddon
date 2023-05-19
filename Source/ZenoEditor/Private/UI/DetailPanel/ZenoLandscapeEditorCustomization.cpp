@@ -4,6 +4,7 @@
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
 #include "Landscape.h"
+#include "LandscapeInfo.h"
 #include "LandscapeProxy.h"
 #include "SlateOptMacros.h"
 #include "UI/DetailPanel/ZenoDetailPanelService.h"
