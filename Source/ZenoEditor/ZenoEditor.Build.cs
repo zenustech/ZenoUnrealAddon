@@ -35,7 +35,6 @@ public class ZenoEditor : ModuleRules
                 "StaticMeshDescription",
                 "ProceduralMeshComponent",
                 "ProceduralMeshComponentEditor",
-                "CMakeTarget",
                 "AssetTools",
                 "DeveloperSettings",
                 "ContentBrowser",
