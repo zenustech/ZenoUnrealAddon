@@ -28,6 +28,7 @@ public class ZenoLiveLinkEditor : ModuleRules
                 "Landscape",
                 "LandscapeEditor",
                 "LiveLinkInterface",
+                "EditorStyle",
             }
         );
     }
