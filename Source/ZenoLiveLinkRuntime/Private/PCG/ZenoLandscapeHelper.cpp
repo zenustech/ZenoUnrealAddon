@@ -8,6 +8,7 @@
 #include "LandscapeDataAccess.h"
 #include "LandscapeEdit.h"
 #include "LandscapeProxy.h"
+#include "PCG/DataSource/ZenoPCGLandscapeData.h"
 
 bool Zeno::Helper::IsRuntimeOrPIE()
 {
@@ -149,8 +150,10 @@ TArray<uint16> Zeno::Helper::GetHeightDataInBound(const ALandscapeProxy* Landsca
 	return HeightData;
 }
 
-TArray<FVector> Zeno::Helper::ScatterPoints(const ALandscapeProxy* Landscape, const uint32 NumPoints, const int32 Seed, const FBox& InBound)
+TArray<FVector> Zeno::Helper::ScatterPoints(ALandscapeProxy* Landscape, const uint32 NumPoints, const int32 Seed, const FBox& InBound)
 {
+	UZenoPCGLandscapeData* Data = NewObject<UZenoPCGLandscapeData>();
+	Data->Initialize({ Landscape }, GetLandscapeBounds(Landscape), true, false);
 	TArray<FVector> Points;
 
 	if (!IsValid(Landscape))
@@ -158,34 +161,16 @@ TArray<FVector> Zeno::Helper::ScatterPoints(const ALandscapeProxy* Landscape, co
 		return Points;
 	}
 
-	const ULandscapeInfo* LandscapeInfo = Landscape->GetLandscapeInfo();
-	if (!IsValid(LandscapeInfo))
-	{
-		return Points;
-	}
-
-	const FTransform LandscapeTransform = Landscape->LandscapeActorToWorld();
 	Points.Reserve(NumPoints);
-
 	const FRandomStream RandomStream { Seed };
-	FBox NewBounds = InBound;
-	FIntPoint OutSize;
-	bool bIsSuccess = false;
-	TArray<uint16> HeightData = GetHeightDataInBound(Landscape, NewBounds, OutSize, bIsSuccess);
-	const FBox LocalBound = NewBounds.InverseTransformBy(LandscapeTransform);
 
-	const float ZScale = LANDSCAPE_ZSCALE;
-
-	if (bIsSuccess)
+	for (uint32 PointIdx = 0; PointIdx < NumPoints; ++PointIdx)
 	{
-		for (uint32 PointIdx = 0; PointIdx < NumPoints; ++PointIdx)
-		{
-			const int32 RandomX = RandomStream.RandRange(LocalBound.Min.X, LocalBound.Max.X);
-			const int32 RandomY = RandomStream.RandRange(LocalBound.Min.Y, LocalBound.Max.Y);
-			const float Height = (HeightData[(RandomY - LocalBound.Min.Y) * OutSize.X + (RandomX - LocalBound.Min.X)] - (std::numeric_limits<uint16>::max() / 2)) * ZScale;
-			const FVector Point = FVector(RandomX, RandomY, Height);
-			Points.Add(Point);
-		}
+		FVector RandomPoint = RandomStream.RandPointInBox(InBound);
+		FZenoPCGPoint OutPoint;
+		Data->SamplePoint(FTransform {RandomPoint}, InBound, OutPoint, nullptr);
+		const FVector Point = OutPoint.Transform.GetLocation();
+		Points.Add(Point);
 	}
 	
 	return Points;

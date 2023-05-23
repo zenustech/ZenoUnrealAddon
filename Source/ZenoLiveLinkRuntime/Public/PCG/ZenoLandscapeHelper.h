@@ -40,7 +40,7 @@ namespace Zeno::Helper
 	 * @param NumPoints: The number of points to generate
 	 * @param Seed: The seed to generate points
 	 **/
-	ZENOLIVELINKRUNTIME_API TArray<FVector> ScatterPoints(const ALandscapeProxy* Landscape, uint32 NumPoints, int32 Seed = 0, const FBox& InBound = FBox{ForceInit});
+	ZENOLIVELINKRUNTIME_API TArray<FVector> ScatterPoints(ALandscapeProxy* Landscape, uint32 NumPoints, int32 Seed = 0, const FBox& InBound = FBox{ForceInit});
 
 
 	FORCEINLINE int32 ComputeSeed(const int32 A)
