@@ -6,7 +6,7 @@
 #include "ZenoPCGSpatialData.h"
 #include "ZenoPCGSurfaceData.generated.h"
 
-UCLASS()
+UCLASS(Abstract, BlueprintType, ClassGroup = (Zeno))
 class ZENOLIVELINKRUNTIME_API UZenoPCGSurfaceData : public UZenoPCGSpatialDataWithPointCache
 {
 	GENERATED_BODY()

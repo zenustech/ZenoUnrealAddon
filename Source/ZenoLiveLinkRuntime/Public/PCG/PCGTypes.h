@@ -119,6 +119,70 @@ struct ZENOLIVELINKRUNTIME_API FZenoPCGPoint
 	int32 Seed = 0;
 };
 
+UENUM()
+enum class EZenoMetadataOp : uint8
+{
+	/** Take the minimum value. */
+	Min,
+	/** Take the maximum value. */
+	Max,
+	/** Subtract the values. */
+	Sub,
+	/** Add the values. */
+	Add,
+	/** Multiply the values. */
+	Mul,
+	/** Divide the values. */
+	Div,
+	/** Pick the source (first) value. */
+	SourceValue,
+	/** Pick the target (second) value. */
+	TargetValue
+};
+
+UENUM()
+enum class EZenoMetadataFilterMode : uint8
+{
+	/** The listed attributes will be unchanged by the projection and will not be added from the target data. */
+	ExcludeAttributes,
+	/** Only the listed attributes will be changed by the projection or added from the target data. */
+	IncludeAttributes,
+};
+
+USTRUCT(BlueprintType)
+struct ZENOLIVELINKRUNTIME_API FZenoPCGProjectionParams
+{
+	GENERATED_BODY()
+
+	/** Project positions. */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Apply Data")
+	bool bProjectPositions = true;
+
+	/** Project rotations. */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Apply Data")
+	bool bProjectRotations = true;
+
+	/** Project scales. */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Apply Data")
+	bool bProjectScales = false;
+
+	/** Project colors. */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Apply Data")
+	bool bProjectColors = false;
+
+	/** Attributes to either explicitly exclude or include in the projection operation, depending on the Attribute Mode setting. Leave empty to gather all attributes and their values. Format is comma separated list like: Attribute1,Attribute2 .*/
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Apply Data")
+	FString AttributeList = TEXT("");
+
+	/** How the attribute list is used. Exclude Attributes will ignore these attributes and their values on the projection target. */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Apply Data")
+	EZenoMetadataFilterMode AttributeMode = EZenoMetadataFilterMode::ExcludeAttributes;
+
+	/** Operation to use to combine attributes that reside on both source and target data. */
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Apply Data")
+	EZenoMetadataOp AttributeMergeOperation = EZenoMetadataOp::TargetValue;
+};
+
 USTRUCT(BlueprintType)
 struct ZENOLIVELINKRUNTIME_API FZenoPCGContext
 {

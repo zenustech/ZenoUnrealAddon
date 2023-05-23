@@ -20,6 +20,29 @@ void UZenoPCGSpatialData::GetResourceSizeEx(FResourceSizeEx& CumulativeResourceS
 	}
 }
 
+bool UZenoPCGSpatialData::ProjectPoint(const FTransform& InTransform, const FBox& InBounds,
+	const FZenoPCGProjectionParams& InParams, FZenoPCGPoint& OutPoint, UZenoMetadata* OutMetadata) const
+{
+	const bool bResult = SamplePoint(InTransform, InBounds, OutPoint, OutMetadata);
+
+	if (!InParams.bProjectPositions)
+	{
+		OutPoint.Transform.SetLocation(InTransform.GetLocation());
+	}
+
+	if (!InParams.bProjectRotations)
+	{
+		OutPoint.Transform.SetRotation(InTransform.GetRotation());
+	}
+
+	if (!InParams.bProjectScales)
+	{
+		OutPoint.Transform.SetScale3D(InTransform.GetScale3D());
+	}
+
+	return bResult;
+}
+
 void UZenoPCGSpatialDataWithPointCache::GetResourceSizeEx(FResourceSizeEx& CumulativeResourceSize)
 {
 	Super::GetResourceSizeEx(CumulativeResourceSize);
