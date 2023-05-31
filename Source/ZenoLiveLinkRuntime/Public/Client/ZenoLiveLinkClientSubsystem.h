@@ -76,7 +76,7 @@ TSharedPromise<T> UZenoLiveLinkClientSubsystem::TryLoadSubjectRemotely(const FNa
 	TRACE_CPUPROFILER_EVENT_SCOPE(UZenoLiveLinkClientSubsystem::TryLoadSubjectRemotely);
 	TSharedPromise<T> Promise = MakeShared<TPromise<TOptional<T>>>();
 	
-	CONSTEXPR zeno::remote::ESubjectType RequiredSubjectType = zeno::remote::TGetClassSubjectType<T>::Value;
+	CONSTEXPR zeno::remote::ESubjectType RequiredSubjectType = T::SubjectType;
 	if (RequiredSubjectType == zeno::remote::ESubjectType::Invalid || RequiredSubjectType >= zeno::remote::ESubjectType::Num)
 	{
 		Promise->EmplaceValue();
