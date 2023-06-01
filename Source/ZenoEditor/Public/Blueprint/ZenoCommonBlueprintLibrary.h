@@ -47,4 +47,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	static bool OpenSettingsModal(UObject* InObject, const FText& InTitle = NSLOCTEXT("UZenoCommonBlueprintLibrary", "DefualtTitle", "Settings Panel"));
 	
+	/**
+	 * @brief Open settings modal, return after close window.
+	 * @param InObject Object to edit
+	 * @param InTitle Modal title
+	 * @return return true if user clicked apply button
+	 */
+	static bool OpenSettingsModal(TSharedRef<FStructOnScope> InObject, const FText& InTitle = NSLOCTEXT("UZenoCommonBlueprintLibrary", "DefualtTitle", "Settings Panel"));
 };

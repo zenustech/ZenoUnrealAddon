@@ -15,13 +15,19 @@ enum class EZenoVATType
 };
 
 
-UCLASS()
+UCLASS(BlueprintType)
 class ZENOEDITOR_API UVATImportSettings : public UObject
 {
 	GENERATED_BODY()
 
 public:
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = VAT)
+	// VAT type to import
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = VAT, DisplayName = "VAT Type")
 	EZenoVATType Type = EZenoVATType::SoftBody;
+
+	// VAT file path
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = VAT, DisplayName = "VAT File Path")
+	FFilePath FilePath;
+	
 };

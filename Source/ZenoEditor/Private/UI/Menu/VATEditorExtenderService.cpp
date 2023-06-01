@@ -8,6 +8,7 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Blueprint/ZenoCommonBlueprintLibrary.h"
 #include "Blueprint/ZenoEditorSettings.h"
+#include "Blueprint/Panel/VATImportSettings.h"
 #include "Importer/VAT/VATTypes.h"
 #include "Importer/VAT/VATUtility.h"
 #include "Importer/Wavefront/ZenoObjLoader.h"
@@ -42,12 +43,14 @@ void FVATEditorExtenderService::ExtendMenuBar(FMenuBarBuilder& Builder)
 void FVATEditorExtenderService::ExtendVATPullDownMenu(FMenuBuilder& Builder)
 {
 	Builder.AddMenuEntry(FZenoEditorCommand::Get().ImportWavefrontMesh);
+	Builder.AddMenuEntry(FZenoEditorCommand::Get().ImportVAT);
 }
 
 void FVATEditorExtenderService::MapAction()
 {
 	CommandList->MapAction(FZenoEditorCommand::Get().Debug, FExecuteAction::CreateRaw(this, &FVATEditorExtenderService::Debug));
 	CommandList->MapAction(FZenoEditorCommand::Get().ImportWavefrontMesh, FExecuteAction::CreateRaw(this, &FVATEditorExtenderService::ImportWavefrontObjFile));
+	CommandList->MapAction(FZenoEditorCommand::Get().ImportVAT, FExecuteAction::CreateRaw(this, &FVATEditorExtenderService::ImportVAT));
 }
 
 void FVATEditorExtenderService::Debug()
@@ -72,6 +75,34 @@ void FVATEditorExtenderService::ImportWavefrontObjFile()
 	}
 }
 
+void FVATEditorExtenderService::ImportVAT()
+{
+	UVATImportSettings* ImportSettings = NewObject<UVATImportSettings>(GetTransientPackage(), UVATImportSettings::StaticClass(), NAME_None, RF_Transient);
+	FWavefrontObjectContextCreateArgs ContextCreateArgs;
+	const TSharedRef<FStructOnScope> StructOnScope = MakeShared<FStructOnScope>(FWavefrontObjectContextCreateArgs::StaticStruct(), reinterpret_cast<uint8*>(&ContextCreateArgs));
+	bool bContinue = UZenoCommonBlueprintLibrary::OpenSettingsModal(ImportSettings);
+	bContinue = bContinue && UZenoCommonBlueprintLibrary::OpenSettingsModal(StructOnScope);
+
+	const FString& FilePath = ImportSettings->FilePath.FilePath;
+
+	if (!bContinue || FilePath.IsEmpty() || !FPaths::FileExists(FilePath))	
+	{
+		// TODO [darc] : show warning :
+		return;
+	}
+
+	FWavefrontObjectContext Context(ContextCreateArgs);
+	
+	TArray<FString> Arr;
+	FFileHelper::LoadFileToStringArray(Arr, *FilePath);
+	const FWavefrontFileParser Parser{Arr};
+	Parser.ParseFile(FZenoWavefrontObjectParserDelegate::CreateLambda([&] (const EWavefrontAttrType& InAttrType, const FString& InData) mutable
+	{
+		Context.Parse(InAttrType, InData);
+	}));
+	Context.CompleteParse();
+}
+
 void FVATEditorExtenderService::ProcessObjFileImport(const FString& FilePath)
 {
 	const FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>(
@@ -80,7 +111,7 @@ void FVATEditorExtenderService::ProcessObjFileImport(const FString& FilePath)
 	FFileHelper::LoadFileToStringArray(Arr, *FilePath);
 	const FWavefrontFileParser Parser{Arr};
 	EWavefrontParseError Err;
-	TSharedPtr<FRawMesh> RawMesh = Parser.Parse(Err);
+	TSharedPtr<FRawMesh> RawMesh = Parser.ParseDynamicMesh(Err);
 	if (Err == EWavefrontParseError::Success)
 	{
 		UStaticMesh* StaticMesh = NewObject<UStaticMesh>(GetTransientPackage(), MakeUniqueObjectName(GetTransientPackage(), UStaticMesh::StaticClass()), RF_Public | RF_Standalone);
@@ -94,8 +125,10 @@ void FVATEditorExtenderService::ProcessObjFileImport(const FString& FilePath)
 			SourceModel.BuildSettings.bRemoveDegenerates = false;
 			SourceModel.BuildSettings.bComputeWeightedNormals = false;
 			SourceModel.BuildSettings.bUseMikkTSpace = false;
-			SourceModel.BuildSettings.bUseFullPrecisionUVs = true;
+			SourceModel.BuildSettings.bUseFullPrecisionUVs = false;
 			SourceModel.BuildSettings.bUseHighPrecisionTangentBasis = true;
+			SourceModel.BuildSettings.bBuildReversedIndexBuffer = false;
+			SourceModel.BuildSettings.bUseBackwardsCompatibleF16TruncUVs = true;
 			SourceModel.SaveRawMesh(*RawMesh);
 		}
 		StaticMesh = Cast<UStaticMesh>(AssetToolsModule.Get().DuplicateAssetWithDialog(MakeUniqueObjectName(GetTransientPackage(), UStaticMesh::StaticClass()).ToString(), "/GAME", StaticMesh));

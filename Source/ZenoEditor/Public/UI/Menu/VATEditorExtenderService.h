@@ -16,6 +16,7 @@ public:
 private:
 	void Debug();
 	void ImportWavefrontObjFile();
+	void ImportVAT();
 
 	static void ProcessObjFileImport(const FString& FilePath);
 	static bool TryLoadPositionAndNormalVATBinaryDescriptor(const FString& InObjPath, UMaterialInstance* MaterialInstance);
