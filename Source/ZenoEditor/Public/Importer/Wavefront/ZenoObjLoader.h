@@ -49,7 +49,7 @@ struct ZENOEDITOR_API FWavefrontObjectContext
 
 	/** Vertex positions. Array[WedgeId]=float3(x,y,z) */
 	UPROPERTY(BlueprintReadOnly, Category = Context)
-	TArray<FVector> VertexBuffer;
+	TArray<FVector3f> VertexBuffer;
 	/** Texture coordinates. Array[WedgeId]=float2(u,v) */
 	UPROPERTY(BlueprintReadOnly, Category = Context)
 	TArray<FVector2f> UVChannel0;
@@ -76,19 +76,23 @@ struct ZENOEDITOR_API FWavefrontObjectContext
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Properties)
 	bool bTreatingNormalAsUV = false;
 
-	template <EWavefrontAttrType T>
-	void ParseLine(const FString& Data);
-
 	void Parse(EWavefrontAttrType InType, const FString& InData);
 
 	void CompleteParse();
 
+	TSharedRef<FRawMesh> ToRawMesh() const;
+
 private:
+	template <EWavefrontAttrType T>
+	void ParseLine(const FString& Data);
+	
 	TArray<FVector2f> UVBuffer0;
 	TArray<FVector2f> UVBuffer1;
 	TArray<FVector3f> NormalBuffer;
 	TMap<int32, uint32> FaceIdToUVIndex[2];
 	TMap<int32, uint32> FaceIdToNormalIndex;
+
+	bool bIsCompleted = false;
 };
 
 	

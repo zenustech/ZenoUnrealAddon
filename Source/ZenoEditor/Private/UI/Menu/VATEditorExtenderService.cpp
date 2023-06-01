@@ -80,8 +80,8 @@ void FVATEditorExtenderService::ImportVAT()
 	UVATImportSettings* ImportSettings = NewObject<UVATImportSettings>(GetTransientPackage(), UVATImportSettings::StaticClass(), NAME_None, RF_Transient);
 	FWavefrontObjectContextCreateArgs ContextCreateArgs;
 	const TSharedRef<FStructOnScope> StructOnScope = MakeShared<FStructOnScope>(FWavefrontObjectContextCreateArgs::StaticStruct(), reinterpret_cast<uint8*>(&ContextCreateArgs));
-	bool bContinue = UZenoCommonBlueprintLibrary::OpenSettingsModal(ImportSettings);
-	bContinue = bContinue && UZenoCommonBlueprintLibrary::OpenSettingsModal(StructOnScope);
+	bool bContinue = UZenoCommonBlueprintLibrary::OpenSettingsModal(ImportSettings, LOCTEXT("ImportSettings", "Import Settings"));
+	bContinue = bContinue && UZenoCommonBlueprintLibrary::OpenSettingsModal(StructOnScope, LOCTEXT("ParseSettings", "Parse Settings"));
 
 	const FString& FilePath = ImportSettings->FilePath.FilePath;
 

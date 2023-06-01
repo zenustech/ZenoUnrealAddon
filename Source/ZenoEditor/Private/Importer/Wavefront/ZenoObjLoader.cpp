@@ -15,6 +15,11 @@ FWavefrontObjectContext::FWavefrontObjectContext(const FWavefrontObjectContextCr
 
 void FWavefrontObjectContext::Parse(EWavefrontAttrType InType, const FString& InData)
 {
+	if (bIsCompleted)
+	{
+		return;
+	}
+	
 	if (InType == EWavefrontAttrType::Face)
 	{
 		ParseLine<EWavefrontAttrType::Face>(InData);
@@ -87,6 +92,51 @@ void FWavefrontObjectContext::CompleteParse()
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("qwq: %d / %d"), VertexBuffer.Num(), FaceBuffer.Num());
+	bIsCompleted = true;
+}
+
+TSharedRef<FRawMesh> FWavefrontObjectContext::ToRawMesh() const
+{
+	TSharedRef<FRawMesh> RawMesh = MakeShared<FRawMesh>();
+
+	RawMesh->VertexPositions = VertexBuffer;
+	RawMesh->WedgeIndices.Reserve(FaceBuffer.Num());
+	for (const int32 Face : FaceBuffer)
+	{
+		RawMesh->WedgeIndices.Add(static_cast<uint32>(Face));
+	}
+	RawMesh->WedgeTexCoords[0] = UVChannel0;
+	if (RawMesh->WedgeTexCoords[0].Num() == 0)
+	{
+		RawMesh->WedgeTexCoords[0].AddZeroed(RawMesh->WedgeIndices.Num());
+	}
+	if (bTreatingNormalAsUV)
+	{
+		RawMesh->WedgeTexCoords[1] = UVChannel1;
+	}
+	else
+	{
+		RawMesh->WedgeTangentZ = NormalChannel;
+	}
+
+	const uint32 EdgeNum = RawMesh->WedgeIndices.Num();
+	
+	RawMesh->WedgeTangentX.SetNumUninitialized(EdgeNum);
+	RawMesh->WedgeTangentY.SetNumUninitialized(EdgeNum);
+	RawMesh->WedgeTangentZ.SetNumUninitialized(EdgeNum);
+	RawMesh->WedgeColors.SetNumUninitialized(EdgeNum);
+	for (size_t Idx = 0; Idx < EdgeNum; ++Idx)
+	{
+		RawMesh->WedgeTangentX[Idx] = { 1.0f, .0f, .0f};
+		RawMesh->WedgeTangentY[Idx] = { .0f, 1.0f, .0f};
+		RawMesh->WedgeTangentZ[Idx] = { .0f, .0f, 1.0f};
+		RawMesh->WedgeColors[Idx] = FColor::Blue;
+	}
+
+	RawMesh->FaceMaterialIndices.SetNumZeroed(EdgeNum / 3);
+	RawMesh->FaceSmoothingMasks.SetNumZeroed(EdgeNum / 3);
+
+	return RawMesh;
 }
 
 template <>
