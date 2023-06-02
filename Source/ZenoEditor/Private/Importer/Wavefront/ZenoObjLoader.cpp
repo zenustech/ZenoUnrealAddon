@@ -92,6 +92,7 @@ void FWavefrontObjectContext::CompleteParse()
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("qwq: %d / %d"), VertexBuffer.Num(), FaceBuffer.Num());
+	
 	bIsCompleted = true;
 }
 
@@ -188,18 +189,18 @@ void FWavefrontObjectContext::ParseLine<EWavefrontAttrType::Face>(const FString&
 		const int32 VertexIndex1 = FCString::Atoi(ANSI_TO_TCHAR(Matches[1].str().c_str()));
 		const int32 VertexIndex2 = FCString::Atoi(ANSI_TO_TCHAR(Matches[2].str().c_str()));
 		const int32 VertexIndex3 = FCString::Atoi(ANSI_TO_TCHAR(Matches[3].str().c_str()));
-		FaceBuffer.Add(VertexIndex1);
-		FaceBuffer.Add(VertexIndex2);
-		FaceBuffer.Add(VertexIndex3);
+		FaceBuffer.Add(VertexIndex1 - 1);
+		FaceBuffer.Add(VertexIndex2 - 1);
+		FaceBuffer.Add(VertexIndex3 - 1);
 	}
 	else if (std::regex_search(TestStr, Matches, FaceFormat2))
 	{
 		const int32 VertexIndex1 = FCString::Atoi(ANSI_TO_TCHAR(Matches[1].str().c_str()));
 		const int32 VertexIndex2 = FCString::Atoi(ANSI_TO_TCHAR(Matches[3].str().c_str()));
 		const int32 VertexIndex3 = FCString::Atoi(ANSI_TO_TCHAR(Matches[5].str().c_str()));
-		const uint32 FaceId1 = FaceBuffer.Add(VertexIndex1);
-		const uint32 FaceId2 = FaceBuffer.Add(VertexIndex2);
-		const uint32 FaceId3 = FaceBuffer.Add(VertexIndex3);
+		const uint32 FaceId1 = FaceBuffer.Add(VertexIndex1 - 1);
+		const uint32 FaceId2 = FaceBuffer.Add(VertexIndex2 - 1);
+		const uint32 FaceId3 = FaceBuffer.Add(VertexIndex3 - 1);
 		const int32 UVIndex1 = FCString::Atoi(ANSI_TO_TCHAR(Matches[2].str().c_str()));
 		const int32 UVIndex2 = FCString::Atoi(ANSI_TO_TCHAR(Matches[4].str().c_str()));
 		const int32 UVIndex3 = FCString::Atoi(ANSI_TO_TCHAR(Matches[6].str().c_str()));
@@ -212,9 +213,9 @@ void FWavefrontObjectContext::ParseLine<EWavefrontAttrType::Face>(const FString&
 		const int32 VertexIndex1 = FCString::Atoi(ANSI_TO_TCHAR(Matches[1].str().c_str()));
 		const int32 VertexIndex2 = FCString::Atoi(ANSI_TO_TCHAR(Matches[4].str().c_str()));
 		const int32 VertexIndex3 = FCString::Atoi(ANSI_TO_TCHAR(Matches[7].str().c_str()));
-		const uint32 FaceId1 = FaceBuffer.Add(VertexIndex1);
-		const uint32 FaceId2 = FaceBuffer.Add(VertexIndex2);
-		const uint32 FaceId3 = FaceBuffer.Add(VertexIndex3);
+		const uint32 FaceId1 = FaceBuffer.Add(VertexIndex1 - 1);
+		const uint32 FaceId2 = FaceBuffer.Add(VertexIndex2 - 1);
+		const uint32 FaceId3 = FaceBuffer.Add(VertexIndex3 - 1);
 		const int32 UVIndex1 = FCString::Atoi(ANSI_TO_TCHAR(Matches[2].str().c_str()));
 		const int32 UVIndex2 = FCString::Atoi(ANSI_TO_TCHAR(Matches[5].str().c_str()));
 		const int32 UVIndex3 = FCString::Atoi(ANSI_TO_TCHAR(Matches[8].str().c_str()));

@@ -33,9 +33,9 @@ struct ZENOEDITOR_API FWavefrontObjectContextCreateArgs
 	GENERATED_BODY()
 	
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Properties)
-	bool bTreatingNormalAsUV = false;
+	bool bTreatingNormalAsUV = true;
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Properties)
-	bool bIsUpwardY = false;
+	bool bIsUpwardY = true;
 };
 
 

@@ -20,4 +20,5 @@ private:
 
 	static void ProcessObjFileImport(const FString& FilePath);
 	static bool TryLoadPositionAndNormalVATBinaryDescriptor(const FString& InObjPath, UMaterialInstance* MaterialInstance);
+	static bool SaveRawMeshToStaticMesh(FRawMesh& InRawMesh);
 };
