@@ -48,9 +48,18 @@ protected:
 public:
 	virtual FPrimitiveSceneProxy* CreateSceneProxy() override;
 
+	virtual void BeginPlay() override;
+
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
+	
+	virtual FBoxSphereBounds CalcLocalBounds() const override;
+
 protected:
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials) const override;
 #endif // WITH_EDITOR
 
 	friend class FZenoVatMeshSceneProxy;
