@@ -1,7 +1,7 @@
 ﻿#pragma once
-#include "MaterialDomain.h"
-#include "MeshMaterialShader.h"
-
+#include "ZenoMeshBuffer.h"
+class FZenoMeshIndexBuffer;
+class FZenoMeshVertexBuffer;
 class FZenoVatMeshSceneProxy;
 
 class FZenoVatMeshVertexFactoryShaderParameters : public FVertexFactoryShaderParameters
@@ -26,9 +26,9 @@ private:
 	LAYOUT_FIELD(FShaderResourceParameter, PositionBuffer);
 };
 
-struct FZenoVatMeshVertexFactory final : public FLocalVertexFactory
+class FZenoVatMeshVertexFactory final : public FLocalVertexFactory
 {
-	DECLARE_VERTEX_FACTORY_TYPE(FZenoVatMeshVertexFactory);
+	// DECLARE_VERTEX_FACTORY_TYPE(FZenoVatMeshVertexFactory);
 
 public:
 	FZenoVatMeshVertexFactory(ERHIFeatureLevel::Type InFeatureLevel, const char* InDebugName);
@@ -40,16 +40,15 @@ public:
 
 	FORCEINLINE void SetSceneProxy(FZenoVatMeshSceneProxy* InSceneProxy);
 	
-	virtual void InitRHI() override;
+	virtual void InitResource() override;
 
-	virtual void ReleaseRHI() override;
+	virtual void ReleaseResource() override;
 
-	void InitVertexResources_RenderThread(FRHICommandListImmediate& CmdList);
-
-	FPositionVertexBuffer& GetPositionBuffer() const;
-
+	FZenoMeshVertexBuffer* VertexBuffer = nullptr;
+	FZenoMeshIndexBuffer* IndexBuffer = nullptr;
+	
 private:
 	FZenoVatMeshSceneProxy* SceneProxy = nullptr;
 
-	mutable FPositionVertexBuffer PositionBuffer;
+	FZenoMeshBufferAllocator BufferAllocator;
 };

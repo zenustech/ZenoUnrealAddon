@@ -53,8 +53,8 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 	virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
-	
-	virtual FBoxSphereBounds CalcLocalBounds() const override;
+
+	virtual void PostInitProperties() override;
 
 protected:
 #if WITH_EDITOR

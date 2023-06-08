@@ -18,30 +18,10 @@ FZenoVatMeshSceneProxy::FZenoVatMeshSceneProxy(const UPrimitiveComponent* InComp
 	}
 	
 	VertexFactory = new FZenoVatMeshVertexFactory(GetScene().GetFeatureLevel(), "ZenoVatMeshVertexFactory");
-	
-	IndexBuffer.Indices = { 0, 1, 2, 2, 1, 3 };
-	TArray Vertices {
-		FDynamicMeshVertex { FVector3f { .0f, .0f, 1.f } * 100.f },
-		FDynamicMeshVertex { FVector3f { .5f, .0f, .5f } * 100.f },
-		FDynamicMeshVertex { FVector3f { .0f, .5f, .5f } * 100.f },
-		FDynamicMeshVertex { FVector3f { .5f, .5f, .0f } * 100.f },
-	};
-	VertexBuffers.InitFromDynamicVertex(VertexFactory, Vertices, 4);
-
-	BeginInitResource(&VertexBuffers.PositionVertexBuffer);
-	BeginInitResource(&VertexBuffers.StaticMeshVertexBuffer);
-	BeginInitResource(&VertexBuffers.ColorVertexBuffer);
-	BeginInitResource(&IndexBuffer);
-	BeginInitResource(VertexFactory);
 }
 
 FZenoVatMeshSceneProxy::~FZenoVatMeshSceneProxy()
 {
-	VertexBuffers.PositionVertexBuffer.ReleaseResource();
-	VertexBuffers.ColorVertexBuffer.ReleaseResource();
-	VertexBuffers.StaticMeshVertexBuffer.ReleaseResource();
-	IndexBuffer.ReleaseResource();
-	
 	if (VertexFactory)
 	{
 		VertexFactory->ReleaseResource();
@@ -79,6 +59,13 @@ void FZenoVatMeshSceneProxy::GetDynamicMeshElements(const TArray<const FSceneVie
                                                     const FSceneViewFamily& ViewFamily, uint32 VisibilityMap,
                                                     FMeshElementCollector& Collector) const
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(FZenoVatMeshSceneProxy::GetDynamicMeshElements);
+	if (VertexFactory == nullptr || VertexFactory->VertexBuffer == nullptr || VertexFactory->IndexBuffer == nullptr || VertexFactory->VertexBuffer->Vertices.IsEmpty())
+	{
+		ensureMsgf(false, TEXT("ZenoVatMeshSceneProxy has invalid vertex data"));
+		return;
+	}
+	
 	// Set up wireframe material (if needed)
 	const bool bWireframe = AllowDebugViewmodes() && ViewFamily.EngineShowFlags.Wireframe;
 
@@ -112,77 +99,46 @@ void FZenoVatMeshSceneProxy::GetDynamicMeshElements(const TArray<const FSceneVie
 				bOutputVelocity);
 			bOutputVelocity |= AlwaysHasVelocity();
 
+			FDynamicPrimitiveUniformBuffer& DynamicPrimitiveUniformBuffer = Collector.AllocateOneFrameResource<FDynamicPrimitiveUniformBuffer>();
+			DynamicPrimitiveUniformBuffer.Set(GetLocalToWorld(), PreviousLocalToWorld, GetBounds(), GetLocalBounds(), true, bHasPrecomputedVolumetricLightmap, bOutputVelocity);
+			
 			FMeshBatch& Mesh = Collector.AllocateMesh();
+			FMeshBatchElement& BatchElement = Mesh.Elements[0];
 			{
-				Mesh.bWireframe = bWireframe;
 				Mesh.VertexFactory = VertexFactory;
 				Mesh.MaterialRenderProxy = MaterialProxy;
+
+				Mesh.CastShadow = IsShadowCast(View);
+				Mesh.bWireframe = bWireframe;
+				Mesh.bCanApplyViewModeOverrides = false;
 				Mesh.ReverseCulling = IsLocalToWorldDeterminantNegative();
+				Mesh.bDisableBackfaceCulling = MaterialRelevance.bTwoSided;
 				Mesh.Type = PT_TriangleList;
 				Mesh.DepthPriorityGroup = SDPG_World;
-				Mesh.bCanApplyViewModeOverrides = false;
+				Mesh.bUseSelectionOutline = IsSelected();
 			}
 			{
-				FMeshBatchElement& BatchElement = Mesh.Elements[0];
-				BatchElement.IndexBuffer = &IndexBuffer;
-
-				FDynamicPrimitiveUniformBuffer& DynamicPrimitiveUniformBuffer = Collector.AllocateOneFrameResource<FDynamicPrimitiveUniformBuffer>();
-				DynamicPrimitiveUniformBuffer.Set(GetLocalToWorld(), PreviousLocalToWorld, GetBounds(),
-				                                  GetLocalBounds(), GetLocalBounds(), true,
-				                                  bHasPrecomputedVolumetricLightmap, bOutputVelocity,
-				                                  GetCustomPrimitiveData());
+				BatchElement.IndexBuffer = VertexFactory->IndexBuffer;
 				BatchElement.PrimitiveUniformBufferResource = &DynamicPrimitiveUniformBuffer.UniformBuffer;
 
 				BatchElement.FirstIndex = 0;
-				BatchElement.NumPrimitives = IndexBuffer.Indices.Num() / 3;
+				BatchElement.NumPrimitives = VertexFactory->IndexBuffer->Indices.Num() / 3;
 				BatchElement.MinVertexIndex = 0;
-				BatchElement.MaxVertexIndex = VertexBuffers.PositionVertexBuffer.GetNumVertices() - 1;
+				BatchElement.MaxVertexIndex = VertexFactory->VertexBuffer->Vertices.Num() - 1;
 			}
-
+			
 			Collector.AddMesh(ViewIndex, Mesh);
 		}
 	}
 }
 
+void FZenoVatMeshSceneProxy::CreateRenderThreadResources()
+{
+	VertexFactory->InitResource();
+	FPrimitiveSceneProxy::CreateRenderThreadResources();
+}
+
 void FZenoVatMeshSceneProxy::DestroyRenderThreadResources()
 {
 	FPrimitiveSceneProxy::DestroyRenderThreadResources();
-}
-
-void FZenoVatMeshSceneProxy::UpdateBuffer()
-{
-	ENQUEUE_RENDER_COMMAND(FZenoVatMeshSceneProxyUpdateBuffer)(
-		[this] (FRHICommandListImmediate& RHICmdList)
-		{
-			TArray Vertices {
-				FDynamicMeshVertex { FVector3f { .0f, .0f, 1.f } * 100.f },
-				FDynamicMeshVertex { FVector3f { .5f, .0f, .5f } * 100.f },
-				FDynamicMeshVertex { FVector3f { .0f, .5f, .5f } * 100.f },
-				FDynamicMeshVertex { FVector3f { .5f, .5f, .0f } * 100.f },
-			};
-
-			for (int32 Idx = 0; Idx < Vertices.Num(); Idx++)
-			{
-				VertexBuffers.PositionVertexBuffer.VertexPosition(Idx) = Vertices[Idx].Position;
-				VertexBuffers.ColorVertexBuffer.VertexColor(Idx) = FColor::White;
-			}
-
-			{
-				auto& VertexBuffer = VertexBuffers.PositionVertexBuffer;
-				void* VertexBufferData = RHILockBuffer(VertexBuffer.VertexBufferRHI, 0, VertexBuffer.GetNumVertices() * VertexBuffer.GetStride(), RLM_WriteOnly);
-				FMemory::Memcpy(VertexBufferData, VertexBuffer.GetVertexData(), VertexBuffer.GetNumVertices() * VertexBuffer.GetStride());
-				RHIUnlockBuffer(VertexBuffer.VertexBufferRHI);
-			}
-
-			{
-				auto& VertexBuffer = VertexBuffers.ColorVertexBuffer;
-				void* VertexBufferData = RHILockBuffer(VertexBuffer.VertexBufferRHI, 0,
-				                                       VertexBuffer.GetNumVertices() * VertexBuffer.GetStride(),
-				                                       RLM_WriteOnly);
-				FMemory::Memcpy(VertexBufferData, VertexBuffer.GetVertexData(),
-				                VertexBuffer.GetNumVertices() * VertexBuffer.GetStride());
-				RHIUnlockBuffer(VertexBuffer.VertexBufferRHI);
-			}
-		}
-	);
 }

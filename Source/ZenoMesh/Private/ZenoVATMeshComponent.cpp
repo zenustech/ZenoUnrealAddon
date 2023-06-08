@@ -28,40 +28,29 @@ FPrimitiveSceneProxy* UZenoVATMeshComponent::CreateSceneProxy()
 void UZenoVATMeshComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	if (SceneProxy)
-	{
-		FZenoVatMeshSceneProxy* Proxy = static_cast<FZenoVatMeshSceneProxy*>(SceneProxy);
-		Proxy->UpdateBuffer();
-	}
 }
 
 void UZenoVATMeshComponent::TickComponent(float DeltaTime, ELevelTick TickType,
                                           FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	if (SceneProxy)
-	{
-		FZenoVatMeshSceneProxy* Proxy = static_cast<FZenoVatMeshSceneProxy*>(SceneProxy);
-		Proxy->UpdateBuffer();
-	}
 }
 
 FBoxSphereBounds UZenoVATMeshComponent::CalcBounds(const FTransform& LocalToWorld) const
 {
-	FBoxSphereBounds NewBounds;
-	NewBounds.Origin = LocalToWorld.GetLocation();
-	NewBounds.BoxExtent = FVector::ZeroVector;
-	NewBounds.SphereRadius = 1000.f;
+	FBoxSphereBounds NewBounds(FBox{ FVector { -1000.0 }, FVector { 1000.0 } }.TransformBy(LocalToWorld));
+
+	NewBounds.BoxExtent *= BoundsScale;
+	NewBounds.SphereRadius *= BoundsScale;
+	
 	return NewBounds;
 }
 
-FBoxSphereBounds UZenoVATMeshComponent::CalcLocalBounds() const
+void UZenoVATMeshComponent::PostInitProperties()
 {
-	static FBoxSphereBounds StaticBounds;
-
-	StaticBounds.Origin = FVector::ZeroVector;
-	return StaticBounds.ExpandBy(1000.0f);
+	Super::PostInitProperties();
+	UpdateBounds();
+	MarkRenderTransformDirty();
 }
 
 #if WITH_EDITOR

@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "DynamicMeshBuilder.h"
 
-struct FZenoVatMeshVertexFactory;
+class FZenoVatMeshVertexFactory;
 
 class FZenoVatMeshSceneProxy final : public FPrimitiveSceneProxy
 {
@@ -20,18 +20,14 @@ public:
 
 	virtual void GetDynamicMeshElements(const TArray<const FSceneView*>& Views, const FSceneViewFamily& ViewFamily, uint32 VisibilityMap, FMeshElementCollector& Collector) const override;
 
+	virtual void CreateRenderThreadResources() override;
+	
 	virtual void DestroyRenderThreadResources() override;
-
-	void UpdateBuffer();
 
 private:
 	FMaterialRelevance MaterialRelevance;
 
 	TSoftObjectPtr<UMaterialInterface> MaterialInterface;
-	
-	FDynamicMeshIndexBuffer32 IndexBuffer;
-
-	FStaticMeshVertexBuffers VertexBuffers;
 
 	FZenoVatMeshVertexFactory* VertexFactory = nullptr;
 };

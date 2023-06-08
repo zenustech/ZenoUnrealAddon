@@ -10,6 +10,7 @@ public class ZenoMesh : ModuleRules
             new string[]
             {
                 "Core",
+                "Engine",
             }
         );
 
