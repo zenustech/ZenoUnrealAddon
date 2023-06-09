@@ -129,9 +129,16 @@ void FZenoVatMeshSceneProxy::GetDynamicMeshElements(const TArray<const FSceneVie
 				Mesh.bUseSelectionOutline = IsSelected();
 			}
 			{
-				FDynamicPrimitiveUniformBuffer& DynamicPrimitiveUniformBuffer = Collector.AllocateOneFrameResource<FDynamicPrimitiveUniformBuffer>();
-				DynamicPrimitiveUniformBuffer.Set(GetLocalToWorld(), PreviousLocalToWorld, GetBounds(), GetLocalBounds(), true, bHasPrecomputedVolumetricLightmap, bOutputVelocity);
-				BatchElement.PrimitiveUniformBufferResource = &DynamicPrimitiveUniformBuffer.UniformBuffer;
+				if (BatchElement.PrimitiveIdMode != PrimID_FromPrimitiveSceneInfo)
+				{
+					 FDynamicPrimitiveUniformBuffer& DynamicPrimitiveUniformBuffer = Collector.AllocateOneFrameResource<FDynamicPrimitiveUniformBuffer>();
+					 DynamicPrimitiveUniformBuffer.Set(GetLocalToWorld(), PreviousLocalToWorld, GetBounds(), GetLocalBounds(), true, bHasPrecomputedVolumetricLightmap, bOutputVelocity);
+					 BatchElement.PrimitiveUniformBufferResource = &DynamicPrimitiveUniformBuffer.UniformBuffer;
+				}
+				else
+				{
+					BatchElement.PrimitiveUniformBuffer = GetUniformBuffer();
+				}
 				
 				BatchElement.IndexBuffer = VertexFactory->IndexBuffer;
 				BatchElement.UserData = &UserData;

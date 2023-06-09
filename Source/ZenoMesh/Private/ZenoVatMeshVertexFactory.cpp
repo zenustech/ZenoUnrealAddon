@@ -12,12 +12,12 @@
 
 void FZenoVatMeshVertexFactoryShaderParameters::Bind(const FShaderParameterMap& ParameterMap)
 {
-	BoundsMin.Bind(ParameterMap, TEXT("BoundsMin"));
-	BoundsMax.Bind(ParameterMap, TEXT("BoundsMax"));
-	TotalFrame.Bind(ParameterMap, TEXT("TotalFrame"));
-	TextureHeight.Bind(ParameterMap, TEXT("TextureHeight"));
-	PlaySpeed.Bind(ParameterMap, TEXT("PlaySpeed"));
-	bAutoPlay.Bind(ParameterMap, TEXT("bAutoPlay"));
+	BoundsMin.Bind(ParameterMap, TEXT("VatBoundsMin"));
+	BoundsMax.Bind(ParameterMap, TEXT("VatBoundsMax"));
+	TotalFrame.Bind(ParameterMap, TEXT("VatTotalFrame"));
+	TextureHeight.Bind(ParameterMap, TEXT("VatTextureHeight"));
+	PlaySpeed.Bind(ParameterMap, TEXT("VatPlaySpeed"));
+	bAutoPlay.Bind(ParameterMap, TEXT("ShouldVatAutoPlay"));
 }
 
 void FZenoVatMeshVertexFactoryShaderParameters::GetElementShaderBindings(const FSceneInterface* Scene,

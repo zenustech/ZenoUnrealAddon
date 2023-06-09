@@ -12,6 +12,19 @@
 
 #include "/Engine/Generated/UniformBuffers/PrecomputedLightingBuffer.ush"
 
+/*=============================================================================
+	start Zeno shader binding
+=============================================================================*/
+float3 VatBoundsMin;
+float3 VatBoundsMax;
+int VatTotalFrame;
+int VatTextureHeight;
+float VatPlaySpeed;
+bool ShouldVatAutoPlay;
+/*=============================================================================
+	end Zeno shader binding
+=============================================================================*/
+
 #if USE_INSTANCE_CULLING || USE_INSTANCING
 	#if USE_DITHERED_LOD_TRANSITION
 		float4 InstancingViewZCompareZero;  // w contains random lod scale 
