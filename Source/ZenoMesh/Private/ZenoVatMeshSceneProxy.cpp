@@ -1,6 +1,7 @@
 ﻿#include "ZenoVatMeshSceneProxy.h"
 
 #include "MaterialDomain.h"
+#include "ZenoVATMeshComponent.h"
 #include "ZenoVatMeshVertexFactory.h"
 #include "Materials/MaterialRenderProxy.h"
 
@@ -18,6 +19,15 @@ FZenoVatMeshSceneProxy::FZenoVatMeshSceneProxy(const UPrimitiveComponent* InComp
 	}
 	
 	VertexFactory = new FZenoVatMeshVertexFactory(GetScene().GetFeatureLevel(), "ZenoVatMeshVertexFactory");
+
+	UniformData = new FZenoVatMeshUniformData();
+	const UZenoVATMeshComponent* Component = Cast<UZenoVATMeshComponent>(InComponent);
+	UniformData->bAutoPlay = Component->bAutoPlay;
+	UniformData->BoundsMax = Component->MaxBounds;
+	UniformData->BoundsMin = Component->MinBounds;
+	UniformData->PlaySpeed = Component->PlaySpeed;
+	UniformData->TextureHeight = Component->TextureHeight;
+	UniformData->TotalFrame = Component->TotalFrame;
 }
 
 FZenoVatMeshSceneProxy::~FZenoVatMeshSceneProxy()
@@ -27,6 +37,7 @@ FZenoVatMeshSceneProxy::~FZenoVatMeshSceneProxy()
 		VertexFactory->ReleaseResource();
 	}
 	delete VertexFactory;
+	delete UniformData;
 }
 
 SIZE_T FZenoVatMeshSceneProxy::GetTypeHash() const
@@ -98,9 +109,9 @@ void FZenoVatMeshSceneProxy::GetDynamicMeshElements(const TArray<const FSceneVie
 				GetPrimitiveSceneInfo(), bHasPrecomputedVolumetricLightmap, PreviousLocalToWorld, SingleCaptureIndex,
 				bOutputVelocity);
 			bOutputVelocity |= AlwaysHasVelocity();
-
-			FDynamicPrimitiveUniformBuffer& DynamicPrimitiveUniformBuffer = Collector.AllocateOneFrameResource<FDynamicPrimitiveUniformBuffer>();
-			DynamicPrimitiveUniformBuffer.Set(GetLocalToWorld(), PreviousLocalToWorld, GetBounds(), GetLocalBounds(), true, bHasPrecomputedVolumetricLightmap, bOutputVelocity);
+			
+			FZenoVatMeshUniformDataWrapper& UserData = Collector.AllocateOneFrameResource<FZenoVatMeshUniformDataWrapper>();
+			UserData.Data = *UniformData;
 			
 			FMeshBatch& Mesh = Collector.AllocateMesh();
 			FMeshBatchElement& BatchElement = Mesh.Elements[0];
@@ -118,13 +129,20 @@ void FZenoVatMeshSceneProxy::GetDynamicMeshElements(const TArray<const FSceneVie
 				Mesh.bUseSelectionOutline = IsSelected();
 			}
 			{
-				BatchElement.IndexBuffer = VertexFactory->IndexBuffer;
+				FDynamicPrimitiveUniformBuffer& DynamicPrimitiveUniformBuffer = Collector.AllocateOneFrameResource<FDynamicPrimitiveUniformBuffer>();
+				DynamicPrimitiveUniformBuffer.Set(GetLocalToWorld(), PreviousLocalToWorld, GetBounds(), GetLocalBounds(), true, bHasPrecomputedVolumetricLightmap, bOutputVelocity);
 				BatchElement.PrimitiveUniformBufferResource = &DynamicPrimitiveUniformBuffer.UniformBuffer;
+				
+				BatchElement.IndexBuffer = VertexFactory->IndexBuffer;
+				BatchElement.UserData = &UserData;
 
 				BatchElement.FirstIndex = 0;
 				BatchElement.NumPrimitives = VertexFactory->IndexBuffer->Indices.Num() / 3;
 				BatchElement.MinVertexIndex = 0;
 				BatchElement.MaxVertexIndex = VertexFactory->VertexBuffer->Vertices.Num() - 1;
+
+				// Pass the vertex factory's uniform buffer to FZenoVatMeshVertexFactoryShaderParameters::GetElementShaderBindings
+				BatchElement.VertexFactoryUserData = VertexFactory->GetUniformBuffer();
 			}
 			
 			Collector.AddMesh(ViewIndex, Mesh);

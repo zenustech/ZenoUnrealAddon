@@ -1,6 +1,6 @@
 ﻿#pragma once
-#include "DynamicMeshBuilder.h"
 
+struct FZenoVatMeshUniformData;
 class FZenoVatMeshVertexFactory;
 
 class FZenoVatMeshSceneProxy final : public FPrimitiveSceneProxy
@@ -30,4 +30,6 @@ private:
 	TSoftObjectPtr<UMaterialInterface> MaterialInterface;
 
 	FZenoVatMeshVertexFactory* VertexFactory = nullptr;
+
+	FZenoVatMeshUniformData* UniformData = nullptr;
 };

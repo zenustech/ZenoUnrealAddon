@@ -4,6 +4,7 @@
 #include "MeshDrawShaderBindings.h"
 #include "MeshMaterialShader.h"
 #include "ZenoMeshBuffer.h"
+#include "ZenoVATMeshComponent.h"
 
 ////////////////////////////////////////////////////////////////////////
 /// FZenoVatMeshVertexFactoryShaderParameters
@@ -11,7 +12,12 @@
 
 void FZenoVatMeshVertexFactoryShaderParameters::Bind(const FShaderParameterMap& ParameterMap)
 {
-	PositionBuffer.Bind(ParameterMap, TEXT("PositionBuffer"));
+	BoundsMin.Bind(ParameterMap, TEXT("BoundsMin"));
+	BoundsMax.Bind(ParameterMap, TEXT("BoundsMax"));
+	TotalFrame.Bind(ParameterMap, TEXT("TotalFrame"));
+	TextureHeight.Bind(ParameterMap, TEXT("TextureHeight"));
+	PlaySpeed.Bind(ParameterMap, TEXT("PlaySpeed"));
+	bAutoPlay.Bind(ParameterMap, TEXT("bAutoPlay"));
 }
 
 void FZenoVatMeshVertexFactoryShaderParameters::GetElementShaderBindings(const FSceneInterface* Scene,
@@ -20,6 +26,23 @@ void FZenoVatMeshVertexFactoryShaderParameters::GetElementShaderBindings(const F
 	FMeshDrawSingleShaderBindings& ShaderBindings, FVertexInputStreamArray& VertexStreams) const
 {
 	const FZenoVatMeshVertexFactory* ZenoVatMeshVertexFactory = static_cast<const FZenoVatMeshVertexFactory*>(VertexFactory);
+
+	// Bind LocalVertexFactoryUniformBuffer back.
+	const FRHIUniformBuffer* VertexFactoryUniformBuffer = static_cast<FRHIUniformBuffer*>(BatchElement.VertexFactoryUserData);
+	if(ZenoVatMeshVertexFactory->SupportsManualVertexFetch(FeatureLevel) || UseGPUScene(GMaxRHIShaderPlatform, FeatureLevel))
+	{
+		ShaderBindings.Add(Shader->GetUniformBufferParameter<FLocalVertexFactoryUniformShaderParameters>(), VertexFactoryUniformBuffer);
+	}
+
+	const FZenoVatMeshUniformDataWrapper* BatchUserData = static_cast<const FZenoVatMeshUniformDataWrapper*>(BatchElement.UserData);
+	check(BatchUserData);
+
+	ShaderBindings.Add(BoundsMin, BatchUserData->Data.BoundsMin);
+	ShaderBindings.Add(BoundsMax, BatchUserData->Data.BoundsMax);
+	ShaderBindings.Add(TotalFrame, BatchUserData->Data.TotalFrame);
+	ShaderBindings.Add(TextureHeight, BatchUserData->Data.TextureHeight);
+	ShaderBindings.Add(PlaySpeed, BatchUserData->Data.PlaySpeed);
+	ShaderBindings.Add(bAutoPlay, BatchUserData->Data.bAutoPlay);
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -182,8 +205,16 @@ void FZenoVatMeshVertexFactory::ReleaseResource()
 }
 
 IMPLEMENT_TYPE_LAYOUT(FZenoVatMeshVertexFactoryShaderParameters);
-//
-// IMPLEMENT_VERTEX_FACTORY_PARAMETER_TYPE(FZenoVatMeshVertexFactory, SF_Vertex, FZenoVatMeshVertexFactoryShaderParameters);
-//
-// IMPLEMENT_VERTEX_FACTORY_TYPE(FZenoVatMeshVertexFactory, "/Plugin/ZenoMesh/Private/VATVertexFactory.ush",
-//                               EVertexFactoryFlags::SupportsPositionOnly);
+
+IMPLEMENT_VERTEX_FACTORY_PARAMETER_TYPE(FZenoVatMeshVertexFactory, SF_Vertex, FZenoVatMeshVertexFactoryShaderParameters);
+
+IMPLEMENT_VERTEX_FACTORY_TYPE(
+	FZenoVatMeshVertexFactory,
+	"/Plugin/ZenoMesh/Private/VATVertexFactory.ush",
+	// "/Engine/Private/LocalVertexFactory.ush",
+	  EVertexFactoryFlags::UsedWithMaterials
+	| EVertexFactoryFlags::SupportsStaticLighting
+	| EVertexFactoryFlags::SupportsDynamicLighting
+	| EVertexFactoryFlags::SupportsPositionOnly
+	| EVertexFactoryFlags::SupportsManualVertexFetch
+);

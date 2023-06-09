@@ -77,3 +77,18 @@ inline void InitOrUpdateResource(FRenderResource* Resource)
 		Resource->UpdateRHI();
 	}
 }
+
+struct FZenoVatMeshUniformData
+{
+	FVector3f BoundsMin = FVector3f::Zero();
+	FVector3f BoundsMax = FVector3f::Zero();
+	int32 TotalFrame = 0;
+	int32 TextureHeight = 0;
+	float PlaySpeed = 1.0f;
+	bool bAutoPlay = true;
+};
+
+struct FZenoVatMeshUniformDataWrapper : public FOneFrameResource
+{
+	FZenoVatMeshUniformData Data;
+};

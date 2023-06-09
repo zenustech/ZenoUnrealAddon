@@ -23,12 +23,17 @@ public:
     		FVertexInputStreamArray& VertexStreams) const;
 
 private:
-	LAYOUT_FIELD(FShaderResourceParameter, PositionBuffer);
+	LAYOUT_FIELD(FShaderParameter, BoundsMin);
+	LAYOUT_FIELD(FShaderParameter, BoundsMax);
+	LAYOUT_FIELD(FShaderParameter, TotalFrame);
+	LAYOUT_FIELD(FShaderParameter, TextureHeight);
+	LAYOUT_FIELD(FShaderParameter, PlaySpeed);
+	LAYOUT_FIELD(FShaderParameter, bAutoPlay);
 };
 
 class FZenoVatMeshVertexFactory final : public FLocalVertexFactory
 {
-	// DECLARE_VERTEX_FACTORY_TYPE(FZenoVatMeshVertexFactory);
+	DECLARE_VERTEX_FACTORY_TYPE(FZenoVatMeshVertexFactory);
 
 public:
 	FZenoVatMeshVertexFactory(ERHIFeatureLevel::Type InFeatureLevel, const char* InDebugName);
