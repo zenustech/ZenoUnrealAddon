@@ -53,11 +53,32 @@ void UZenoVATMeshComponent::PostInitProperties()
 	MarkRenderTransformDirty();
 }
 
+void UZenoVATMeshComponent::UpdateVarInfoToRenderThread() const
+{
+	if (SceneProxy)
+	{
+		const FZenoVatMeshSceneProxy* VatSceneProxy = static_cast<FZenoVatMeshSceneProxy*>(SceneProxy);
+		FZenoVatMeshUniformData Data;
+		Data.bAutoPlay = bAutoPlay;
+		Data.BoundsMax = MaxBounds;
+		Data.BoundsMin = MinBounds;
+		Data.PlaySpeed = PlaySpeed;
+		Data.TotalFrame = TotalFrame;
+		Data.TextureHeight = TextureHeight;
+		ENQUEUE_RENDER_COMMAND(UpdateZenoVatInfo)(
+			[Data, VatSceneProxy](FRHICommandListImmediate& RHICmdList)
+			{
+				VatSceneProxy->SetVatInfo_RenderThread(Data);
+			}
+		);
+	}
+}
+
 #if WITH_EDITOR
 void UZenoVATMeshComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
-	if (PropertyChangedEvent.Property != nullptr)
+	if (PropertyChangedEvent.MemberProperty != nullptr)
 	{
 		if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UZenoVATMeshComponent, PositionTexturePath))
 		{
@@ -65,6 +86,10 @@ void UZenoVATMeshComponent::PostEditChangeProperty(FPropertyChangedEvent& Proper
 			{
 				TextureHeight = PositionTexture->GetImportedSize().Y;
 			}
+		}
+		if (PropertyChangedEvent.MemberProperty->HasMetaData(TEXT("ZenoVat")))
+		{
+			UpdateVarInfoToRenderThread();
 		}
 	}
 }

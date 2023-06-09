@@ -1024,7 +1024,9 @@ float4 VertexFactoryGetWorldPosition(FVertexFactoryInput Input, FVertexFactoryIn
 	// Scale to zero if not visible, seems a bit wild but whatever
 	return CalcWorldPosition(Input.Position, LocalToWorld) * Intermediates.IsVisible;
 #else
-	return CalcWorldPosition(Input.Position, LocalToWorld);
+	float4 NewPosition = Input.Position;
+	NewPosition.xyz += VatBoundsMin;
+	return CalcWorldPosition(NewPosition, LocalToWorld);
 #endif	// USE_INSTANCING
 }
 

@@ -18,32 +18,36 @@ public:
 
 protected:
 	/** Position Texture */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Position Texture")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Position Texture", meta = (ZenoVat))
 	TSoftObjectPtr<UTexture2D> PositionTexturePath;
 
 	/** Should the animation auto started? */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", meta = (ZenoVat))
 	bool bAutoPlay = false;
 
 	/** Number of frames */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Number of Frames")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Number of Frames", meta = (ZenoVat))
 	int32 TotalFrame = 0;
 
 	/** Height of texture */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VAT", DisplayName = "Height of Texture")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "VAT", DisplayName = "Height of Texture", meta = (ZenoVat))
 	int32 TextureHeight = 0;
 
 	/** Playing speed */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Animation Speed")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Animation Speed", meta = (ZenoVat))
 	float PlaySpeed = 1.0f;
 
 	/** Bounds to scale back position data */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Maximum Bounds")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Maximum Bounds", meta = (ZenoVat))
 	FVector3f MaxBounds = FVector3f::Zero();
 	
 	/** Bounds to scale back position data */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Minimum Bounds")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Minimum Bounds", meta = (ZenoVat))
 	FVector3f MinBounds = FVector3f::Zero();
+
+	/** Bounds to scale back position data */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Material")
+	UMaterialInterface* MeshMaterial = nullptr;
 	
 public:
 	virtual FPrimitiveSceneProxy* CreateSceneProxy() override;
@@ -55,6 +59,8 @@ public:
 	virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
 
 	virtual void PostInitProperties() override;
+
+	void UpdateVarInfoToRenderThread() const;
 
 protected:
 #if WITH_EDITOR

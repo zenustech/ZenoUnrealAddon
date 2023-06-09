@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "ZenoVATMeshComponent.h"
 
 struct FZenoVatMeshUniformData;
 class FZenoVatMeshVertexFactory;
@@ -23,6 +24,8 @@ public:
 	virtual void CreateRenderThreadResources() override;
 	
 	virtual void DestroyRenderThreadResources() override;
+
+	void SetVatInfo_RenderThread(const FZenoVatMeshUniformData& InUniformData) const;
 
 private:
 	FMaterialRelevance MaterialRelevance;

@@ -8,20 +8,20 @@
 FZenoVatMeshSceneProxy::FZenoVatMeshSceneProxy(const UPrimitiveComponent* InComponent, const FName& ResourceName)
 	: FPrimitiveSceneProxy(InComponent, ResourceName)
 {
-	if (MaterialInterface = InComponent->GetMaterial(0); MaterialInterface.IsValid())
+	const UZenoVATMeshComponent* Component = Cast<UZenoVATMeshComponent>(InComponent);
+	if (MaterialInterface = Component->MeshMaterial; MaterialInterface.IsValid())
 	{
 		MaterialRelevance = MaterialInterface->GetRelevance(GetScene().GetFeatureLevel());
 	}
 	else
 	{
-		const UMaterialInterface* DefaultMaterial = UMaterial::GetDefaultMaterial(MD_Surface);
-		MaterialRelevance = DefaultMaterial->GetRelevance(GetScene().GetFeatureLevel());
+		MaterialInterface = UMaterial::GetDefaultMaterial(MD_Surface);
+		MaterialRelevance = MaterialInterface->GetRelevance(GetScene().GetFeatureLevel());
 	}
 	
 	VertexFactory = new FZenoVatMeshVertexFactory(GetScene().GetFeatureLevel(), "ZenoVatMeshVertexFactory");
 
 	UniformData = new FZenoVatMeshUniformData();
-	const UZenoVATMeshComponent* Component = Cast<UZenoVATMeshComponent>(InComponent);
 	UniformData->bAutoPlay = Component->bAutoPlay;
 	UniformData->BoundsMax = Component->MaxBounds;
 	UniformData->BoundsMin = Component->MinBounds;
@@ -90,7 +90,7 @@ void FZenoVatMeshSceneProxy::GetDynamicMeshElements(const TArray<const FSceneVie
 
 		Collector.RegisterOneFrameMaterialProxy(WireframeMaterialInstance);
 	}
-
+	
 	const FMaterialRenderProxy* MaterialProxy = bWireframe
 		                                            ? WireframeMaterialInstance
 		                                            : UMaterial::GetDefaultMaterial(MD_Surface)->GetRenderProxy();
@@ -166,4 +166,9 @@ void FZenoVatMeshSceneProxy::CreateRenderThreadResources()
 void FZenoVatMeshSceneProxy::DestroyRenderThreadResources()
 {
 	FPrimitiveSceneProxy::DestroyRenderThreadResources();
+}
+
+void FZenoVatMeshSceneProxy::SetVatInfo_RenderThread(const FZenoVatMeshUniformData& InUniformData) const
+{
+	*UniformData = InUniformData;
 }

@@ -56,7 +56,7 @@ FZenoVatMeshVertexFactory::FZenoVatMeshVertexFactory(ERHIFeatureLevel::Type InFe
 
 bool FZenoVatMeshVertexFactory::ShouldCompilePermutation(const FVertexFactoryShaderPermutationParameters& InParameters)
 {
-	return InParameters.MaterialParameters.MaterialDomain != MD_UI;
+	return InParameters.MaterialParameters.MaterialDomain == MD_Surface && InParameters.MaterialParameters.ShadingModels.HasAnyShadingModel({ MSM_DefaultLit, MSM_Unlit });
 }
 
 void FZenoVatMeshVertexFactory::ModifyCompilationEnvironment(
