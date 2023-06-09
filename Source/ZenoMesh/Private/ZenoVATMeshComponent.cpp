@@ -65,6 +65,11 @@ void UZenoVATMeshComponent::UpdateVarInfoToRenderThread() const
 		Data.PlaySpeed = PlaySpeed;
 		Data.TotalFrame = TotalFrame;
 		Data.TextureHeight = TextureHeight;
+		Data.CurrentFrame = CurrentFrame;
+		if (PositionTexturePath.IsValid())
+		{
+			Data.PositionTexture = TStrongObjectPtr { PositionTexturePath.LoadSynchronous() };
+		}
 		ENQUEUE_RENDER_COMMAND(UpdateZenoVatInfo)(
 			[Data, VatSceneProxy](FRHICommandListImmediate& RHICmdList)
 			{
@@ -80,11 +85,19 @@ void UZenoVATMeshComponent::PostEditChangeProperty(FPropertyChangedEvent& Proper
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 	if (PropertyChangedEvent.MemberProperty != nullptr)
 	{
-		if (PropertyChangedEvent.GetMemberPropertyName() == GET_MEMBER_NAME_CHECKED(UZenoVATMeshComponent, PositionTexturePath))
+		const FName MemberPropertyName = PropertyChangedEvent.GetMemberPropertyName();
+		if (MemberPropertyName == GET_MEMBER_NAME_CHECKED(UZenoVATMeshComponent, PositionTexturePath))
 		{
 			if (const UTexture2D* PositionTexture =  PositionTexturePath.LoadSynchronous(); IsValid(PositionTexture))
 			{
 				TextureHeight = PositionTexture->GetImportedSize().Y;
+			}
+		}
+		if (MemberPropertyName == GET_MEMBER_NAME_CHECKED(UZenoVATMeshComponent, CurrentFrame))
+		{
+			if (CurrentFrame >= TotalFrame)
+			{
+				CurrentFrame %= FMath::Max(1, TotalFrame);
 			}
 		}
 		if (PropertyChangedEvent.MemberProperty->HasMetaData(TEXT("ZenoVat")))

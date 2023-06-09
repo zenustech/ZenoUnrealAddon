@@ -48,6 +48,10 @@ protected:
 	/** Bounds to scale back position data */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Material")
 	UMaterialInterface* MeshMaterial = nullptr;
+
+	/** Current Frame */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Current Frame", meta = (ZenoVat))
+	int32 CurrentFrame = 0;
 	
 public:
 	virtual FPrimitiveSceneProxy* CreateSceneProxy() override;
@@ -92,6 +96,8 @@ struct FZenoVatMeshUniformData
 	int32 TextureHeight = 0;
 	float PlaySpeed = 1.0f;
 	bool bAutoPlay = true;
+	TStrongObjectPtr<UTexture2D> PositionTexture;
+	int32 CurrentFrame = 0;
 };
 
 struct FZenoVatMeshUniformDataWrapper : public FOneFrameResource

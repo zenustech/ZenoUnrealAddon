@@ -21,6 +21,10 @@ int VatTotalFrame;
 int VatTextureHeight;
 float VatPlaySpeed;
 bool ShouldVatAutoPlay;
+int VatCurrentFrame;
+
+Texture2D VatPositionTexture;
+SamplerState VatPositionTextureSampler;
 /*=============================================================================
 	end Zeno shader binding
 =============================================================================*/

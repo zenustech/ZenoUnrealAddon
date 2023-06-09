@@ -18,6 +18,9 @@ void FZenoVatMeshVertexFactoryShaderParameters::Bind(const FShaderParameterMap& 
 	TextureHeight.Bind(ParameterMap, TEXT("VatTextureHeight"));
 	PlaySpeed.Bind(ParameterMap, TEXT("VatPlaySpeed"));
 	bAutoPlay.Bind(ParameterMap, TEXT("ShouldVatAutoPlay"));
+	PositionTexture.Bind(ParameterMap, TEXT("VatPositionTexture"));
+	PositionTextureSampler.Bind(ParameterMap, TEXT("VatPositionTextureSampler"));
+	CurrentFrame.Bind(ParameterMap, TEXT("VatCurrentFrame"));
 }
 
 void FZenoVatMeshVertexFactoryShaderParameters::GetElementShaderBindings(const FSceneInterface* Scene,
@@ -43,6 +46,12 @@ void FZenoVatMeshVertexFactoryShaderParameters::GetElementShaderBindings(const F
 	ShaderBindings.Add(TextureHeight, BatchUserData->Data.TextureHeight);
 	ShaderBindings.Add(PlaySpeed, BatchUserData->Data.PlaySpeed);
 	ShaderBindings.Add(bAutoPlay, BatchUserData->Data.bAutoPlay);
+	ShaderBindings.Add(CurrentFrame, BatchUserData->Data.CurrentFrame);
+
+	if (BatchUserData->Data.PositionTexture.IsValid())
+	{
+		ShaderBindings.AddTexture(PositionTexture, PositionTextureSampler, BatchUserData->Data.PositionTexture->GetResource()->SamplerStateRHI, BatchUserData->Data.PositionTexture->GetResource()->GetTexture2DRHI());
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////

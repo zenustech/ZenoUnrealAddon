@@ -28,6 +28,11 @@ FZenoVatMeshSceneProxy::FZenoVatMeshSceneProxy(const UPrimitiveComponent* InComp
 	UniformData->PlaySpeed = Component->PlaySpeed;
 	UniformData->TextureHeight = Component->TextureHeight;
 	UniformData->TotalFrame = Component->TotalFrame;
+	UniformData->CurrentFrame = Component->CurrentFrame;
+	if (Component->PositionTexturePath.IsValid())
+	{
+		UniformData->PositionTexture = TStrongObjectPtr { Component->PositionTexturePath.LoadSynchronous() };
+	}
 }
 
 FZenoVatMeshSceneProxy::~FZenoVatMeshSceneProxy()

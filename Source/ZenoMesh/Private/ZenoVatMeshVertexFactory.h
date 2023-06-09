@@ -29,6 +29,9 @@ private:
 	LAYOUT_FIELD(FShaderParameter, TextureHeight);
 	LAYOUT_FIELD(FShaderParameter, PlaySpeed);
 	LAYOUT_FIELD(FShaderParameter, bAutoPlay);
+	LAYOUT_FIELD(FShaderResourceParameter, PositionTexture);
+	LAYOUT_FIELD(FShaderResourceParameter, PositionTextureSampler);
+	LAYOUT_FIELD(FShaderParameter, CurrentFrame);
 };
 
 class FZenoVatMeshVertexFactory final : public FLocalVertexFactory
