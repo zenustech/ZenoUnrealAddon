@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include "ZenoEditorMenuExtender.h"
 
+struct FWavefrontObjectContext;
+
 class FVATEditorExtenderService final : public FZenoEditorExtenderServiceBase, public TGetFromThis<FVATEditorExtenderService>
 {
 public:
@@ -21,4 +23,5 @@ private:
 	static void ProcessObjFileImport(const FString& FilePath);
 	static bool TryLoadPositionAndNormalVATBinaryDescriptor(const FString& InObjPath, UMaterialInstance* MaterialInstance);
 	static bool SaveRawMeshToStaticMesh(FRawMesh& InRawMesh);
+	static bool SaveContextToStaticMesh(const FWavefrontObjectContext& InContext);
 };

@@ -7,7 +7,9 @@
 #include "ZenoVATMeshComponent.generated.h"
 
 
-UCLASS(ClassGroup=(Zeno), meta=(BlueprintSpawnableComponent))
+class UZenoMeshInstance;
+
+UCLASS(ClassGroup=(Zeno), meta=(BlueprintSpawnableComponent), DefaultToInstanced)
 class ZENOMESH_API UZenoVATMeshComponent : public UMeshComponent
 {
 	GENERATED_BODY()
@@ -52,6 +54,10 @@ protected:
 	/** Current Frame */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Current Frame", meta = (ZenoVat))
 	int32 CurrentFrame = 0;
+
+	/** Base mesh data */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Mesh Data")
+	UZenoMeshInstance* MeshData = nullptr;
 	
 public:
 	virtual FPrimitiveSceneProxy* CreateSceneProxy() override;
@@ -62,7 +68,7 @@ public:
 
 	virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
 
-	virtual void PostInitProperties() override;
+	virtual void Serialize(FArchive& Ar) override;
 
 	void UpdateVarInfoToRenderThread() const;
 
@@ -96,7 +102,7 @@ struct FZenoVatMeshUniformData
 	int32 TextureHeight = 0;
 	float PlaySpeed = 1.0f;
 	bool bAutoPlay = true;
-	TStrongObjectPtr<UTexture2D> PositionTexture;
+	UTexture2D* PositionTexture;
 	int32 CurrentFrame = 0;
 };
 

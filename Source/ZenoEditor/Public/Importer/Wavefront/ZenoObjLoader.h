@@ -2,6 +2,7 @@
 #include "ZenoObjTypes.h"
 #include "ZenoObjLoader.generated.h"
 
+class UZenoMeshInstance;
 enum class EWavefrontParseError : uint8;
 
 DECLARE_DELEGATE_TwoParams(FZenoWavefrontObjectParserDelegate, const EWavefrontAttrType&, const FString&);
@@ -81,6 +82,10 @@ struct ZENOEDITOR_API FWavefrontObjectContext
 	void CompleteParse();
 
 	TSharedRef<FRawMesh> ToRawMesh() const;
+
+	void FillMeshDescription(FMeshDescription* OutMeshDescription) const;
+
+	UZenoMeshInstance* CreateMeshInstance(UObject* InOuter, const FString& InName) const;
 
 private:
 	template <EWavefrontAttrType T>

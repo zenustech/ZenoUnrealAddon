@@ -26,6 +26,7 @@ public class ZenoMesh : ModuleRules
                 "Projects",
                 "RHI",
                 "RHICore",
+                "ZenoEngine",
             }
         );
     }

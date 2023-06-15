@@ -27,6 +27,8 @@ public:
 
 	void SetVatInfo_RenderThread(const FZenoVatMeshUniformData& InUniformData) const;
 
+	void SetMaterial_RenderThread(const UMaterialInterface* InMaterialInterface);
+
 private:
 	FMaterialRelevance MaterialRelevance;
 

@@ -5,6 +5,9 @@
 #include "Internationalization/Regex.h"
 #include <regex>
 
+#include "StaticMeshAttributes.h"
+#include "ZenoMeshDescriptor.h"
+
 FWavefrontObjectContext::FWavefrontObjectContext(const FWavefrontObjectContextCreateArgs& InArgs/* = FCreateArgs() **/)
 {
 	const FVector3f& Scale = GetDefault<UZenoEditorSettings>()->VATImportScale;
@@ -64,6 +67,11 @@ void FWavefrontObjectContext::Parse(EWavefrontAttrType InType, const FString& In
 
 void FWavefrontObjectContext::CompleteParse()
 {
+	if (bIsCompleted)
+	{
+		return;
+	}
+	bIsCompleted = true;
 	// Fill uv channel from map
 	UVChannel0.Reset();
 	UVChannel0.AddZeroed(FaceBuffer.Num());
@@ -81,19 +89,23 @@ void FWavefrontObjectContext::CompleteParse()
 	for (const TPair<int32, uint32>& Pair : FaceIdToUVIndex[0])
 	{
 		UVChannel0[Pair.Key] = UVBuffer0[Pair.Value];
-		if (bTreatingNormalAsUV)
+	}
+
+	if (bTreatingNormalAsUV)
+	{
+		for (const TPair<int32, uint32>& Pair : FaceIdToUVIndex[1])
 		{
 			UVChannel1[Pair.Key] = UVBuffer1[Pair.Value];
 		}
-		else
+	} else
+	{
+		for (const TPair<int32, uint32>& Pair : FaceIdToNormalIndex)
 		{
 			NormalChannel[Pair.Key] = NormalBuffer[Pair.Value];
 		}
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("qwq: %d / %d"), VertexBuffer.Num(), FaceBuffer.Num());
-	
-	bIsCompleted = true;
 }
 
 TSharedRef<FRawMesh> FWavefrontObjectContext::ToRawMesh() const
@@ -138,6 +150,130 @@ TSharedRef<FRawMesh> FWavefrontObjectContext::ToRawMesh() const
 	RawMesh->FaceSmoothingMasks.SetNumZeroed(EdgeNum / 3);
 
 	return RawMesh;
+}
+
+void FWavefrontObjectContext::FillMeshDescription(FMeshDescription* OutMeshDescription) const
+{
+	const bool bSkipTangents = bTreatingNormalAsUV;
+	constexpr int32 NumUVs = 2;
+
+	const int32 NumVertex = VertexBuffer.Num();
+	const int32 NumIndices = FaceBuffer.Num();
+	const int32 NumTriangle = NumIndices / 3;
+
+	FStaticMeshAttributes StaticMeshAttributes(*OutMeshDescription);
+	StaticMeshAttributes.Register(false);
+
+	TPolygonGroupAttributesRef<FName> PolygonGroupNames = StaticMeshAttributes.GetPolygonGroupMaterialSlotNames();
+	TVertexAttributesRef<FVector3f> VertexPositions = StaticMeshAttributes.GetVertexPositions();
+	TVertexInstanceAttributesRef<FVector3f> Normals = StaticMeshAttributes.GetVertexInstanceNormals();
+	TVertexInstanceAttributesRef<FVector4f> Colors = StaticMeshAttributes.GetVertexInstanceColors();
+	TVertexInstanceAttributesRef<FVector2f> UVs = StaticMeshAttributes.GetVertexInstanceUVs();
+	UVs.SetNumChannels(NumUVs);
+
+	OutMeshDescription->ReserveNewVertices(NumVertex);
+	OutMeshDescription->ReserveNewVertexInstances(NumIndices);
+	OutMeshDescription->ReserveNewTriangles(NumIndices);
+	
+	// Create polygon groups
+	const FPolygonGroupID PolygonGroupID = OutMeshDescription->CreatePolygonGroup();
+	PolygonGroupNames[PolygonGroupID] = TEXT("Default");
+
+	TMap<int32, FVertexID> VertexIndexToVertexID;
+	for (int32 VertexIndex = 0; VertexIndex < NumVertex; VertexIndex++)
+	{
+		const FVertexID VertexID = OutMeshDescription->CreateVertex();
+		VertexPositions[VertexID] = VertexBuffer[VertexIndex];
+		VertexIndexToVertexID.Add(VertexIndex, VertexID);
+	}
+
+	TMap<int32, FVertexInstanceID> IndiceIndexToVertexInstanceID;
+	for (int32 FaceIndex = 0; FaceIndex < NumIndices; FaceIndex++)
+	{
+		const int32 VertexIndex = FaceBuffer[FaceIndex];
+		const FVertexID VertexID = VertexIndexToVertexID[VertexIndex];
+		const FVertexInstanceID VertexInstanceID = OutMeshDescription->CreateVertexInstance(VertexID);
+		IndiceIndexToVertexInstanceID.Add(FaceIndex, VertexInstanceID);
+
+		UVs.Set(VertexInstanceID, 0, UVChannel0[FaceIndex]);
+		
+		if (bTreatingNormalAsUV)
+		{
+			UVs.Set(VertexInstanceID, 1, UVChannel1[FaceIndex]);
+		}
+		else
+		{
+			Normals.Set(VertexInstanceID, NormalChannel[FaceIndex]);
+		}
+	}
+
+	for (int32 TriIdx = 0; TriIdx < NumTriangle; TriIdx++)
+	{
+		TArray<FVertexInstanceID> VertexInstanceIds;
+		VertexInstanceIds.SetNum(3);
+
+		for (int32 CornerIndex = 0; CornerIndex < 3; ++CornerIndex)
+		{
+			const int32 IndiceIndex = (TriIdx * 3) + CornerIndex;
+			VertexInstanceIds[CornerIndex] = IndiceIndexToVertexInstanceID[IndiceIndex];
+		}
+
+		OutMeshDescription->CreateTriangle(PolygonGroupID, VertexInstanceIds);
+	}
+}
+
+UZenoMeshInstance* FWavefrontObjectContext::CreateMeshInstance(UObject* InOuter, const FString& InName) const
+{
+	UZenoMeshInstance* MeshInstance = NewObject<UZenoMeshInstance>(InOuter, *InName, RF_Public | RF_Standalone);
+
+	// MeshInstance->MeshData.IndexBuffer = FaceBuffer;
+	// MeshInstance->MeshData.NormalChannel = NormalChannel;
+	// MeshInstance->MeshData.UVChannel0 = UVChannel0;
+	// MeshInstance->MeshData.UVChannel1 = UVChannel1;
+	// MeshInstance->MeshData.VertexBuffer = VertexBuffer;
+
+	TArray<FVector3f>& NewVertexBuffer = MeshInstance->MeshData.VertexBuffer;
+	TArray<int32>& NewIndexBuffer = MeshInstance->MeshData.IndexBuffer;
+	TArray<FVector2f>& NewUVChannel0 = MeshInstance->MeshData.UVChannel0;
+	TArray<FVector2f>& NewUVChannel1 = MeshInstance->MeshData.UVChannel1;
+	TArray<FVector3f>& NewNormalChannel = MeshInstance->MeshData.NormalChannel;
+
+	NewVertexBuffer.Reserve(FaceBuffer.Num());
+	NewIndexBuffer.Reserve(FaceBuffer.Num());
+	if (UVChannel0.Num() > 0)
+	{
+		NewUVChannel0.Reserve(FaceBuffer.Num());
+	}
+	if (UVChannel1.Num() > 0)
+	{
+		NewUVChannel1.Reserve(FaceBuffer.Num());
+	}
+	if (NormalChannel.Num() > 0)
+	{
+		NewNormalChannel.Reserve(FaceBuffer.Num());
+	}
+	
+	const int32 NumIndices = FaceBuffer.Num();
+	for (int32 Idx = 0; Idx < NumIndices; ++Idx)
+	{
+		const int32 VertexIndex = FaceBuffer[Idx];
+		int32 NewIdx = NewVertexBuffer.Add(VertexBuffer[VertexIndex]);
+		NewIndexBuffer.Add(NewIdx);
+		if (UVChannel0.IsValidIndex(Idx))
+		{
+			NewUVChannel0.Add(UVChannel0[Idx]);
+		}
+		if (UVChannel1.IsValidIndex(Idx))
+		{
+			NewUVChannel1.Add(UVChannel1[Idx]);
+		}
+		if (NormalChannel.IsValidIndex(Idx))
+		{
+			NewNormalChannel.Add(NormalChannel[Idx]);
+		}
+	}
+	
+	return MeshInstance;
 }
 
 template <>
@@ -227,9 +363,9 @@ void FWavefrontObjectContext::ParseLine<EWavefrontAttrType::Face>(const FString&
 		const int32 NormalIndex3 = FCString::Atoi(ANSI_TO_TCHAR(Matches[9].str().c_str()));
 		if (bTreatingNormalAsUV)
 		{
-			FaceIdToUVIndex[0].Add(FaceId1, NormalIndex1 - 1);
-			FaceIdToUVIndex[0].Add(FaceId2, NormalIndex2 - 1);
-			FaceIdToUVIndex[0].Add(FaceId3, NormalIndex3 - 1);
+			FaceIdToUVIndex[1].Add(FaceId1, NormalIndex1 - 1);
+			FaceIdToUVIndex[1].Add(FaceId2, NormalIndex2 - 1);
+			FaceIdToUVIndex[1].Add(FaceId3, NormalIndex3 - 1);
 		} else
 		{
 			FaceIdToNormalIndex.Add(FaceId1, NormalIndex1 - 1);

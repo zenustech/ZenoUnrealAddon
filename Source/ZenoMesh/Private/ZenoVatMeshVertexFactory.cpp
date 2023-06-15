@@ -4,6 +4,7 @@
 #include "MeshDrawShaderBindings.h"
 #include "MeshMaterialShader.h"
 #include "ZenoMeshBuffer.h"
+#include "ZenoMeshDescriptor.h"
 #include "ZenoVATMeshComponent.h"
 
 ////////////////////////////////////////////////////////////////////////
@@ -48,7 +49,7 @@ void FZenoVatMeshVertexFactoryShaderParameters::GetElementShaderBindings(const F
 	ShaderBindings.Add(bAutoPlay, BatchUserData->Data.bAutoPlay);
 	ShaderBindings.Add(CurrentFrame, BatchUserData->Data.CurrentFrame);
 
-	if (BatchUserData->Data.PositionTexture.IsValid())
+	if (IsValid(BatchUserData->Data.PositionTexture))
 	{
 		ShaderBindings.AddTexture(PositionTexture, PositionTextureSampler, BatchUserData->Data.PositionTexture->GetResource()->SamplerStateRHI, BatchUserData->Data.PositionTexture->GetResource()->GetTexture2DRHI());
 	}
@@ -58,9 +59,50 @@ void FZenoVatMeshVertexFactoryShaderParameters::GetElementShaderBindings(const F
 /// FZenoVatMeshVertexFactory
 ////////////////////////////////////////////////////////////////////////
 
-FZenoVatMeshVertexFactory::FZenoVatMeshVertexFactory(ERHIFeatureLevel::Type InFeatureLevel, const char* InDebugName)
+FZenoVatMeshVertexFactory::FZenoVatMeshVertexFactory(const FZenoMeshData* InMesh, ERHIFeatureLevel::Type InFeatureLevel, const char* InDebugName)
 	: FLocalVertexFactory(InFeatureLevel, InDebugName)
 {
+	VertexBuffer = new FZenoMeshVertexBuffer(3, 2, false, BufferAllocator);
+	IndexBuffer = new FZenoMeshIndexBuffer(BufferAllocator);
+
+	if (InMesh)
+	{
+		VertexBuffer->Vertices.Reserve(InMesh->VertexBuffer.Num());
+		int32 VertexIndex = 0;
+		for (const FVector3f& Vertex : InMesh->VertexBuffer)
+		{
+			FZenoMeshVertex NewVertex(Vertex);
+			if (InMesh->UVChannel0.IsValidIndex(VertexIndex))
+			{
+				NewVertex.TextureCoordinate[0] = InMesh->UVChannel0[VertexIndex];
+			}
+			if (InMesh->UVChannel1.IsValidIndex(VertexIndex))
+			{
+				NewVertex.TextureCoordinate[1] = InMesh->UVChannel1[VertexIndex];
+			}
+			if (InMesh->NormalChannel.IsValidIndex(VertexIndex))
+			{
+				NewVertex.Normal = InMesh->NormalChannel[VertexIndex];
+			}
+			
+			VertexBuffer->Vertices.Add(NewVertex);
+			VertexIndex++;
+		}
+
+		IndexBuffer->Indices = InMesh->IndexBuffer;
+	}
+#if 1
+	else
+	{
+		// Debug
+		VertexBuffer->Vertices.Append({
+			FZenoMeshVertex { FVector3f { -100.f, .0f, .0f } },
+			FZenoMeshVertex { FVector3f { 0.f, 100.0f, .0f } },
+			FZenoMeshVertex { FVector3f { 100.f, .0f, .0f } },
+		});
+		IndexBuffer->Indices.Append({ 0, 1, 2 });
+	}
+#endif
 }
 
 bool FZenoVatMeshVertexFactory::ShouldCompilePermutation(const FVertexFactoryShaderPermutationParameters& InParameters)
@@ -82,20 +124,6 @@ void FZenoVatMeshVertexFactory::SetSceneProxy(FZenoVatMeshSceneProxy* InScenePro
 void FZenoVatMeshVertexFactory::InitResource()
 {
 	FLocalVertexFactory* VertexFactory = this;
-	VertexBuffer = new FZenoMeshVertexBuffer(3, 2, false, BufferAllocator);
-	IndexBuffer = new FZenoMeshIndexBuffer(BufferAllocator);
-
-#if 1
-	// Debug
-	{
-		VertexBuffer->Vertices.Append({
-			FZenoMeshVertex { FVector3f { -100.f, .0f, .0f } },
-			FZenoMeshVertex { FVector3f { 0.f, 100.0f, .0f } },
-			FZenoMeshVertex { FVector3f { 100.f, .0f, .0f } },
-		});
-		IndexBuffer->Indices.Append({ 0, 1, 2 });
-	}
-#endif
 
 	BeginInitResource(VertexBuffer);
 	BeginInitResource(IndexBuffer);

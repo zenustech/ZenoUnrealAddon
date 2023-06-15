@@ -5,6 +5,7 @@
 #include "RawMesh.h"
 #include "StaticMeshOperations.h"
 #include "ZenoEditorCommand.h"
+#include "ZenoMeshDescriptor.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Blueprint/ZenoCommonBlueprintLibrary.h"
 #include "Blueprint/ZenoEditorSettings.h"
@@ -101,8 +102,20 @@ void FVATEditorExtenderService::ImportVAT()
 		Context.Parse(InAttrType, InData);
 	}));
 	Context.CompleteParse();
-	const TSharedRef<FRawMesh> RawMesh = Context.ToRawMesh();
-	SaveRawMeshToStaticMesh(*RawMesh);
+	// const TSharedRef<FRawMesh> RawMesh = Context.ToRawMesh();
+	// SaveRawMeshToStaticMesh(*RawMesh);
+	// SaveContextToStaticMesh(Context);
+	if (const FString ContentPath = UZenoCommonBlueprintLibrary::OpenContentPicker(); !ContentPath.IsEmpty())
+	{
+		const FString SavePackageName = FPackageName::ObjectPathToPackageName(ContentPath);
+		const FString SavePackagePath = FPaths::GetPath(SavePackageName);
+		const FString SaveAssetName = FPaths::GetBaseFilename(SavePackageName);
+
+		UPackage* Package = CreatePackage(*SavePackageName);
+		
+		UZenoMeshInstance* Instance = Context.CreateMeshInstance(Package, *SaveAssetName);
+		FAssetRegistryModule::AssetCreated(Instance);
+	}
 }
 
 void FVATEditorExtenderService::ProcessObjFileImport(const FString& FilePath)
@@ -172,24 +185,81 @@ bool FVATEditorExtenderService::SaveRawMeshToStaticMesh(FRawMesh& InRawMesh)
 		StaticMesh->ImportVersion = LastVersion;
 		StaticMesh->PreEditChange(nullptr);
 		FStaticMeshSourceModel& SourceModel = StaticMesh->AddSourceModel();
-	#if 1
 		{
 			StaticMesh->NaniteSettings.bEnabled = false;
 			SourceModel.BuildSettings.bRecomputeNormals = false;
-			SourceModel.BuildSettings.bRecomputeTangents = true;
+			SourceModel.BuildSettings.bRecomputeTangents = false;
 			SourceModel.BuildSettings.bRemoveDegenerates = false;
-			SourceModel.BuildSettings.bComputeWeightedNormals = false;
+			SourceModel.BuildSettings.bComputeWeightedNormals = true;
 			SourceModel.BuildSettings.bUseMikkTSpace = false;
 			SourceModel.BuildSettings.bUseFullPrecisionUVs = true;
 			SourceModel.BuildSettings.bUseHighPrecisionTangentBasis = true;
-			SourceModel.BuildSettings.bBuildReversedIndexBuffer = false;
-			SourceModel.BuildSettings.bUseBackwardsCompatibleF16TruncUVs = false;
+			SourceModel.BuildSettings.bGenerateLightmapUVs = false;
 			SourceModel.SaveRawMesh(InRawMesh);
 		}
-	#endif
 		StaticMesh->SetLightingGuid();
 		StaticMesh->SetLightMapResolution(64);
-		StaticMesh->SetLightMapCoordinateIndex(1);
+		StaticMesh->SetLightMapCoordinateIndex(2);
+		StaticMesh->PostEditChange();
+		StaticMesh->Build(false);
+		
+		if (!IsValid(StaticMesh))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("User canceled import."));
+			return false;
+		}
+		if (UZenoEditorSettings::Get()->bAutoCreateBasicVatMaterialInstanceConstant)
+		{
+			UMaterialInstance* NewMI = UZenoEditorSettings::CreateBasicVATMaterialInstance(FString::Printf(TEXT("Mat_PosAndNormVAT_%ls_Inst"), *StaticMesh->GetName()), StaticMesh->GetFullName());
+			StaticMesh->AddMaterial(NewMI);
+		}
+		else
+		{
+			StaticMesh->GetStaticMaterials().Add({});
+		}
+		FAssetRegistryModule::AssetCreated(StaticMesh);
+		if (IsValid(StaticMesh->GetPackage()))
+		{
+			auto _ = StaticMesh->GetPackage()->MarkPackageDirty();
+		}
+		return true;
+	}
+
+	return false;
+}
+
+bool FVATEditorExtenderService::SaveContextToStaticMesh(const FWavefrontObjectContext& InContext)
+{
+	const FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>(
+    			"AssetTools");
+	
+	if (const FString ContentPath = UZenoCommonBlueprintLibrary::OpenContentPicker(); !ContentPath.IsEmpty())
+	{
+		const FString SavePackageName = FPackageName::ObjectPathToPackageName(ContentPath);
+		const FString SavePackagePath = FPaths::GetPath(SavePackageName);
+		const FString SaveAssetName = FPaths::GetBaseFilename(SavePackageName);
+
+		UPackage* Package = CreatePackage(*SavePackageName);
+		UStaticMesh* StaticMesh = NewObject<UStaticMesh>(Package, MakeUniqueObjectName(Package, UStaticMesh::StaticClass()), RF_Public | RF_Standalone);
+		StaticMesh->ImportVersion = LastVersion;
+		StaticMesh->PreEditChange(nullptr);
+		FStaticMeshSourceModel& SourceModel = StaticMesh->AddSourceModel();
+		{
+			StaticMesh->NaniteSettings.bEnabled = false;
+			SourceModel.BuildSettings.bRecomputeNormals = false;
+			SourceModel.BuildSettings.bRecomputeTangents = false;
+			SourceModel.BuildSettings.bRemoveDegenerates = false;
+			SourceModel.BuildSettings.bComputeWeightedNormals = true;
+			SourceModel.BuildSettings.bUseMikkTSpace = false;
+			SourceModel.BuildSettings.bUseFullPrecisionUVs = true;
+			SourceModel.BuildSettings.bUseHighPrecisionTangentBasis = true;
+			SourceModel.BuildSettings.bGenerateLightmapUVs = true;
+			SourceModel.BuildSettings.SrcLightmapIndex = 0;
+			SourceModel.BuildSettings.DstLightmapIndex = 2;
+			FMeshDescription* MeshDescription = SourceModel.CreateMeshDescription();
+			InContext.FillMeshDescription(MeshDescription);
+			SourceModel.CommitMeshDescription(true);
+		}
 		StaticMesh->PostEditChange();
 		StaticMesh->Build(false);
 		

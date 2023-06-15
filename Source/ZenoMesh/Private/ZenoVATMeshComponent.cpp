@@ -3,6 +3,7 @@
 
 #include "ZenoVATMeshComponent.h"
 
+#include "ZenoMeshDescriptor.h"
 #include "ZenoVatMeshSceneProxy.h"
 #include "UObject/SoftObjectPtr.h"
 
@@ -46,11 +47,13 @@ FBoxSphereBounds UZenoVATMeshComponent::CalcBounds(const FTransform& LocalToWorl
 	return NewBounds;
 }
 
-void UZenoVATMeshComponent::PostInitProperties()
+void UZenoVATMeshComponent::Serialize(FArchive& Ar)
 {
-	Super::PostInitProperties();
-	UpdateBounds();
-	MarkRenderTransformDirty();
+	Super::Serialize(Ar);
+	if (Ar.IsLoading())
+	{
+		MarkRenderStateDirty();
+	}
 }
 
 void UZenoVATMeshComponent::UpdateVarInfoToRenderThread() const
@@ -68,7 +71,7 @@ void UZenoVATMeshComponent::UpdateVarInfoToRenderThread() const
 		Data.CurrentFrame = CurrentFrame;
 		if (PositionTexturePath.IsValid())
 		{
-			Data.PositionTexture = TStrongObjectPtr { PositionTexturePath.LoadSynchronous() };
+			Data.PositionTexture = PositionTexturePath.LoadSynchronous();
 		}
 		ENQUEUE_RENDER_COMMAND(UpdateZenoVatInfo)(
 			[Data, VatSceneProxy](FRHICommandListImmediate& RHICmdList)
@@ -82,7 +85,6 @@ void UZenoVATMeshComponent::UpdateVarInfoToRenderThread() const
 #if WITH_EDITOR
 void UZenoVATMeshComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
-	Super::PostEditChangeProperty(PropertyChangedEvent);
 	if (PropertyChangedEvent.MemberProperty != nullptr)
 	{
 		const FName MemberPropertyName = PropertyChangedEvent.GetMemberPropertyName();
@@ -91,8 +93,38 @@ void UZenoVATMeshComponent::PostEditChangeProperty(FPropertyChangedEvent& Proper
 			if (const UTexture2D* PositionTexture =  PositionTexturePath.LoadSynchronous(); IsValid(PositionTexture))
 			{
 				TextureHeight = PositionTexture->GetImportedSize().Y;
+				MarkRenderStateDirty();
 			}
 		}
+		else if (MemberPropertyName == GET_MEMBER_NAME_CHECKED(UZenoVATMeshComponent, MeshData))
+		{
+			if (const UZenoMeshInstance* MeshInstance = Cast<UZenoMeshInstance>(MeshData); IsValid(MeshInstance))
+			{
+				MarkRenderStateDirty();
+			}
+			else
+			{
+				MeshData = nullptr;
+			}
+		}
+		else if (MemberPropertyName == GET_MEMBER_NAME_CHECKED(UZenoVATMeshComponent, MeshMaterial))
+		{
+			if (SceneProxy)
+			{
+				ENQUEUE_RENDER_COMMAND(UpdateMaterial) (
+					 [this] (FRHICommandListImmediate& RHICmdList)
+					 {
+					 	if (SceneProxy)
+					 	{
+					 		FZenoVatMeshSceneProxy* VatSceneProxy = static_cast<FZenoVatMeshSceneProxy*>(SceneProxy);
+					 		VatSceneProxy->SetMaterial_RenderThread(MeshMaterial);
+					 	}
+						  
+					 }
+				);
+			}
+		}
+		
 		if (MemberPropertyName == GET_MEMBER_NAME_CHECKED(UZenoVATMeshComponent, CurrentFrame))
 		{
 			if (CurrentFrame >= TotalFrame)
@@ -105,10 +137,12 @@ void UZenoVATMeshComponent::PostEditChangeProperty(FPropertyChangedEvent& Proper
 			UpdateVarInfoToRenderThread();
 		}
 	}
+	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 
 void UZenoVATMeshComponent::GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials) const
 {
 	Super::GetUsedMaterials(OutMaterials, bGetDebugMaterials);
+	OutMaterials.Add(MeshMaterial);
 }
 #endif // WITH_EDITOR

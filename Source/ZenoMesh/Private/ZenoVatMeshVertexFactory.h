@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "ZenoMeshBuffer.h"
+struct FZenoMeshData;
 class FZenoMeshIndexBuffer;
 class FZenoMeshVertexBuffer;
 class FZenoVatMeshSceneProxy;
@@ -39,7 +40,7 @@ class FZenoVatMeshVertexFactory final : public FLocalVertexFactory
 	DECLARE_VERTEX_FACTORY_TYPE(FZenoVatMeshVertexFactory);
 
 public:
-	FZenoVatMeshVertexFactory(ERHIFeatureLevel::Type InFeatureLevel, const char* InDebugName);
+	FZenoVatMeshVertexFactory(const FZenoMeshData* InMesh, ERHIFeatureLevel::Type InFeatureLevel, const char* InDebugName);
 
 	static bool ShouldCompilePermutation(const FVertexFactoryShaderPermutationParameters& InParameters);
 

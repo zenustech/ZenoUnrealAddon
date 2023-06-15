@@ -1,6 +1,7 @@
 ﻿#include "ZenoVatMeshSceneProxy.h"
 
 #include "MaterialDomain.h"
+#include "ZenoMeshDescriptor.h"
 #include "ZenoVATMeshComponent.h"
 #include "ZenoVatMeshVertexFactory.h"
 #include "Materials/MaterialRenderProxy.h"
@@ -18,8 +19,16 @@ FZenoVatMeshSceneProxy::FZenoVatMeshSceneProxy(const UPrimitiveComponent* InComp
 		MaterialInterface = UMaterial::GetDefaultMaterial(MD_Surface);
 		MaterialRelevance = MaterialInterface->GetRelevance(GetScene().GetFeatureLevel());
 	}
-	
-	VertexFactory = new FZenoVatMeshVertexFactory(GetScene().GetFeatureLevel(), "ZenoVatMeshVertexFactory");
+
+	if (const UZenoMeshInstance* MeshInstance = Component->MeshData; IsValid(MeshInstance))
+	{
+		const FZenoMeshData MeshData = MeshInstance->MeshData;
+		VertexFactory = new FZenoVatMeshVertexFactory(&MeshData, GetScene().GetFeatureLevel(), "ZenoVatMeshVertexFactory");
+	}
+	else
+	{
+		VertexFactory = new FZenoVatMeshVertexFactory(nullptr, GetScene().GetFeatureLevel(), "ZenoVatMeshVertexFactory");
+	}
 
 	UniformData = new FZenoVatMeshUniformData();
 	UniformData->bAutoPlay = Component->bAutoPlay;
@@ -29,9 +38,9 @@ FZenoVatMeshSceneProxy::FZenoVatMeshSceneProxy(const UPrimitiveComponent* InComp
 	UniformData->TextureHeight = Component->TextureHeight;
 	UniformData->TotalFrame = Component->TotalFrame;
 	UniformData->CurrentFrame = Component->CurrentFrame;
-	if (Component->PositionTexturePath.IsValid())
+	if (!Component->PositionTexturePath.IsNull())
 	{
-		UniformData->PositionTexture = TStrongObjectPtr { Component->PositionTexturePath.LoadSynchronous() };
+		UniformData->PositionTexture = Component->PositionTexturePath.LoadSynchronous();
 	}
 }
 
@@ -98,7 +107,7 @@ void FZenoVatMeshSceneProxy::GetDynamicMeshElements(const TArray<const FSceneVie
 	
 	const FMaterialRenderProxy* MaterialProxy = bWireframe
 		                                            ? WireframeMaterialInstance
-		                                            : UMaterial::GetDefaultMaterial(MD_Surface)->GetRenderProxy();
+		                                            : MaterialInterface.IsValid() ? MaterialInterface->GetRenderProxy() : UMaterial::GetDefaultMaterial(MD_Surface)->GetRenderProxy();
 
 	for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ViewIndex++)
 	{
@@ -176,4 +185,12 @@ void FZenoVatMeshSceneProxy::DestroyRenderThreadResources()
 void FZenoVatMeshSceneProxy::SetVatInfo_RenderThread(const FZenoVatMeshUniformData& InUniformData) const
 {
 	*UniformData = InUniformData;
+}
+
+void FZenoVatMeshSceneProxy::SetMaterial_RenderThread(const UMaterialInterface* InMaterialInterface)
+{
+	if (IsValid(InMaterialInterface))
+	{
+		MaterialInterface = InMaterialInterface;
+	}
 }
