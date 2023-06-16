@@ -226,18 +226,19 @@ UZenoMeshInstance* FWavefrontObjectContext::CreateMeshInstance(UObject* InOuter,
 {
 	UZenoMeshInstance* MeshInstance = NewObject<UZenoMeshInstance>(InOuter, *InName, RF_Public | RF_Standalone);
 
-	// MeshInstance->MeshData.IndexBuffer = FaceBuffer;
-	// MeshInstance->MeshData.NormalChannel = NormalChannel;
-	// MeshInstance->MeshData.UVChannel0 = UVChannel0;
-	// MeshInstance->MeshData.UVChannel1 = UVChannel1;
-	// MeshInstance->MeshData.VertexBuffer = VertexBuffer;
-
+#if 1
+	MeshInstance->MeshData.IndexBuffer = FaceBuffer;
+	MeshInstance->MeshData.NormalChannel = NormalChannel;
+	MeshInstance->MeshData.UVChannel0 = UVChannel0;
+	MeshInstance->MeshData.UVChannel1 = UVChannel1;
+	MeshInstance->MeshData.VertexBuffer = VertexBuffer;
+#else
 	TArray<FVector3f>& NewVertexBuffer = MeshInstance->MeshData.VertexBuffer;
 	TArray<int32>& NewIndexBuffer = MeshInstance->MeshData.IndexBuffer;
 	TArray<FVector2f>& NewUVChannel0 = MeshInstance->MeshData.UVChannel0;
 	TArray<FVector2f>& NewUVChannel1 = MeshInstance->MeshData.UVChannel1;
 	TArray<FVector3f>& NewNormalChannel = MeshInstance->MeshData.NormalChannel;
-
+	
 	NewVertexBuffer.Reserve(FaceBuffer.Num());
 	NewIndexBuffer.Reserve(FaceBuffer.Num());
 	if (UVChannel0.Num() > 0)
@@ -272,6 +273,7 @@ UZenoMeshInstance* FWavefrontObjectContext::CreateMeshInstance(UObject* InOuter,
 			NewNormalChannel.Add(NormalChannel[Idx]);
 		}
 	}
+#endif
 	
 	return MeshInstance;
 }
