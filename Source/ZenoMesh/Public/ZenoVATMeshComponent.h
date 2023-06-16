@@ -68,6 +68,8 @@ public:
 
 	virtual FBoxSphereBounds CalcBounds(const FTransform& LocalToWorld) const override;
 
+	virtual void PostLoad() override;
+	
 	virtual void Serialize(FArchive& Ar) override;
 
 	void UpdateVarInfoToRenderThread() const;

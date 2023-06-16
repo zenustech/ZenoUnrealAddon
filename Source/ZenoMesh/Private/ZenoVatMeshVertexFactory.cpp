@@ -51,7 +51,9 @@ void FZenoVatMeshVertexFactoryShaderParameters::GetElementShaderBindings(const F
 
 	if (IsValid(BatchUserData->Data.PositionTexture))
 	{
-		ShaderBindings.AddTexture(PositionTexture, PositionTextureSampler, BatchUserData->Data.PositionTexture->GetResource()->SamplerStateRHI, BatchUserData->Data.PositionTexture->GetResource()->GetTexture2DRHI());
+		// We always need to disable filtering for the position texture as we just sample a single point.
+		FRHISamplerState* SamplerStatePoint = TStaticSamplerState<SF_Point>::GetRHI();
+		ShaderBindings.AddTexture(PositionTexture, PositionTextureSampler, SamplerStatePoint, BatchUserData->Data.PositionTexture->GetResource()->GetTexture2DRHI());
 	}
 }
 
@@ -62,7 +64,7 @@ void FZenoVatMeshVertexFactoryShaderParameters::GetElementShaderBindings(const F
 FZenoVatMeshVertexFactory::FZenoVatMeshVertexFactory(const FZenoMeshData* InMesh, ERHIFeatureLevel::Type InFeatureLevel, const char* InDebugName)
 	: FLocalVertexFactory(InFeatureLevel, InDebugName)
 {
-	VertexBuffer = new FZenoMeshVertexBuffer(3, 2, false, BufferAllocator);
+	VertexBuffer = new FZenoMeshVertexBuffer(2, 0, false, BufferAllocator);
 	IndexBuffer = new FZenoMeshIndexBuffer(BufferAllocator);
 
 	if (InMesh)
@@ -113,7 +115,7 @@ bool FZenoVatMeshVertexFactory::ShouldCompilePermutation(const FVertexFactorySha
 void FZenoVatMeshVertexFactory::ModifyCompilationEnvironment(
 	const FVertexFactoryShaderPermutationParameters& InParameters, FShaderCompilerEnvironment& OutEnvironment)
 {
-	OutEnvironment.SetDefine(TEXT("CLOTH_MESH"), TEXT("1"));
+	OutEnvironment.SetDefine(TEXT("ZENO_VAT_MESH"), TEXT("1"));
 }
 
 void FZenoVatMeshVertexFactory::SetSceneProxy(FZenoVatMeshSceneProxy* InSceneProxy)
@@ -252,6 +254,6 @@ IMPLEMENT_VERTEX_FACTORY_TYPE(
 	  EVertexFactoryFlags::UsedWithMaterials
 	| EVertexFactoryFlags::SupportsStaticLighting
 	| EVertexFactoryFlags::SupportsDynamicLighting
-	| EVertexFactoryFlags::SupportsPositionOnly
-	| EVertexFactoryFlags::SupportsManualVertexFetch
+	// | EVertexFactoryFlags::SupportsPositionOnly
+	// | EVertexFactoryFlags::SupportsManualVertexFetch
 );

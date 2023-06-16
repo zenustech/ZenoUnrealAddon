@@ -39,12 +39,20 @@ void UZenoVATMeshComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 FBoxSphereBounds UZenoVATMeshComponent::CalcBounds(const FTransform& LocalToWorld) const
 {
-	FBoxSphereBounds NewBounds(FBox{ FVector { -1000.0 }, FVector { 1000.0 } }.TransformBy(LocalToWorld));
-
+	FBoxSphereBounds NewBounds(FBox{ FVector { MinBounds }, FVector { MaxBounds } }.TransformBy(LocalToWorld));
+	
 	NewBounds.BoxExtent *= BoundsScale;
 	NewBounds.SphereRadius *= BoundsScale;
 	
 	return NewBounds;
+}
+
+void UZenoVATMeshComponent::PostLoad()
+{
+	Super::PostLoad();
+#if WITH_EDITOR
+	UpdateBounds();
+#endif // WITH_EDITOR
 }
 
 void UZenoVATMeshComponent::Serialize(FArchive& Ar)

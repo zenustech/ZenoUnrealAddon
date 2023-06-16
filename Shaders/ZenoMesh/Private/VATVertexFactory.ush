@@ -22,9 +22,10 @@ int VatTextureHeight;
 float VatPlaySpeed;
 bool ShouldVatAutoPlay;
 int VatCurrentFrame;
-
-Texture2D VatPositionTexture;
+#if ZENO_VAT_MESH
+Texture2D<float4> VatPositionTexture;
 SamplerState VatPositionTextureSampler;
+#endif // ZENO_VAT_MESH 
 /*=============================================================================
 	end Zeno shader binding
 =============================================================================*/
@@ -1027,10 +1028,29 @@ float4 VertexFactoryGetWorldPosition(FVertexFactoryInput Input, FVertexFactoryIn
 #elif USE_INSTANCE_CULLING
 	// Scale to zero if not visible, seems a bit wild but whatever
 	return CalcWorldPosition(Input.Position, LocalToWorld) * Intermediates.IsVisible;
-#else
+// ~darczeng start [VAT Offset]
+#elif ZENO_VAT_MESH
 	float4 NewPosition = Input.Position;
-	NewPosition.xyz += VatBoundsMin;
+	float3x3 TangentToLocal = VertexFactoryGetTangentToLocal(Input, Intermediates);
+#if NUM_MATERIAL_TEXCOORDS_VERTEX > 1
+	FMaterialVertexParameters MaterialParameters = GetMaterialVertexParameters(Input, Intermediates, NewPosition.xyz, TangentToLocal );
+	float2 UV = MaterialParameters.TexCoords[1];
+	float HeightPerFrame = ceil(VatTotalFrame / VatTextureHeight);
+	float FrameOffset = HeightPerFrame / max(1.0, float(VatTotalFrame));
+	UV.y += FrameOffset * float(VatCurrentFrame);
+	float4 MeshSpacePosition = NewPosition = Texture2DSample(VatPositionTexture, VatPositionTextureSampler, UV);
+
+	// Bounds space to local space
+	float3 BoundsScale = VatBoundsMax - VatBoundsMin;
+	MeshSpacePosition = MeshSpacePosition * float4(BoundsScale, 1.0) + float4(VatBoundsMin, 0.0);
+
+	NewPosition = float4(MeshSpacePosition.x, MeshSpacePosition.z, MeshSpacePosition.y, MeshSpacePosition.w);
+#endif
+	
 	return CalcWorldPosition(NewPosition, LocalToWorld);
+// ~darczeng end [VAT Offset]
+#else
+	return CalcWorldPosition(Input.Position, LocalToWorld);
 #endif	// USE_INSTANCING
 }
 
