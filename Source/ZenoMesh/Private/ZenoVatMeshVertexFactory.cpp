@@ -69,6 +69,30 @@ FZenoVatMeshVertexFactory::FZenoVatMeshVertexFactory(const FZenoMeshData* InMesh
 
 	if (InMesh)
 	{
+#if 1
+		const int32 VertexInstanceNum = InMesh->IndexBuffer.Num();
+		VertexBuffer->Vertices.SetNumUninitialized(VertexInstanceNum);
+		IndexBuffer->Indices.Reserve(VertexInstanceNum);
+		for (int32 WEdgeIndex = 0; WEdgeIndex < VertexInstanceNum; WEdgeIndex++ )
+		{
+			FZenoMeshVertex NewVertex(InMesh->VertexBuffer[InMesh->IndexBuffer[WEdgeIndex]]);
+			if (InMesh->NormalChannel.IsValidIndex(WEdgeIndex))
+			{
+				NewVertex.Normal = InMesh->NormalChannel[WEdgeIndex];
+			}
+			if (InMesh->UVChannel0.IsValidIndex(WEdgeIndex))
+			{
+				NewVertex.TextureCoordinate[0] = InMesh->UVChannel0[WEdgeIndex];
+			}
+			if (InMesh->UVChannel1.IsValidIndex(WEdgeIndex))
+			{
+				NewVertex.TextureCoordinate[1] = InMesh->UVChannel1[WEdgeIndex];
+			}
+
+			VertexBuffer->Vertices[WEdgeIndex] = NewVertex;
+			IndexBuffer->Indices.Add(WEdgeIndex);
+		}
+#else
 		VertexBuffer->Vertices.Reserve(InMesh->VertexBuffer.Num());
 		int32 VertexIndex = 0;
 		for (const FVector3f& Vertex : InMesh->VertexBuffer)
@@ -92,6 +116,7 @@ FZenoVatMeshVertexFactory::FZenoVatMeshVertexFactory(const FZenoMeshData* InMesh
 		}
 
 		IndexBuffer->Indices = InMesh->IndexBuffer;
+#endif
 	}
 #if 1
 	else
