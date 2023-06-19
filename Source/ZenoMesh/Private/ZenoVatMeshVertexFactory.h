@@ -28,11 +28,13 @@ private:
 	LAYOUT_FIELD(FShaderParameter, BoundsMax);
 	LAYOUT_FIELD(FShaderParameter, TotalFrame);
 	LAYOUT_FIELD(FShaderParameter, TextureHeight);
-	LAYOUT_FIELD(FShaderParameter, PlaySpeed);
-	LAYOUT_FIELD(FShaderParameter, bAutoPlay);
+	LAYOUT_FIELD(FShaderParameter, CurrentFrame);
+	// LAYOUT_FIELD(FShaderParameter, PlaySpeed);
+	// LAYOUT_FIELD(FShaderParameter, bAutoPlay);
 	LAYOUT_FIELD(FShaderResourceParameter, PositionTexture);
 	LAYOUT_FIELD(FShaderResourceParameter, PositionTextureSampler);
-	LAYOUT_FIELD(FShaderParameter, CurrentFrame);
+	LAYOUT_FIELD(FShaderResourceParameter, NormalTexture);
+	LAYOUT_FIELD(FShaderResourceParameter, NormalTextureSampler);
 };
 
 class FZenoVatMeshVertexFactory final : public FLocalVertexFactory
@@ -52,6 +54,10 @@ public:
 	virtual void InitResource() override;
 
 	virtual void ReleaseResource() override;
+
+	virtual bool SupportsPositionOnlyStream() const override;
+
+	virtual bool SupportsPositionAndNormalOnlyStream() const override;
 
 	FZenoMeshVertexBuffer* VertexBuffer = nullptr;
 	FZenoMeshIndexBuffer* IndexBuffer = nullptr;

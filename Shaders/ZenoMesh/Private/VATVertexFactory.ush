@@ -19,13 +19,13 @@ float3 VatBoundsMin;
 float3 VatBoundsMax;
 int VatTotalFrame;
 int VatTextureHeight;
-float VatPlaySpeed;
-bool ShouldVatAutoPlay;
+// float VatPlaySpeed;
+// bool ShouldVatAutoPlay;
 int VatCurrentFrame;
-#if ZENO_VAT_MESH
 Texture2D<float4> VatPositionTexture;
 SamplerState VatPositionTextureSampler;
-#endif // ZENO_VAT_MESH 
+Texture2D<float4> VatNormalTexture;
+SamplerState VatNormalTextureSampler;
 /*=============================================================================
 	end Zeno shader binding
 =============================================================================*/
@@ -1198,6 +1198,27 @@ float4 VertexFactoryGetWorldPosition(FPositionAndNormalOnlyVertexFactoryInput In
 #endif
 }
 
+// ~darczeng start [Normal]
+float3 ZenoVatGetWorldNormal(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates)
+{
+#if NUM_MATERIAL_TEXCOORDS_VERTEX > 1
+	FSceneDataIntermediates SceneData = VF_GPUSCENE_GET_INTERMEDIATES(Input);
+	FLWCMatrix LocalToWorld = SceneData.InstanceData.LocalToWorld;
+	float3 InvScale = SceneData.InstanceData.InvNonUniformScale;
+	const float3x3 TangentToLocal = VertexFactoryGetTangentToLocal(Input, Intermediates);
+	FMaterialVertexParameters MaterialParameters = GetMaterialVertexParameters(Input, Intermediates, Input.Position.xyz, TangentToLocal );
+	float2 UV = MaterialParameters.TexCoords[1];
+	const float HeightPerFrame = ceil(VatTotalFrame / VatTextureHeight);
+	const float FrameOffset = HeightPerFrame / max(1.0, float(VatTotalFrame));
+	UV.y += FrameOffset * float(VatCurrentFrame);
+	float4 NewNormal = Texture2DSample(VatNormalTexture, VatNormalTextureSampler, UV);
+	return RotateLocalToWorld(NewNormal, LocalToWorld, InvScale);
+#else
+	return Intermediates.TangentToWorld[2];
+#endif
+}
+// ~darczeng end [Normal]
+
 float3 VertexFactoryGetWorldNormal(FPositionAndNormalOnlyVertexFactoryInput Input)
 {
 	FSceneDataIntermediates SceneData = VF_GPUSCENE_GET_INTERMEDIATES(Input);
@@ -1215,7 +1236,11 @@ float3 VertexFactoryGetWorldNormal(FPositionAndNormalOnlyVertexFactoryInput Inpu
 
 float3 VertexFactoryGetWorldNormal(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates)
 {
+#if ZENO_VAT_MESH
+	return ZenoVatGetWorldNormal(Input, Intermediates);
+#else
 	return Intermediates.TangentToWorld[2];
+#endif
 }
 
 // @return previous translated world position

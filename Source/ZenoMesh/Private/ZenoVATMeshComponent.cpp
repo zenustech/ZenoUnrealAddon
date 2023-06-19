@@ -77,9 +77,13 @@ void UZenoVATMeshComponent::UpdateVarInfoToRenderThread() const
 		Data.TotalFrame = TotalFrame;
 		Data.TextureHeight = TextureHeight;
 		Data.CurrentFrame = CurrentFrame;
-		if (PositionTexturePath.IsValid())
+		if (!PositionTexturePath.IsNull())
 		{
 			Data.PositionTexture = PositionTexturePath.LoadSynchronous();
+		}
+		if (!NormalTexturePath.IsNull())
+		{
+			Data.NormalTexture = NormalTexturePath.LoadSynchronous();
 		}
 		ENQUEUE_RENDER_COMMAND(UpdateZenoVatInfo)(
 			[Data, VatSceneProxy](FRHICommandListImmediate& RHICmdList)

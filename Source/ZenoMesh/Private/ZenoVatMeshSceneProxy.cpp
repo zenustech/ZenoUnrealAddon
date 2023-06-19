@@ -42,6 +42,10 @@ FZenoVatMeshSceneProxy::FZenoVatMeshSceneProxy(const UPrimitiveComponent* InComp
 	{
 		UniformData->PositionTexture = Component->PositionTexturePath.LoadSynchronous();
 	}
+	if (!Component->NormalTexturePath.IsNull())
+	{
+		UniformData->NormalTexture = Component->NormalTexturePath.LoadSynchronous();
+	}
 }
 
 FZenoVatMeshSceneProxy::~FZenoVatMeshSceneProxy()
@@ -140,6 +144,10 @@ void FZenoVatMeshSceneProxy::GetDynamicMeshElements(const TArray<const FSceneVie
 				Mesh.bDisableBackfaceCulling = MaterialRelevance.bTwoSided;
 				Mesh.Type = PT_TriangleList;
 				Mesh.DepthPriorityGroup = SDPG_World;
+				Mesh.bUseForDepthPass = true;
+				Mesh.bUseAsOccluder = true;
+				Mesh.bUseForMaterial = true;
+				Mesh.bDitheredLODTransition = true;
 				Mesh.bUseSelectionOutline = IsSelected();
 			}
 			{

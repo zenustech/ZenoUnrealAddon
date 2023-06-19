@@ -1,5 +1,6 @@
 ﻿#include "ZenoVatMeshVertexFactory.h"
 
+#include "DataDrivenShaderPlatformInfo.h"
 #include "MaterialDomain.h"
 #include "MeshDrawShaderBindings.h"
 #include "MeshMaterialShader.h"
@@ -17,11 +18,13 @@ void FZenoVatMeshVertexFactoryShaderParameters::Bind(const FShaderParameterMap& 
 	BoundsMax.Bind(ParameterMap, TEXT("VatBoundsMax"));
 	TotalFrame.Bind(ParameterMap, TEXT("VatTotalFrame"));
 	TextureHeight.Bind(ParameterMap, TEXT("VatTextureHeight"));
-	PlaySpeed.Bind(ParameterMap, TEXT("VatPlaySpeed"));
-	bAutoPlay.Bind(ParameterMap, TEXT("ShouldVatAutoPlay"));
+	// PlaySpeed.Bind(ParameterMap, TEXT("VatPlaySpeed"));
+	// bAutoPlay.Bind(ParameterMap, TEXT("ShouldVatAutoPlay"));
 	PositionTexture.Bind(ParameterMap, TEXT("VatPositionTexture"));
 	PositionTextureSampler.Bind(ParameterMap, TEXT("VatPositionTextureSampler"));
 	CurrentFrame.Bind(ParameterMap, TEXT("VatCurrentFrame"));
+	NormalTexture.Bind(ParameterMap, TEXT("VatNormalTexture"));
+	NormalTextureSampler.Bind(ParameterMap, TEXT("VatNormalTextureSampler"));
 }
 
 void FZenoVatMeshVertexFactoryShaderParameters::GetElementShaderBindings(const FSceneInterface* Scene,
@@ -45,15 +48,19 @@ void FZenoVatMeshVertexFactoryShaderParameters::GetElementShaderBindings(const F
 	ShaderBindings.Add(BoundsMax, BatchUserData->Data.BoundsMax);
 	ShaderBindings.Add(TotalFrame, BatchUserData->Data.TotalFrame);
 	ShaderBindings.Add(TextureHeight, BatchUserData->Data.TextureHeight);
-	ShaderBindings.Add(PlaySpeed, BatchUserData->Data.PlaySpeed);
-	ShaderBindings.Add(bAutoPlay, BatchUserData->Data.bAutoPlay);
+	// ShaderBindings.Add(PlaySpeed, BatchUserData->Data.PlaySpeed);
+	// ShaderBindings.Add(bAutoPlay, BatchUserData->Data.bAutoPlay);
 	ShaderBindings.Add(CurrentFrame, BatchUserData->Data.CurrentFrame);
 
+	// We always need to disable filtering for the position texture as we just sample a single point.
+	FRHISamplerState* SamplerStatePoint = TStaticSamplerState<SF_Point>::GetRHI();
 	if (IsValid(BatchUserData->Data.PositionTexture))
 	{
-		// We always need to disable filtering for the position texture as we just sample a single point.
-		FRHISamplerState* SamplerStatePoint = TStaticSamplerState<SF_Point>::GetRHI();
-		ShaderBindings.AddTexture(PositionTexture, PositionTextureSampler, SamplerStatePoint, BatchUserData->Data.PositionTexture->GetResource()->GetTexture2DRHI());
+		ShaderBindings.AddTexture(PositionTexture, PositionTextureSampler, SamplerStatePoint, BatchUserData->Data.PositionTexture->GetResource()->GetTextureRHI());
+	}
+	if (IsValid(BatchUserData->Data.NormalTexture))
+	{
+		ShaderBindings.AddTexture(NormalTexture, NormalTextureSampler, SamplerStatePoint, BatchUserData->Data.NormalTexture->GetResource()->GetTextureRHI());
 	}
 }
 
@@ -134,12 +141,18 @@ FZenoVatMeshVertexFactory::FZenoVatMeshVertexFactory(const FZenoMeshData* InMesh
 
 bool FZenoVatMeshVertexFactory::ShouldCompilePermutation(const FVertexFactoryShaderPermutationParameters& InParameters)
 {
-	return InParameters.MaterialParameters.MaterialDomain == MD_Surface && InParameters.MaterialParameters.ShadingModels.HasAnyShadingModel({ MSM_DefaultLit, MSM_Unlit });
+	return InParameters.MaterialParameters.MaterialDomain != MD_UI;
 }
 
 void FZenoVatMeshVertexFactory::ModifyCompilationEnvironment(
 	const FVertexFactoryShaderPermutationParameters& InParameters, FShaderCompilerEnvironment& OutEnvironment)
 {
+	const bool ContainsManualVertexFetch = OutEnvironment.GetDefinitions().Contains("MANUAL_VERTEX_FETCH");
+	if (!ContainsManualVertexFetch && RHISupportsManualVertexFetch(InParameters.Platform))
+	{
+		OutEnvironment.SetDefine(TEXT("MANUAL_VERTEX_FETCH"), TEXT("0"));
+	}
+	
 	OutEnvironment.SetDefine(TEXT("ZENO_VAT_MESH"), TEXT("1"));
 }
 
@@ -268,6 +281,16 @@ void FZenoVatMeshVertexFactory::ReleaseResource()
 	}
 }
 
+bool FZenoVatMeshVertexFactory::SupportsPositionOnlyStream() const
+{
+	return false;
+}
+
+bool FZenoVatMeshVertexFactory::SupportsPositionAndNormalOnlyStream() const
+{
+	return false;
+}
+
 IMPLEMENT_TYPE_LAYOUT(FZenoVatMeshVertexFactoryShaderParameters);
 
 IMPLEMENT_VERTEX_FACTORY_PARAMETER_TYPE(FZenoVatMeshVertexFactory, SF_Vertex, FZenoVatMeshVertexFactoryShaderParameters);
@@ -280,5 +303,7 @@ IMPLEMENT_VERTEX_FACTORY_TYPE(
 	| EVertexFactoryFlags::SupportsStaticLighting
 	| EVertexFactoryFlags::SupportsDynamicLighting
 	// | EVertexFactoryFlags::SupportsPositionOnly
+	| EVertexFactoryFlags::SupportsLightmapBaking
+	| EVertexFactoryFlags::SupportsCachingMeshDrawCommands
 	// | EVertexFactoryFlags::SupportsManualVertexFetch
 );

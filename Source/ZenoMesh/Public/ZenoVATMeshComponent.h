@@ -23,6 +23,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Position Texture", meta = (ZenoVat))
 	TSoftObjectPtr<UTexture2D> PositionTexturePath;
 
+	/** Normal Texture */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Normal Texture", meta = (ZenoVat))
+	TSoftObjectPtr<UTexture2D> NormalTexturePath;
+
 	/** Should the animation auto started? */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", meta = (ZenoVat))
 	bool bAutoPlay = false;
@@ -104,8 +108,9 @@ struct FZenoVatMeshUniformData
 	int32 TextureHeight = 0;
 	float PlaySpeed = 1.0f;
 	bool bAutoPlay = true;
-	UTexture2D* PositionTexture;
+	UTexture2D* PositionTexture = nullptr;
 	int32 CurrentFrame = 0;
+	UTexture2D* NormalTexture = nullptr;
 };
 
 struct FZenoVatMeshUniformDataWrapper : public FOneFrameResource
