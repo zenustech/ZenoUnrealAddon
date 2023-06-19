@@ -1018,21 +1018,14 @@ half3x3 VertexFactoryGetTangentToLocal( FVertexFactoryInput Input, FVertexFactor
 	return Intermediates.TangentToLocal;
 }
 
-// @return translated world position
-float4 VertexFactoryGetWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates)
-{
-	FLWCMatrix LocalToWorld = GetInstanceData(Intermediates).LocalToWorld;
-
-#if USE_INSTANCING
-	return CalcWorldPosition(Input.Position, GetInstanceTransform(Intermediates), LocalToWorld) * Intermediates.PerInstanceParams.y;
-#elif USE_INSTANCE_CULLING
-	// Scale to zero if not visible, seems a bit wild but whatever
-	return CalcWorldPosition(Input.Position, LocalToWorld) * Intermediates.IsVisible;
 // ~darczeng start [VAT Offset]
-#elif ZENO_VAT_MESH
+float4 ZenoVatGetWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates)
+{
+	const FLWCMatrix LocalToWorld = GetInstanceData(Intermediates).LocalToWorld;
+	
 	float4 NewPosition = Input.Position;
-	float3x3 TangentToLocal = VertexFactoryGetTangentToLocal(Input, Intermediates);
 #if NUM_MATERIAL_TEXCOORDS_VERTEX > 1
+	float3x3 TangentToLocal = VertexFactoryGetTangentToLocal(Input, Intermediates);
 	FMaterialVertexParameters MaterialParameters = GetMaterialVertexParameters(Input, Intermediates, NewPosition.xyz, TangentToLocal );
 	float2 UV = MaterialParameters.TexCoords[1];
 	float HeightPerFrame = ceil(VatTotalFrame / VatTextureHeight);
@@ -1046,8 +1039,29 @@ float4 VertexFactoryGetWorldPosition(FVertexFactoryInput Input, FVertexFactoryIn
 
 	NewPosition = float4(MeshSpacePosition.x, MeshSpacePosition.z, MeshSpacePosition.y, MeshSpacePosition.w);
 #endif
-	
+
+	// return float4(NewPosition.xyz, 1.0f);
 	return CalcWorldPosition(NewPosition, LocalToWorld);
+}
+
+// float4 ZenoVatGetWorldPosition(FPositionOnlyVertexFactoryInput Input)
+// {
+// }
+// ~darczeng end [VAT Offset]
+
+// @return translated world position
+float4 VertexFactoryGetWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates)
+{
+	FLWCMatrix LocalToWorld = GetInstanceData(Intermediates).LocalToWorld;
+
+#if USE_INSTANCING
+	return CalcWorldPosition(Input.Position, GetInstanceTransform(Intermediates), LocalToWorld) * Intermediates.PerInstanceParams.y;
+#elif USE_INSTANCE_CULLING
+	// Scale to zero if not visible, seems a bit wild but whatever
+	return CalcWorldPosition(Input.Position, LocalToWorld) * Intermediates.IsVisible;
+// ~darczeng start [VAT Offset]
+#elif ZENO_VAT_MESH
+	return ZenoVatGetWorldPosition(Input, Intermediates);
 // ~darczeng end [VAT Offset]
 #else
 	return CalcWorldPosition(Input.Position, LocalToWorld);
