@@ -25,6 +25,8 @@ public:
 	TObjectPtr<UZenoPCGLandscapeCache> LandscapeCacheObject = nullptr;
 	
 	FORCEINLINE UZenoPCGLandscapeCache* GetLandscapeCache() const { return LandscapeCacheObject.Get(); }
+
+	virtual TStatId GetStatId() const override;
 	
 	//~Begin UObject Interface
 #if WITH_EDITOR

@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "ZenoGraphAsset.h"
 #include "GameFramework/Volume.h"
 #include "ZenoPCGVolume.generated.h"
 
@@ -33,6 +34,7 @@ public:
 	virtual void SetStaticMeshComponent(UStaticMeshComponent* InStaticMeshComponent, const FVector4f& InBoundDiff);
 
 	virtual void ExecutePCGGraph();
+	virtual void ExecutePCGGraph2();
 #endif // WITH_EDITOR
 
 protected:

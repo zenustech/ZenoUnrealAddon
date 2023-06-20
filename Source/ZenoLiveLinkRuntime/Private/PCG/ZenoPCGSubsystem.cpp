@@ -20,6 +20,11 @@ UZenoPCGSubsystem* UZenoPCGSubsystem::GetInstance(const UWorld* World)
 	return nullptr;
 }
 
+TStatId UZenoPCGSubsystem::GetStatId() const
+{
+	return TStatId();
+}
+
 void UZenoPCGSubsystem::BeginCacheForCookedPlatformData(const ITargetPlatform* TargetPlatform)
 {
 	Super::BeginCacheForCookedPlatformData(TargetPlatform);

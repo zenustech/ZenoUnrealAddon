@@ -37,6 +37,7 @@ void UZenoPCGVolumeComponent::PostEditChangeProperty(FPropertyChangedEvent& Prop
 	{
 		ParameterChangedEvent.Broadcast();
 	}
+	
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 
@@ -49,22 +50,7 @@ std::shared_ptr<zeno::remote::HeightField> UZenoPCGVolumeComponent::GetLandscape
 		return nullptr;
 	}
 	
-	FBox ActorBounds;
-	if (Actor->IsA<ALandscapeProxy>())
-	{
-		ActorBounds = Actor->GetComponentsBoundingBox(true);
-	}
-	else if (const AZenoPCGVolume* Volume = Cast<AZenoPCGVolume>(Actor); IsValid(Volume) && IsValid(Volume->GetBrushComponent()))
-	{
-		ActorBounds = Volume->GetBrushComponent()->Bounds.GetBox();
-	}
-	else
-	{
-		FVector Origin;
-		FVector Extent;
-		Actor->GetActorBounds(false, Origin, Extent);
-		ActorBounds = FBox::BuildAABB(Origin, Extent);
-	}
+	FBox ActorBounds = GetActorBounds();
 
 	TArray<TWeakObjectPtr<ALandscapeProxy>> Landscapes = Zeno::Helper::GetLandscapeProxies(Actor->GetWorld(), ActorBounds);
 
@@ -128,4 +114,63 @@ std::shared_ptr<zeno::remote::HeightField> UZenoPCGVolumeComponent::GetLandscape
 	Result->LandscapeScale = LandscapeScale.Z;
 	
 	return Result;
+}
+
+std::shared_ptr<zeno::remote::PointSet> UZenoPCGVolumeComponent::GetScatteredPoints() const
+{
+	const AActor* Actor = GetOwner();
+	if (!IsValid(Actor))
+	{
+		return nullptr;
+	}
+
+	const FBox ActorBounds = GetActorBounds();
+	
+	TArray<TWeakObjectPtr<ALandscapeProxy>> Landscapes = Zeno::Helper::GetLandscapeProxies(Actor->GetWorld(), ActorBounds);
+
+	if (Landscapes.IsEmpty())
+	{
+		return nullptr;
+	}
+	
+	ALandscapeProxy* LandscapeProxy = Landscapes[0].Get(false);
+
+	TArray<FVector> Points = Zeno::Helper::ScatterPoints(LandscapeProxy, ScatterPoints, ScatterSeed, ActorBounds);
+
+	std::shared_ptr<zeno::remote::PointSet> Result = std::make_shared<zeno::remote::PointSet>();
+	Result->Points.reserve(Points.Num());
+	for (const FVector& Point : Points)
+	{
+		Result->Points.emplace_back(zeno::remote::PCGPoint { zeno::remote::Vector3f { static_cast<float>(Point.X), static_cast<float>(Point.Y), static_cast<float>(Point.Z) } });
+	}
+
+	return Result;
+}
+
+FBox UZenoPCGVolumeComponent::GetActorBounds() const
+{
+	const AActor* Actor = GetOwner();
+	if (!IsValid(Actor))
+	{
+		return FBox(ForceInit);
+	}
+	
+	FBox ActorBounds;
+	if (Actor->IsA<ALandscapeProxy>())
+	{
+		ActorBounds = Actor->GetComponentsBoundingBox(true);
+	}
+	else if (const AZenoPCGVolume* Volume = Cast<AZenoPCGVolume>(Actor); IsValid(Volume) && IsValid(Volume->GetBrushComponent()))
+	{
+		ActorBounds = Volume->GetBrushComponent()->Bounds.GetBox();
+	}
+	else
+	{
+		FVector Origin;
+		FVector Extent;
+		Actor->GetActorBounds(false, Origin, Extent);
+		ActorBounds = FBox::BuildAABB(Origin, Extent);
+	}
+
+	return ActorBounds;
 }
