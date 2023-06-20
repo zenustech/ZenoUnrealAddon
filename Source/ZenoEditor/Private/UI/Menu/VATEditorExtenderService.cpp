@@ -1,13 +1,15 @@
 ﻿#include "UI/Menu/VATEditorExtenderService.h"
 
 #include "AssetToolsModule.h"
-#include "LevelEditor.h"
+#include "MaterialDomain.h"
 #include "RawMesh.h"
-#include "StaticMeshAttributes.h"
+#include "StaticMeshOperations.h"
 #include "ZenoEditorCommand.h"
+#include "ZenoMeshDescriptor.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Blueprint/ZenoCommonBlueprintLibrary.h"
 #include "Blueprint/ZenoEditorSettings.h"
+#include "Blueprint/Panel/VATImportSettings.h"
 #include "Importer/VAT/VATTypes.h"
 #include "Importer/VAT/VATUtility.h"
 #include "Importer/Wavefront/ZenoObjLoader.h"
@@ -42,12 +44,14 @@ void FVATEditorExtenderService::ExtendMenuBar(FMenuBarBuilder& Builder)
 void FVATEditorExtenderService::ExtendVATPullDownMenu(FMenuBuilder& Builder)
 {
 	Builder.AddMenuEntry(FZenoEditorCommand::Get().ImportWavefrontMesh);
+	Builder.AddMenuEntry(FZenoEditorCommand::Get().ImportVAT);
 }
 
 void FVATEditorExtenderService::MapAction()
 {
 	CommandList->MapAction(FZenoEditorCommand::Get().Debug, FExecuteAction::CreateRaw(this, &FVATEditorExtenderService::Debug));
 	CommandList->MapAction(FZenoEditorCommand::Get().ImportWavefrontMesh, FExecuteAction::CreateRaw(this, &FVATEditorExtenderService::ImportWavefrontObjFile));
+	CommandList->MapAction(FZenoEditorCommand::Get().ImportVAT, FExecuteAction::CreateRaw(this, &FVATEditorExtenderService::ImportVAT));
 }
 
 void FVATEditorExtenderService::Debug()
@@ -72,57 +76,58 @@ void FVATEditorExtenderService::ImportWavefrontObjFile()
 	}
 }
 
+void FVATEditorExtenderService::ImportVAT()
+{
+	UVATImportSettings* ImportSettings = NewObject<UVATImportSettings>(GetTransientPackage(), UVATImportSettings::StaticClass(), NAME_None, RF_Transient);
+	FWavefrontObjectContextCreateArgs ContextCreateArgs;
+	const TSharedRef<FStructOnScope> StructOnScope = MakeShared<FStructOnScope>(FWavefrontObjectContextCreateArgs::StaticStruct(), reinterpret_cast<uint8*>(&ContextCreateArgs));
+	bool bContinue = UZenoCommonBlueprintLibrary::OpenSettingsModal(ImportSettings, LOCTEXT("ImportSettings", "Import Settings"));
+	bContinue = bContinue && UZenoCommonBlueprintLibrary::OpenSettingsModal(StructOnScope, LOCTEXT("ParseSettings", "Parse Settings"));
+
+	const FString& FilePath = ImportSettings->FilePath.FilePath;
+
+	if (!bContinue || FilePath.IsEmpty() || !FPaths::FileExists(FilePath))	
+	{
+		// TODO [darc] : show warning :
+		return;
+	}
+
+	FWavefrontObjectContext Context(ContextCreateArgs);
+	
+	TArray<FString> Arr;
+	FFileHelper::LoadFileToStringArray(Arr, *FilePath);
+	const FWavefrontFileParser Parser{Arr};
+	Parser.ParseFile(FZenoWavefrontObjectParserDelegate::CreateLambda([&] (const EWavefrontAttrType& InAttrType, const FString& InData) mutable
+	{
+		Context.Parse(InAttrType, InData);
+	}));
+	Context.CompleteParse();
+	// const TSharedRef<FRawMesh> RawMesh = Context.ToRawMesh();
+	// SaveRawMeshToStaticMesh(*RawMesh);
+	// SaveContextToStaticMesh(Context);
+	if (const FString ContentPath = UZenoCommonBlueprintLibrary::OpenContentPicker(); !ContentPath.IsEmpty())
+	{
+		const FString SavePackageName = FPackageName::ObjectPathToPackageName(ContentPath);
+		const FString SavePackagePath = FPaths::GetPath(SavePackageName);
+		const FString SaveAssetName = FPaths::GetBaseFilename(SavePackageName);
+
+		UPackage* Package = CreatePackage(*SavePackageName);
+		
+		UZenoMeshInstance* Instance = Context.CreateMeshInstance(Package, *SaveAssetName);
+		FAssetRegistryModule::AssetCreated(Instance);
+	}
+}
+
 void FVATEditorExtenderService::ProcessObjFileImport(const FString& FilePath)
 {
-	const FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>(
-    			"AssetTools");
 	TArray<FString> Arr;
 	FFileHelper::LoadFileToStringArray(Arr, *FilePath);
 	const FWavefrontFileParser Parser{Arr};
 	EWavefrontParseError Err;
-	TSharedPtr<FRawMesh> RawMesh = Parser.Parse(Err);
+	const TSharedPtr<FRawMesh> RawMesh = Parser.ParseDynamicMesh(Err);
 	if (Err == EWavefrontParseError::Success)
 	{
-		UStaticMesh* StaticMesh = NewObject<UStaticMesh>(GetTransientPackage(), MakeUniqueObjectName(GetTransientPackage(), UStaticMesh::StaticClass()), RF_Public | RF_Standalone);
-		StaticMesh->ImportVersion = LastVersion;
-		StaticMesh->PreEditChange(nullptr);
-		FStaticMeshSourceModel& SourceModel = StaticMesh->AddSourceModel();
-		{
-			StaticMesh->NaniteSettings.bEnabled = false;
-			SourceModel.BuildSettings.bRecomputeNormals = false;
-			SourceModel.BuildSettings.bRecomputeTangents = true;
-			SourceModel.BuildSettings.bRemoveDegenerates = false;
-			SourceModel.BuildSettings.bComputeWeightedNormals = false;
-			SourceModel.BuildSettings.bUseMikkTSpace = false;
-			SourceModel.BuildSettings.bUseFullPrecisionUVs = true;
-			SourceModel.BuildSettings.bUseHighPrecisionTangentBasis = true;
-			SourceModel.SaveRawMesh(*RawMesh);
-		}
-		StaticMesh = Cast<UStaticMesh>(AssetToolsModule.Get().DuplicateAssetWithDialog(MakeUniqueObjectName(GetTransientPackage(), UStaticMesh::StaticClass()).ToString(), "/GAME", StaticMesh));
-		if (!IsValid(StaticMesh))
-		{
-			UE_LOG(LogTemp, Warning, TEXT("User canceled import of %ls"), *FilePath);
-			return;
-		}
-		if (UZenoEditorSettings::Get()->bAutoCreateBasicVatMaterialInstanceConstant)
-		{
-			UMaterialInstance* NewMI = UZenoEditorSettings::CreateBasicVATMaterialInstance(FString::Printf(TEXT("Mat_PosAndNormVAT_%ls_Inst"), *StaticMesh->GetName()), StaticMesh->GetFullName());
-			TryLoadPositionAndNormalVATBinaryDescriptor(FilePath, NewMI);
-			StaticMesh->AddMaterial(NewMI);
-		}
-		else
-		{
-			FStaticMaterial StaticMaterial;
-			StaticMaterial.MaterialSlotName = NAME_None;
-			StaticMesh->GetStaticMaterials().Add(StaticMaterial);
-		}
-		StaticMesh->PostEditChange();
-		StaticMesh->Build(false);
-		FAssetRegistryModule::AssetCreated(StaticMesh);
-		if (IsValid(StaticMesh->GetPackage()))
-		{
-			auto _ = StaticMesh->GetPackage()->MarkPackageDirty();
-		}
+		SaveRawMeshToStaticMesh(*RawMesh);
 	}
 }
 
@@ -155,6 +160,131 @@ bool FVATEditorExtenderService::TryLoadPositionAndNormalVATBinaryDescriptor(cons
 		}
 	}
 #endif // WITH_EDITORONLY_DATA
+	return false;
+}
+
+bool FVATEditorExtenderService::SaveRawMeshToStaticMesh(FRawMesh& InRawMesh)
+{
+	if (!InRawMesh.IsValid())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Trying to save an invalid Mesh! aborted."));
+		return false;
+	}
+	
+	const FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>(
+    			"AssetTools");
+	
+	if (const FString ContentPath = UZenoCommonBlueprintLibrary::OpenContentPicker(); !ContentPath.IsEmpty())
+	{
+		const FString SavePackageName = FPackageName::ObjectPathToPackageName(ContentPath);
+		const FString SavePackagePath = FPaths::GetPath(SavePackageName);
+		const FString SaveAssetName = FPaths::GetBaseFilename(SavePackageName);
+
+		UPackage* Package = CreatePackage(*SavePackageName);
+		UStaticMesh* StaticMesh = NewObject<UStaticMesh>(Package, MakeUniqueObjectName(Package, UStaticMesh::StaticClass()), RF_Public | RF_Standalone);
+		StaticMesh->ImportVersion = LastVersion;
+		StaticMesh->PreEditChange(nullptr);
+		FStaticMeshSourceModel& SourceModel = StaticMesh->AddSourceModel();
+		{
+			StaticMesh->NaniteSettings.bEnabled = false;
+			SourceModel.BuildSettings.bRecomputeNormals = false;
+			SourceModel.BuildSettings.bRecomputeTangents = false;
+			SourceModel.BuildSettings.bRemoveDegenerates = false;
+			SourceModel.BuildSettings.bComputeWeightedNormals = true;
+			SourceModel.BuildSettings.bUseMikkTSpace = false;
+			SourceModel.BuildSettings.bUseFullPrecisionUVs = true;
+			SourceModel.BuildSettings.bUseHighPrecisionTangentBasis = true;
+			SourceModel.BuildSettings.bGenerateLightmapUVs = false;
+			SourceModel.SaveRawMesh(InRawMesh);
+		}
+		StaticMesh->SetLightingGuid();
+		StaticMesh->SetLightMapResolution(64);
+		StaticMesh->SetLightMapCoordinateIndex(2);
+		StaticMesh->PostEditChange();
+		StaticMesh->Build(false);
+		
+		if (!IsValid(StaticMesh))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("User canceled import."));
+			return false;
+		}
+		if (UZenoEditorSettings::Get()->bAutoCreateBasicVatMaterialInstanceConstant)
+		{
+			UMaterialInstance* NewMI = UZenoEditorSettings::CreateBasicVATMaterialInstance(FString::Printf(TEXT("Mat_PosAndNormVAT_%ls_Inst"), *StaticMesh->GetName()), StaticMesh->GetFullName());
+			StaticMesh->AddMaterial(NewMI);
+		}
+		else
+		{
+			StaticMesh->GetStaticMaterials().Add({});
+		}
+		FAssetRegistryModule::AssetCreated(StaticMesh);
+		if (IsValid(StaticMesh->GetPackage()))
+		{
+			auto _ = StaticMesh->GetPackage()->MarkPackageDirty();
+		}
+		return true;
+	}
+
+	return false;
+}
+
+bool FVATEditorExtenderService::SaveContextToStaticMesh(const FWavefrontObjectContext& InContext)
+{
+	const FAssetToolsModule& AssetToolsModule = FModuleManager::Get().LoadModuleChecked<FAssetToolsModule>(
+    			"AssetTools");
+	
+	if (const FString ContentPath = UZenoCommonBlueprintLibrary::OpenContentPicker(); !ContentPath.IsEmpty())
+	{
+		const FString SavePackageName = FPackageName::ObjectPathToPackageName(ContentPath);
+		const FString SavePackagePath = FPaths::GetPath(SavePackageName);
+		const FString SaveAssetName = FPaths::GetBaseFilename(SavePackageName);
+
+		UPackage* Package = CreatePackage(*SavePackageName);
+		UStaticMesh* StaticMesh = NewObject<UStaticMesh>(Package, MakeUniqueObjectName(Package, UStaticMesh::StaticClass()), RF_Public | RF_Standalone);
+		StaticMesh->ImportVersion = LastVersion;
+		StaticMesh->PreEditChange(nullptr);
+		FStaticMeshSourceModel& SourceModel = StaticMesh->AddSourceModel();
+		{
+			StaticMesh->NaniteSettings.bEnabled = false;
+			SourceModel.BuildSettings.bRecomputeNormals = false;
+			SourceModel.BuildSettings.bRecomputeTangents = false;
+			SourceModel.BuildSettings.bRemoveDegenerates = false;
+			SourceModel.BuildSettings.bComputeWeightedNormals = true;
+			SourceModel.BuildSettings.bUseMikkTSpace = false;
+			SourceModel.BuildSettings.bUseFullPrecisionUVs = true;
+			SourceModel.BuildSettings.bUseHighPrecisionTangentBasis = true;
+			SourceModel.BuildSettings.bGenerateLightmapUVs = true;
+			SourceModel.BuildSettings.SrcLightmapIndex = 0;
+			SourceModel.BuildSettings.DstLightmapIndex = 2;
+			FMeshDescription* MeshDescription = SourceModel.CreateMeshDescription();
+			InContext.FillMeshDescription(MeshDescription);
+			SourceModel.CommitMeshDescription(true);
+		}
+		StaticMesh->PostEditChange();
+		StaticMesh->Build(false);
+		
+		if (!IsValid(StaticMesh))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("User canceled import."));
+			return false;
+		}
+		if (UZenoEditorSettings::Get()->bAutoCreateBasicVatMaterialInstanceConstant)
+		{
+			UMaterialInstance* NewMI = UZenoEditorSettings::CreateBasicVATMaterialInstance(FString::Printf(TEXT("Mat_PosAndNormVAT_%ls_Inst"), *StaticMesh->GetName()), StaticMesh->GetFullName());
+			StaticMesh->AddMaterial(NewMI);
+		}
+		else
+		{
+			StaticMesh->GetStaticMaterials().Add({});
+		}
+		FAssetRegistryModule::AssetCreated(StaticMesh);
+		if (IsValid(StaticMesh->GetPackage()))
+		{
+			auto _ = StaticMesh->GetPackage()->MarkPackageDirty();
+		}
+		return true;
+	}
+
 	return false;
 }
 

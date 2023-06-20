@@ -48,6 +48,7 @@ public class ZenoEditor : ModuleRules
                 "LiveLinkInterface",
                 "Landscape",
                 "LandscapeEditor",
+                "RawMesh",
             }
         );
         

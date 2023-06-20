@@ -12,9 +12,12 @@ public:
 	// Infos
 	TSharedPtr<FUICommandInfo> ZenoGraphHeader;
 	
-	//
+	// Debug
 	TSharedPtr<FUICommandInfo> Debug;
+	// VAT
 	TSharedPtr<FUICommandInfo> ImportWavefrontMesh;
+	TSharedPtr<FUICommandInfo> ImportVAT;
+	// ZSL
 	TSharedPtr<FUICommandInfo> ImportZslFile;
 	// Landscape
 	TSharedPtr<FUICommandInfo> ImportHeightField;

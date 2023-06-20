@@ -217,6 +217,96 @@ void AZenoPCGVolume::ExecutePCGGraph()
 	}
 }
 
+void AZenoPCGVolume::ExecutePCGGraph2()
+{
+	AZenoPCGVolume* Volume = this;
+	UZenoLiveLinkClientSubsystem* Client = GEngine->GetEngineSubsystem<UZenoLiveLinkClientSubsystem>();
+	const std::shared_ptr<zeno::remote::PointSet> PointSetPtr = Volume->PCGComponent->GetScatteredPoints();
+	if (!PointSetPtr)
+	{
+		return;
+	}
+	
+	if (const UZenoLiveLinkSession* Session = Client->GetSessionFallback(); IsValid(Session))
+	{
+		zeno::remote::PointSet PointSet = *PointSetPtr;
+		zeno::remote::SubjectContainer Subject{
+			{TCHAR_TO_ANSI(*Volume->SubjectName)},
+			static_cast<uint16>(zeno::remote::ESubjectType::PointSet),
+			msgpack::pack(PointSet),
+		};
+		zeno::remote::SubjectContainerList List{
+			{Subject,},
+		};
+		
+		Session
+		->GetClient()
+		->SetSubjectToRemote(List)
+		->GetFuture()
+		.Then([Session, Volume](const TResultFuture<bool>& Future)
+	    {
+			if (IsValid(Session) && IsValid(Volume) && IsValid(Volume->PCGComponent))
+			{
+				zeno::remote::GraphRunInfo RunInfo;
+				const UZenoGraphAsset* GraphAsset = Volume->PCGComponent->ZenoGraph.LoadSynchronous();
+				RunInfo.GraphDefinition = TCHAR_TO_ANSI(*GraphAsset->ZenoActionRecordExportedData);
+				for (const UZenoInputParameter* Input : Volume->PCGComponent->InputParameters)
+				{
+					RunInfo.Values.Values.push_back(Input->GatherParamValue());
+				}
+				Session
+				->GetClient()
+				->RunGraph(RunInfo)
+				->GetFuture()
+				.Then([Session, Volume] (const TResultFuture<bool>& RunFuture)
+				{
+					if (RunFuture.Get().Get(false) && IsValid(Session) && IsValid(Volume))
+					{
+						FGCObjectScopeGuard SessionGuard1{Session};
+						FGCObjectScopeGuard VolumeGuard1{Volume};
+						// Load result mesh from zeno remote
+						const UZenoGraphAsset* GraphInfo = Volume->PCGComponent->ZenoGraph.
+																   LoadSynchronous();
+						if (!GraphInfo->OutputParameterDescriptors.IsEmpty())
+						{
+							GraphInfo->ForEachOutputDescriptor<EZenoSubjectType::Mesh>(
+								FZenoOutputDescriptorDelegate::CreateLambda(
+									[Volume](const FZenoOutputParameterDescriptor& Descriptor)
+									{
+										const FString ResultName = Descriptor.Name;
+										UZenoLiveLinkClientSubsystem* LiveLinkSubsystem = GEngine->
+											GetEngineSubsystem<UZenoLiveLinkClientSubsystem>();
+										LiveLinkSubsystem->TryLoadSubjectRemotely<zeno::remote::Mesh>(
+															 FName(ResultName))->GetFuture()
+														 .Then([Volume](
+															 const TResultFuture<zeno::remote::Mesh>& MeshFuture)
+															 {
+																 if (MeshFuture.Get().IsSet() && IsValid(Volume))
+																 {
+																	 FGCObjectScopeGuard VolumeGuard2{Volume};
+																	 const zeno::remote::Mesh MeshData =
+																		 MeshFuture.Get().GetValue();
+																	 std::array<float, 4> BoundDiff = MeshData.
+																		 GetBoundDiff();
+																	 FRawMesh RawMesh =
+																		 UZenoLiveLinkClientSubsystem::ConvertZenoMeshToRawMesh(
+																			 MeshData);
+																	 Volume->OnGeneratedNewMesh(
+																		 RawMesh, FVector4f{
+																			 BoundDiff[0], BoundDiff[1],
+																			 BoundDiff[3], BoundDiff[2]
+																		 });
+																 }
+															 });
+									}));
+						}
+					}
+				});
+			}
+	    });
+	}
+}
+
 
 void AZenoPCGVolume::BuildBrush()
 {

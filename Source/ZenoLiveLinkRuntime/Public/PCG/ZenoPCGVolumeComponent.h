@@ -9,13 +9,17 @@
 #include "ZenoPCGVolumeComponent.generated.h"
 
 
+namespace zeno
+{
+	namespace remote
+	{
+		struct PointSet;
+		struct HeightField;
+	}
+}
+
 class UZenoInputParameter;
 class UZenoGraphAsset;
-
-namespace zeno::remote
-{
-	struct HeightField;
-}
 
 DECLARE_MULTICAST_DELEGATE(FZenoPCGVolumeComponentParameterChangedEvent);
 
@@ -38,6 +42,9 @@ protected:
 
 public:
 	std::shared_ptr<zeno::remote::HeightField> GetLandscapeHeightData() const;
+	std::shared_ptr<zeno::remote::PointSet> GetScatteredPoints() const;
+	
+	FBox GetActorBounds() const;
 
 protected:
 #if WITH_EDITORONLY_DATA
@@ -46,6 +53,12 @@ protected:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Zeno, DisplayName = "Input Data")
 	TArray<UZenoInputParameter*> InputParameters;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Zeno, DisplayName = "Seed")
+	int32 ScatterSeed = 0;
+
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = Zeno, DisplayName = "Seed", meta = ( ClampMin = 0, UIMin = 0 ))
+	int32 ScatterPoints = 0;
 
 	friend class FZenoPCGActorDetailCustomization;
 	friend class AZenoPCGVolume;

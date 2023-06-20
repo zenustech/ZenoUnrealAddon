@@ -87,3 +87,26 @@ struct ZENOENGINE_API FZenoOutputParameterDescriptor
 		};
 	}
 };
+
+
+USTRUCT(BlueprintType)
+struct ZENOENGINE_API FZenoVatMetadata
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category = Context)
+	int32 TextureWidth = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = Context)
+	int32 FrameNum = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = Context)
+	int32 RowsPerFrame = 0;
+	
+	UPROPERTY(BlueprintReadOnly, Category = Context)
+	FVector3f BoundsMin = FVector3f::Zero();
+	
+	UPROPERTY(BlueprintReadOnly, Category = Context)
+	FVector3f BoundsMax = FVector3f::Zero();
+};
+
