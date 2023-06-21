@@ -32,7 +32,7 @@ protected:
 	bool bAutoPlay = false;
 
 	/** Number of frames */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Number of Frames", meta = (ZenoVat))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Number of Frames", meta = (ZenoVat, UIMin = 0, ClampMin = 0))
 	int32 TotalFrame = 0;
 
 	/** Height of texture */
@@ -56,12 +56,16 @@ protected:
 	UMaterialInterface* MeshMaterial = nullptr;
 
 	/** Current Frame */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Current Frame", meta = (ZenoVat))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Current Frame", meta = (ZenoVat, UIMin = 0, ClampMin = 0))
 	int32 CurrentFrame = 0;
 
 	/** Base mesh data */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Mesh Data")
 	UZenoMeshInstance* MeshData = nullptr;
+
+	/** Time passed */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VAT", DisplayName = "Time Passed", AdvancedDisplay)
+	float TimePassed = 0.0f;
 	
 public:
 	virtual FPrimitiveSceneProxy* CreateSceneProxy() override;

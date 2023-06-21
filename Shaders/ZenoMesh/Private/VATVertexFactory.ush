@@ -1028,8 +1028,8 @@ float4 ZenoVatGetWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermed
 	float3x3 TangentToLocal = VertexFactoryGetTangentToLocal(Input, Intermediates);
 	FMaterialVertexParameters MaterialParameters = GetMaterialVertexParameters(Input, Intermediates, NewPosition.xyz, TangentToLocal );
 	float2 UV = MaterialParameters.TexCoords[1];
-	float HeightPerFrame = ceil(VatTotalFrame / VatTextureHeight);
-	float FrameOffset = HeightPerFrame / max(1.0, float(VatTotalFrame));
+	float HeightPerFrame = floor(float(VatTextureHeight) / float(VatTotalFrame));
+	float FrameOffset = HeightPerFrame / max(1.0, float(VatTextureHeight));
 	UV.y += FrameOffset * float(VatCurrentFrame);
 	float4 MeshSpacePosition = NewPosition = Texture2DSample(VatPositionTexture, VatPositionTextureSampler, UV);
 
