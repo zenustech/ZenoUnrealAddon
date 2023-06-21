@@ -35,6 +35,18 @@ void UZenoVATMeshComponent::TickComponent(float DeltaTime, ELevelTick TickType,
                                           FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	if (!bAutoPlay)
+	{
+		return;
+	}
+	TimePassed += DeltaTime;
+	const int32 NewFrameNum = static_cast<int32>(FMath::Fmod(TimePassed * PlaySpeed, TotalFrame));
+	if (CurrentFrame != NewFrameNum)
+	{
+		CurrentFrame = NewFrameNum;
+		UpdateVarInfoToRenderThread();
+	}
 }
 
 FBoxSphereBounds UZenoVATMeshComponent::CalcBounds(const FTransform& LocalToWorld) const
