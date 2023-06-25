@@ -1243,9 +1243,40 @@ float3 VertexFactoryGetWorldNormal(FVertexFactoryInput Input, FVertexFactoryInte
 #endif
 }
 
+
+// ~darczeng start [VAT Previous WP]
+float4 ZenoVatGetPreviousWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates)
+{
+	const FLWCMatrix LocalToWorld = GetInstanceData(Intermediates).PrevLocalToWorld;
+	
+	float4 NewPosition = Input.Position;
+#if NUM_MATERIAL_TEXCOORDS_VERTEX > 1
+	float3x3 TangentToLocal = VertexFactoryGetTangentToLocal(Input, Intermediates);
+	FMaterialVertexParameters MaterialParameters = GetMaterialVertexParameters(Input, Intermediates, NewPosition.xyz, TangentToLocal );
+	float2 UV = MaterialParameters.TexCoords[1];
+	float HeightPerFrame = floor(float(VatTextureHeight) / float(VatTotalFrame));
+	float FrameOffset = HeightPerFrame / max(1.0, float(VatTextureHeight));
+	UV.y += FrameOffset * fmod(float(VatCurrentFrame) + float(VatTotalFrame) - 1.0, float(VatTotalFrame));
+	float4 MeshSpacePosition = NewPosition = Texture2DSample(VatPositionTexture, VatPositionTextureSampler, UV);
+
+	// Bounds space to local space
+	float3 BoundsScale = VatBoundsMax - VatBoundsMin;
+	MeshSpacePosition = MeshSpacePosition * float4(BoundsScale, 1.0) + float4(VatBoundsMin, 0.0);
+
+	NewPosition = float4(MeshSpacePosition.x, MeshSpacePosition.z, MeshSpacePosition.y, MeshSpacePosition.w);
+#endif
+
+	// return float4(NewPosition.xyz, 1.0f);
+	return TransformPreviousLocalPositionToTranslatedWorld(NewPosition, LocalToWorld);
+}
+// ~darczeng end [VAT Previous WP]
+
 // @return previous translated world position
 float4 VertexFactoryGetPreviousWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates)
 {
+#if ZENO_VAT_MESH
+	return ZenoVatGetPreviousWorldPosition(Input, Intermediates);
+#else
 	FLWCMatrix PreviousLocalToWorld = GetInstanceData(Intermediates).PrevLocalToWorld;
 	float4 PrevLocalPosition = Input.Position;
 
@@ -1278,6 +1309,7 @@ float4 VertexFactoryGetPreviousWorldPosition(FVertexFactoryInput Input, FVertexF
 	}
 
 	return TransformPreviousLocalPositionToTranslatedWorld(PrevLocalPosition.xyz, PreviousLocalToWorld);
+#endif // ZENO_VAT_MESH
 }
 
 #if NEEDS_VERTEX_FACTORY_INTERPOLATION
