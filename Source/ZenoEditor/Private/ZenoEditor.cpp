@@ -53,6 +53,8 @@ void FZenoEditorModule::UnregisterDetailPanelCustomization()
 	
 }
 
+DEFINE_LOG_CATEGORY(ZenoEditor);
+
 IMPLEMENT_MODULE(FZenoEditorModule, ZenoEditor)
 
 #undef LOCTEXT_NAMESPACE

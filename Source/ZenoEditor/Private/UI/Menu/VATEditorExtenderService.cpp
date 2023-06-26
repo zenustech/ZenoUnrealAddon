@@ -113,7 +113,7 @@ void FVATEditorExtenderService::ImportVAT()
 
 		UPackage* Package = CreatePackage(*SavePackageName);
 		
-		UZenoMeshInstance* Instance = Context.CreateMeshInstance(Package, *SaveAssetName);
+		UZenoMeshInstance* Instance = Context.CreateMeshInstance(Package, *SaveAssetName, ImportSettings->Type == EZenoVATType::DynamicRemesh);
 		FAssetRegistryModule::AssetCreated(Instance);
 	}
 }

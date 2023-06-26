@@ -85,7 +85,7 @@ struct ZENOEDITOR_API FWavefrontObjectContext
 
 	void FillMeshDescription(FMeshDescription* OutMeshDescription) const;
 
-	UZenoMeshInstance* CreateMeshInstance(UObject* InOuter, const FString& InName) const;
+	UZenoMeshInstance* CreateMeshInstance(UObject* InOuter, const FString& InName, bool bOverrideChannel1WithChannel0 = false) const;
 
 private:
 	template <EWavefrontAttrType T>

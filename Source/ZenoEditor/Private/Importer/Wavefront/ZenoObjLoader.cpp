@@ -222,7 +222,7 @@ void FWavefrontObjectContext::FillMeshDescription(FMeshDescription* OutMeshDescr
 	}
 }
 
-UZenoMeshInstance* FWavefrontObjectContext::CreateMeshInstance(UObject* InOuter, const FString& InName) const
+UZenoMeshInstance* FWavefrontObjectContext::CreateMeshInstance(UObject* InOuter, const FString& InName, const bool bOverrideChannel1WithChannel0) const
 {
 	UZenoMeshInstance* MeshInstance = NewObject<UZenoMeshInstance>(InOuter, *InName, RF_Public | RF_Standalone);
 
@@ -230,8 +230,16 @@ UZenoMeshInstance* FWavefrontObjectContext::CreateMeshInstance(UObject* InOuter,
 	MeshInstance->MeshData.IndexBuffer = FaceBuffer;
 	MeshInstance->MeshData.NormalChannel = NormalChannel;
 	MeshInstance->MeshData.UVChannel0 = UVChannel0;
-	MeshInstance->MeshData.UVChannel1 = UVChannel1;
 	MeshInstance->MeshData.VertexBuffer = VertexBuffer;
+
+	if (bOverrideChannel1WithChannel0)
+	{
+		MeshInstance->MeshData.UVChannel1 = UVChannel0;
+	}
+	else
+	{
+		MeshInstance->MeshData.UVChannel1 = UVChannel1;
+	}
 #else
 	TArray<FVector3f>& NewVertexBuffer = MeshInstance->MeshData.VertexBuffer;
 	TArray<int32>& NewIndexBuffer = MeshInstance->MeshData.IndexBuffer;

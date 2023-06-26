@@ -1018,6 +1018,37 @@ half3x3 VertexFactoryGetTangentToLocal( FVertexFactoryInput Input, FVertexFactor
 	return Intermediates.TangentToLocal;
 }
 
+// ~darczeng start [Normal]
+float3 ZenoVatGetLocalNormal(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates)
+{
+#if NUM_MATERIAL_TEXCOORDS_VERTEX > 1
+	const float3x3 TangentToLocal = VertexFactoryGetTangentToLocal(Input, Intermediates);
+	FMaterialVertexParameters MaterialParameters = GetMaterialVertexParameters(Input, Intermediates, Input.Position.xyz, TangentToLocal );
+	float2 UV = MaterialParameters.TexCoords[1];
+	float HeightPerFrame = floor(float(VatTextureHeight) / float(VatTotalFrame));
+	float FrameOffset = HeightPerFrame / max(1.0, float(VatTextureHeight));
+	UV.y += FrameOffset * float(VatCurrentFrame);
+	float4 NewNormal = Texture2DSample(VatNormalTexture, VatNormalTextureSampler, UV);
+	return NewNormal.xzy;
+#else
+	return Intermediates.TangentToWorld[2];
+#endif
+}
+
+float3 ZenoVatGetWorldNormal(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates)
+{
+#if NUM_MATERIAL_TEXCOORDS_VERTEX > 1
+	FSceneDataIntermediates SceneData = VF_GPUSCENE_GET_INTERMEDIATES(Input);
+	FLWCMatrix LocalToWorld = SceneData.InstanceData.LocalToWorld;
+	float3 InvScale = SceneData.InstanceData.InvNonUniformScale;
+	float3 NewNormal = ZenoVatGetLocalNormal(Input, Intermediates);
+	return RotateLocalToWorld(NewNormal.xyz, LocalToWorld, InvScale);
+#else
+	return Intermediates.TangentToWorld[2];
+#endif
+}
+// ~darczeng end [Normal]
+
 // ~darczeng start [VAT Offset]
 float4 ZenoVatGetWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates)
 {
@@ -1077,27 +1108,6 @@ float3 VertexFactoryGetPositionForVertexLighting(FVertexFactoryInput Input, FVer
 {
 	return TranslatedWorldPosition;
 }
-
-// ~darczeng start [Normal]
-float3 ZenoVatGetWorldNormal(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates)
-{
-#if NUM_MATERIAL_TEXCOORDS_VERTEX > 1
-	FSceneDataIntermediates SceneData = VF_GPUSCENE_GET_INTERMEDIATES(Input);
-	FLWCMatrix LocalToWorld = SceneData.InstanceData.LocalToWorld;
-	float3 InvScale = SceneData.InstanceData.InvNonUniformScale;
-	const float3x3 TangentToLocal = VertexFactoryGetTangentToLocal(Input, Intermediates);
-	FMaterialVertexParameters MaterialParameters = GetMaterialVertexParameters(Input, Intermediates, Input.Position.xyz, TangentToLocal );
-	float2 UV = MaterialParameters.TexCoords[1];
-	const float HeightPerFrame = ceil(VatTotalFrame / VatTextureHeight);
-	const float FrameOffset = HeightPerFrame / max(1.0, float(VatTotalFrame));
-	UV.y += FrameOffset * float(VatCurrentFrame);
-	float4 NewNormal = Texture2DSample(VatNormalTexture, VatNormalTextureSampler, UV);
-	return RotateLocalToWorld(NewNormal.xyz, LocalToWorld, InvScale);
-#else
-	return Intermediates.TangentToWorld[2];
-#endif
-}
-// ~darczeng end [Normal]
 
 FVertexFactoryInterpolantsVSToPS VertexFactoryGetInterpolantsVSToPS(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates, FMaterialVertexParameters VertexParameters)
 {
@@ -1163,7 +1173,7 @@ FVertexFactoryInterpolantsVSToPS VertexFactoryGetInterpolantsVSToPS(FVertexFacto
 #if ZENO_VAT_MESH
 	{
 		float3 ZenoVatNormal = ZenoVatGetWorldNormal(Input, Intermediates);
-		SetTangents(Interpolants, Intermediates.TangentToWorld[0], ZenoVatNormal, Intermediates.TangentToWorldSign);
+		SetTangents(Interpolants, Intermediates.TangentToWorld[0], ZenoVatNormal, 0);
 	}
 #else
 	SetTangents(Interpolants, Intermediates.TangentToWorld[0], Intermediates.TangentToWorld[2], Intermediates.TangentToWorldSign);
