@@ -8,7 +8,12 @@
 #include "LandscapeDataAccess.h"
 #include "LandscapeEdit.h"
 #include "LandscapeProxy.h"
+#include "Engine/SplineMeshActor.h"
+#include "Engine/StaticMeshActor.h"
+#include "PCG/ZenoPCGSubsystem.h"
+#include "PCG/Grid/ZenoPCGLandscapeCache.h"
 #include "PCG/DataSource/ZenoPCGLandscapeData.h"
+#include "UObject/ConstructorHelpers.h"
 
 bool Zeno::Helper::IsRuntimeOrPIE()
 {
@@ -174,4 +179,109 @@ TArray<FVector> Zeno::Helper::ScatterPoints(ALandscapeProxy* Landscape, const ui
 	}
 	
 	return Points;
+}
+
+TArray<uint16> Zeno::Helper::GetHeightDataInBound(ALandscapeProxy* Landscape, FBox& InOutBound, FIntPoint& OutSize)
+{
+	TArray<uint16> HeightData;
+	if (!IsValid(Landscape))
+	{
+		return {};
+	}
+
+#if 0
+	UZenoPCGLandscapeData* Data = NewObject<UZenoPCGLandscapeData>();
+	Data->Initialize({Landscape}, GetLandscapeBounds(Landscape), true, false);
+
+	const ULandscapeInfo* LandscapeInfo = Landscape->GetLandscapeInfo();
+	const int32 ComponentSizeQuads = LandscapeInfo->ComponentSizeQuads;
+	const int32 SubsectionSizeQuads = LandscapeInfo->SubsectionSizeQuads;
+
+	FIntRect LandscapeExtent;
+	LandscapeInfo->GetLandscapeExtent(LandscapeExtent);
+
+	const double SizePerSectionX = LandscapeExtent.Width() / static_cast<double>(ComponentSizeQuads) * SubsectionSizeQuads;
+	const double SizePerSectionY = LandscapeExtent.Height() / static_cast<double>(ComponentSizeQuads) * SubsectionSizeQuads;
+
+	const FTransform& LandscapeTransform = Landscape->GetTransform();
+
+	OutSize = 0;
+	uint32 MaxY = 0;
+	for (double X = InOutBound.Min.X; X < InOutBound.Max.X; X += SizePerSectionX)
+	{
+		OutSize.Y ++;
+		MaxY = 0;
+		for (double Y = InOutBound.Min.Y; Y < InOutBound.Max.Y; Y += SizePerSectionY)
+		{
+			FZenoPCGPoint Point;
+			if (Data->ProjectPoint(FTransform { FVector {X, Y, 0.f} }, InOutBound, {}, Point, nullptr))
+			{
+				FSoftObjectPath CubeMesh { "/Engine/BasicShapes/Cube.Cube" };
+				// if (UStaticMesh* StaticMesh = Cast<UStaticMesh>(CubeMesh.TryLoad()); IsValid(StaticMesh))
+				// {
+				// 	const AStaticMeshActor* Actor = Cast<AStaticMeshActor>(World->SpawnActor(AStaticMeshActor::StaticClass(), &Point.Transform));
+				// 	Actor->GetStaticMeshComponent()->SetStaticMesh(StaticMesh);
+				// }
+				HeightData.Add( LandscapeDataAccess::GetTexHeight(LandscapeTransform.InverseTransformVector(Point.Transform.GetLocation()).Z));
+			} else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("%lf %lf"), X, Y);
+				HeightData.Add(0x8000);
+			}
+			MaxY ++;
+		}
+	}
+	OutSize.X = MaxY;
+#else
+	ULandscapeInfo* LandscapeInfo = Landscape->GetLandscapeInfo();
+	check(IsValid(LandscapeInfo));	
+
+	FIntRect LandscapeExtent;
+	if (!LandscapeInfo->GetLandscapeExtent(LandscapeExtent))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to get Landscape Extent. Aborted."));
+		return {};
+	}
+
+
+	InOutBound = InOutBound.InverseTransformBy(Landscape->GetTransform());	
+	const FVector& BoxMin = InOutBound.Min;
+	const FVector& BoxMax = InOutBound.Max;
+	const FIntPoint MinInt(FMath::FloorToInt(BoxMin.X), FMath::FloorToInt(BoxMin.Y));
+	const FIntPoint MaxInt(FMath::FloorToInt(BoxMax.X), FMath::FloorToInt(BoxMax.Y));
+	FIntRect InBoundsRect { MinInt, MaxInt };
+
+	if (!InBoundsRect.Intersect(LandscapeExtent))
+	{
+		UE_LOG(LogTemp, Error, TEXT("InBounds isn't intersected with Landscape Extent. Aborted."));
+		return {};
+	}
+
+	auto GetIntersectRect = [] (const FIntRect& Rect1, const FIntRect& Rect2)
+	{
+		const int32 MaxLeft = FMath::Max(Rect1.Min.X, Rect2.Min.X);
+		const int32 MaxTop = FMath::Max(Rect1.Min.Y, Rect2.Min.Y);
+		const int32 MinRight = FMath::Min(Rect1.Max.X, Rect2.Max.X);
+		const int32 MinBottom = FMath::Min(Rect1.Max.Y, Rect2.Max.Y);
+		if (MaxLeft <= MinRight && MaxTop <= MinBottom)
+        {
+            return FIntRect(MaxLeft, MaxTop, MinRight, MinBottom);
+        }
+		return FIntRect(0, 0, 0, 0);
+	};
+
+	const FIntRect IntersectRect = GetIntersectRect(InBoundsRect, LandscapeExtent);
+	const int32 DataWidth = IntersectRect.Width() + 1;
+	const int32 DataHeight = IntersectRect.Height() + 1;
+
+	HeightData.AddZeroed(DataWidth * DataHeight);
+
+	FLandscapeEditDataInterface LandscapeEdit(LandscapeInfo);
+	LandscapeEdit.GetHeightDataFast(IntersectRect.Min.X, IntersectRect.Min.Y, IntersectRect.Max.X, IntersectRect.Max.Y, HeightData.GetData(), 0);
+
+	OutSize.X = DataWidth;
+	OutSize.Y = DataHeight;
+#endif
+
+	return HeightData;
 }
