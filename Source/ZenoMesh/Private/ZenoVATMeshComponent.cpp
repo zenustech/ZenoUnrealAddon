@@ -159,6 +159,9 @@ void UZenoVATMeshComponent::PostEditChangeProperty(FPropertyChangedEvent& Proper
 		if (PropertyChangedEvent.MemberProperty->HasMetaData(TEXT("ZenoVat")))
 		{
 			UpdateVarInfoToRenderThread();
+#if WITH_EDITOR
+			UpdateBounds();
+#endif // WITH_EDITOR
 		}
 	}
 	Super::PostEditChangeProperty(PropertyChangedEvent);
