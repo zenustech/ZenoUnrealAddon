@@ -1019,15 +1019,20 @@ half3x3 VertexFactoryGetTangentToLocal( FVertexFactoryInput Input, FVertexFactor
 }
 
 // ~darczeng start [Normal]
+float2 ZenoVatGetUVOffset()
+{
+	const float HeightPerFrame = floor(float(VatTextureHeight) / float(VatTotalFrame));
+	const float FrameOffset = HeightPerFrame / max(1.0, float(VatTextureHeight));
+	return float2(0.0, FrameOffset * float(VatCurrentFrame));
+}
+
 float3 ZenoVatGetLocalNormal(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates)
 {
 #if NUM_MATERIAL_TEXCOORDS_VERTEX > 1
 	const float3x3 TangentToLocal = VertexFactoryGetTangentToLocal(Input, Intermediates);
 	FMaterialVertexParameters MaterialParameters = GetMaterialVertexParameters(Input, Intermediates, Input.Position.xyz, TangentToLocal );
 	float2 UV = MaterialParameters.TexCoords[1];
-	float HeightPerFrame = floor(float(VatTextureHeight) / float(VatTotalFrame));
-	float FrameOffset = HeightPerFrame / max(1.0, float(VatTextureHeight));
-	UV.y += FrameOffset * float(VatCurrentFrame);
+	UV += ZenoVatGetUVOffset();
 	float4 NewNormal = Texture2DSample(VatNormalTexture, VatNormalTextureSampler, UV);
 	return NewNormal.xzy;
 #else
@@ -1059,9 +1064,7 @@ float4 ZenoVatGetWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermed
 	float3x3 TangentToLocal = VertexFactoryGetTangentToLocal(Input, Intermediates);
 	FMaterialVertexParameters MaterialParameters = GetMaterialVertexParameters(Input, Intermediates, NewPosition.xyz, TangentToLocal );
 	float2 UV = MaterialParameters.TexCoords[1];
-	float HeightPerFrame = floor(float(VatTextureHeight) / float(VatTotalFrame));
-	float FrameOffset = HeightPerFrame / max(1.0, float(VatTextureHeight));
-	UV.y += FrameOffset * float(VatCurrentFrame);
+	UV += ZenoVatGetUVOffset();
 	float4 MeshSpacePosition = NewPosition = Texture2DSample(VatPositionTexture, VatPositionTextureSampler, UV);
 
 	// Bounds space to local space
