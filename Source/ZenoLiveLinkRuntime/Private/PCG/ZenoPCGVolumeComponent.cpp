@@ -1,6 +1,7 @@
 ﻿#include "PCG/ZenoPCGVolumeComponent.h"
 #include <zeno/unreal/ZenoRemoteTypes.h>
 
+#include "LandscapeDataAccess.h"
 #include "LandscapeEdit.h"
 #include "LandscapeProxy.h"
 #include "ZenoGraphAsset.h"
@@ -33,6 +34,7 @@ void UZenoPCGVolumeComponent::PostEditChangeProperty(FPropertyChangedEvent& Prop
 			}
 		}
 	}
+
 	if (PropertyChangedEvent.Property && PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UZenoPCGVolumeComponent, InputParameters))
 	{
 		ParameterChangedEvent.Broadcast();
@@ -69,9 +71,23 @@ std::shared_ptr<zeno::remote::HeightField> UZenoPCGVolumeComponent::GetLandscape
 		return nullptr;
 	}
 
+#if 0
 	ActorBounds = ActorBounds.InverseTransformBy(LandscapeProxy->LandscapeActorToWorld());
 	FVector LandscapeScale = LandscapeProxy->GetActorScale3D();
 	FBox LandscapeBound = LandscapeProxy->GetComponentsBoundingBox().InverseTransformBy(LandscapeProxy->LandscapeActorToWorld());
+
+	// ULandscapeInfo* Info = LandscapeProxy->GetLandscapeInfo();
+	// FLandscapeEditDataInterface LandscapeEdit(Info);
+	// auto& Components = LandscapeProxy->LandscapeComponents;
+	// for (const TObjectPtr<ULandscapeComponent>& Component : Components)
+	// {
+	// 	if (IsValid(Component))
+	// 	{
+	// 		FLandscapeComponentDataInterface DataInterface(Component.Get());
+	// 	}
+	// }
+	//
+	// return nullptr;
 	
 	int32 MinX = FMath::FloorToInt((ActorBounds.Min.X));
 	int32 MinY = FMath::FloorToInt((ActorBounds.Min.Y));
@@ -86,7 +102,11 @@ std::shared_ptr<zeno::remote::HeightField> UZenoPCGVolumeComponent::GetLandscape
 	const size_t VertsX = MaxX - MinX + 1, VertsY = MaxY - MinY + 1;
 	
 	TArray<uint16> HeightData;
-	HeightData.SetNumZeroed(VertsX * VertsY);
+	HeightData.SetNumUninitialized(VertsX * VertsY);
+	for (size_t Index = 0; Index < HeightData.Num(); ++Index)
+	{
+		HeightData[Index] = 0x8000; // MidValue = 0x10000 / 2
+	}
 	
 	FLandscapeEditDataInterface EditDataInterface(LandscapeProxy->GetLandscapeInfo());
 	EditDataInterface.GetHeightData(MinX, MinY, MaxX, MaxY, HeightData.GetData(), 0);
@@ -96,7 +116,6 @@ std::shared_ptr<zeno::remote::HeightField> UZenoPCGVolumeComponent::GetLandscape
 		UE_LOG(LogTemp, Warning, TEXT("No Landscape data found."));
 		return Result;
 	}
-
 	Result->Data.resize(VertsY);
 	for (size_t Y = MinY; Y <= MaxY; ++Y)
 	{
@@ -108,10 +127,33 @@ std::shared_ptr<zeno::remote::HeightField> UZenoPCGVolumeComponent::GetLandscape
 			Result->Data[IdxY][IdxX] = Height;
 		}
 	}
-	
+	 
 	Result->Nx = VertsX;
 	Result->Ny = VertsY;
 	Result->LandscapeScale = LandscapeScale.Z;
+#else
+
+	FIntPoint Size;
+	
+	TArray<uint16> HeightData = Zeno::Helper::GetHeightDataInBound(LandscapeProxy, ActorBounds, Size);
+	
+	Result->Data.resize(Size.Y);
+	for (size_t Y = 0; Y < Size.Y; ++Y)
+	{
+		for (size_t X = 0; X < Size.X; ++X)
+		{
+			uint16 Height = HeightData[Y * Size.X + X];
+			if (Result->Data[Y].size() == 0) Result->Data[Y].resize(Size.X);
+			Result->Data[Y][X] = Height;
+		}
+	}
+	
+	Result->Nx = Size.X;
+	Result->Ny = Size.Y;
+	Result->LandscapeScaleX = LandscapeProxy->GetActorScale3D().X;
+	Result->LandscapeScaleY = LandscapeProxy->GetActorScale3D().Y;
+	Result->LandscapeScaleZ = LandscapeProxy->GetActorScale3D().Z;
+#endif
 	
 	return Result;
 }
@@ -141,7 +183,7 @@ std::shared_ptr<zeno::remote::PointSet> UZenoPCGVolumeComponent::GetScatteredPoi
 	Result->Points.reserve(Points.Num());
 	for (const FVector& Point : Points)
 	{
-		Result->Points.emplace_back(zeno::remote::PCGPoint { zeno::remote::Vector3f { static_cast<float>(Point.X), static_cast<float>(Point.Y), static_cast<float>(Point.Z) } });
+		Result->Points.emplace_back(zeno::remote::PCGPoint { zeno::remote::Vector3f { static_cast<float>(Point.X), static_cast<float>(Point.Z), static_cast<float>(Point.Y) } });
 	}
 
 	return Result;

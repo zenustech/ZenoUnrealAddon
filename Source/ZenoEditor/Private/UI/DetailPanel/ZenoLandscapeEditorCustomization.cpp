@@ -4,6 +4,7 @@
 #include "DetailLayoutBuilder.h"
 #include "DetailWidgetRow.h"
 #include "Landscape.h"
+#include "LandscapeEdit.h"
 #include "LandscapeInfo.h"
 #include "LandscapeProxy.h"
 #include "SlateOptMacros.h"
@@ -30,6 +31,9 @@ void FZenoLandscapeEditorCustomization::CustomizeDetails(IDetailLayoutBuilder& D
 	// Location handle
 	const static FName NewLandscapeLocationPropertyName = GET_MEMBER_NAME_CHECKED(UZenoLandscapeObject, NewLandscape_Location);
 	const TSharedRef<IPropertyHandle> NL_LocationHandle = DetailBuilder.GetProperty(NewLandscapeLocationPropertyName);
+	// Export_Landscape handle
+	const static FName ExportLandscapePropertyName = GET_MEMBER_NAME_CHECKED(UZenoLandscapeObject, Export_TargetLandscape);
+	const TSharedRef<IPropertyHandle> ExportLandscapeHandle = DetailBuilder.GetProperty(ExportLandscapePropertyName);
 	
 	// Create action panel for import
 	const static FName NAME_Action = "Action";
@@ -94,6 +98,22 @@ void FZenoLandscapeEditorCustomization::CustomizeDetails(IDetailLayoutBuilder& D
 		}
 	}
 
+	// Create action panel for export
+	if (DetailBuilder.IsPropertyVisible(ExportLandscapeHandle))
+	{
+		IDetailCategoryBuilder& Builder = DetailBuilder.EditCategory(NAME_Action, LOC_Action, ECategoryPriority::Uncommon);
+		Builder.AddCustomRow(LOCTEXT("Apply", "Apply"), false)
+		[
+			SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot()
+			.AutoWidth()
+			[
+				SNew(SButton)
+				.Text(LOCTEXT("Apply", "Apply"))
+				.OnClicked_Static(&FZenoLandscapeEditorCustomization::ApplyLandscapeExport, Object)
+			]
+		];
+	}
 }
 
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
@@ -162,6 +182,56 @@ FReply FZenoLandscapeEditorCustomization::ApplyLandscapeImport(UZenoLandscapeObj
 			LandscapeInfo->UpdateLayerInfoMap(Landscape);
 		});
 	}
+	return FReply::Handled();
+}
+
+FReply FZenoLandscapeEditorCustomization::ApplyLandscapeExport(UZenoLandscapeObject* Object)
+{
+	const FString& SubjectName = Object->Export_SubjectName;
+	if (Object->Export_TargetLandscape.IsValid())
+	{
+		const ALandscapeProxy* TargetLandscape = Object->Export_TargetLandscape.Get();
+		ULandscapeInfo* LandscapeInfo = TargetLandscape->GetLandscapeInfo();
+
+		if (FIntRect LandscapeExtent; LandscapeInfo->GetLandscapeExtent(LandscapeExtent))
+		{
+			FLandscapeEditDataInterface LandscapeEdit(LandscapeInfo);
+			TArray<uint16> HeightData;
+			HeightData.SetNumZeroed((LandscapeExtent.Width() + 1) * (LandscapeExtent.Height() + 1));
+			
+			LandscapeEdit.GetHeightData(LandscapeExtent.Min.X, LandscapeExtent.Min.Y, LandscapeExtent.Max.X, LandscapeExtent.Max.Y, HeightData.GetData(), 0);
+
+			UZenoLiveLinkClientSubsystem* Subsystem = GEngine->GetEngineSubsystem<UZenoLiveLinkClientSubsystem>();
+			if (UZenoLiveLinkSession* LiveLinkSession = Subsystem->GetSessionFallback(); IsValid(LiveLinkSession))
+			{
+				zeno::remote::HeightField HeightField;
+				HeightField.Nx = LandscapeExtent.Width() + 1;
+				HeightField.Ny = LandscapeExtent.Height() + 1;
+				HeightField.LandscapeScaleX = TargetLandscape->GetTransform().GetScale3D().X;
+				HeightField.LandscapeScaleY = TargetLandscape->GetTransform().GetScale3D().Y;
+				HeightField.LandscapeScaleZ = TargetLandscape->GetTransform().GetScale3D().Z;
+				HeightField.Data.resize(HeightField.Ny);
+				for (auto& Vec : HeightField.Data)
+				{
+					Vec.resize(HeightField.Nx);
+				}
+				for (SIZE_T Idx = 0; Idx < HeightData.Num(); Idx++)
+				{
+					HeightField.Data[Idx / HeightField.Nx][Idx % HeightField.Nx] = HeightData[Idx];
+				}
+				zeno::remote::SubjectContainer Container {
+					{ TCHAR_TO_ANSI(*SubjectName) },
+					static_cast<uint16>(zeno::remote::ESubjectType::HeightField),
+					msgpack::pack(HeightField)
+				};
+				zeno::remote::SubjectContainerList List{
+					 {Container},
+				};
+				LiveLinkSession->GetClient()->SetSubjectToRemote( List );
+			}
+		}
+	}
+	
 	return FReply::Handled();
 }
 

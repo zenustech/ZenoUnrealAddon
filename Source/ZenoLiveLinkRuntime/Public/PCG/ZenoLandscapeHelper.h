@@ -42,6 +42,7 @@ namespace Zeno::Helper
 	 **/
 	ZENOLIVELINKRUNTIME_API TArray<FVector> ScatterPoints(ALandscapeProxy* Landscape, uint32 NumPoints, int32 Seed = 0, const FBox& InBound = FBox{ForceInit});
 
+	ZENOLIVELINKRUNTIME_API TArray<uint16> GetHeightDataInBound(ALandscapeProxy* Landscape, FBox& InOutBound, FIntPoint& OutSize);
 
 	FORCEINLINE int32 ComputeSeed(const int32 A)
 	{

@@ -21,4 +21,5 @@ public:
 	TSharedPtr<FUICommandInfo> ImportZslFile;
 	// Landscape
 	TSharedPtr<FUICommandInfo> ImportHeightField;
+	TSharedPtr<FUICommandInfo> ExportHeightField;
 };

@@ -139,7 +139,7 @@ void FZenoVatMeshSceneProxy::GetDynamicMeshElements(const TArray<const FSceneVie
 
 				Mesh.CastShadow = IsShadowCast(View);
 				Mesh.bWireframe = bWireframe;
-				Mesh.bCanApplyViewModeOverrides = false;
+				Mesh.bCanApplyViewModeOverrides = true;
 				Mesh.ReverseCulling = IsLocalToWorldDeterminantNegative();
 				Mesh.bDisableBackfaceCulling = MaterialRelevance.bTwoSided;
 				Mesh.Type = PT_TriangleList;

@@ -58,5 +58,7 @@ public class ZenoEditor : ModuleRules
         {
 			Path.Join(PluginDirectory, "Source/ThirdParty/Zeno/projects/UnrealTool/include"),
         });
+
+        // PrivatePCHHeaderFile = "Private/ZenoEditorPrivatePCH.h";
     }
 }

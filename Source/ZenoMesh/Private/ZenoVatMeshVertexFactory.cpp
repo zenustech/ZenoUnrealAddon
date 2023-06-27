@@ -300,10 +300,10 @@ IMPLEMENT_VERTEX_FACTORY_TYPE(
 	"/Plugin/ZenoMesh/Private/VATVertexFactory.ush",
 	// "/Engine/Private/LocalVertexFactory.ush",
 	  EVertexFactoryFlags::UsedWithMaterials
-	| EVertexFactoryFlags::SupportsStaticLighting
+	// | EVertexFactoryFlags::SupportsStaticLighting
 	| EVertexFactoryFlags::SupportsDynamicLighting
 	// | EVertexFactoryFlags::SupportsPositionOnly
-	| EVertexFactoryFlags::SupportsLightmapBaking
+	// | EVertexFactoryFlags::SupportsLightmapBaking
 	| EVertexFactoryFlags::SupportsCachingMeshDrawCommands
 	// | EVertexFactoryFlags::SupportsManualVertexFetch
 );

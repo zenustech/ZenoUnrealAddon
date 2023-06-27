@@ -108,27 +108,30 @@ void AZenoPCGVolume::SetStaticMeshComponent(UStaticMeshComponent* InStaticMeshCo
 	StaticMeshComponent->AttachToComponent(GetRootComponent(), { EAttachmentRule::SnapToTarget, true });
 	StaticMeshComponent->RegisterComponent();
 	UpdateComponentTransforms();
-
-	FBox MeshBound = StaticMeshComponent->CalcBounds(StaticMeshComponent->GetComponentToWorld()).GetBox();
-	const FBox VolumeBox = GetBrushComponent()->CalcBounds(GetBrushComponent()->GetComponentToWorld()).GetBox();
-	// Scale the mesh to fit the volume
-	const FVector VolumeSize = VolumeBox.GetSize();
-	const FVector MeshSize = MeshBound.GetSize();
-	FVector Scale = VolumeSize / MeshSize;
-	// Adjust by the bound difference
-	Scale.X = Scale.X * (1 - FMath::Abs(InBoundDiff.X) - FMath::Abs(InBoundDiff.Y));
-	Scale.Y = Scale.Y * (1 - FMath::Abs(InBoundDiff.Z) - FMath::Abs(InBoundDiff.W));
-	Scale.Z = 1.0f;
-	StaticMeshComponent->SetRelativeScale3D(Scale);
-	// Update the mesh bounds
-	MeshBound = StaticMeshComponent->CalcBounds(StaticMeshComponent->GetComponentToWorld()).GetBox();
-	// Move mesh origin to the center of the volume
-	const FVector MeshCenter = MeshBound.GetCenter();
-	const FVector VolumeCenter = VolumeBox.GetCenter();
-	FVector Offset = VolumeCenter - MeshCenter;
-	Offset.X = Offset.X - (Offset.X * InBoundDiff.Y);
-	Offset.Y = Offset.Y - (Offset.Y * InBoundDiff.W);
-	StaticMeshComponent->AddWorldOffset(Offset);
+	
+	// FBox MeshBound = StaticMeshComponent->CalcBounds(StaticMeshComponent->GetComponentToWorld()).GetBox();
+	// const FBox VolumeBox = GetBrushComponent()->CalcBounds(GetBrushComponent()->GetComponentToWorld()).GetBox();
+	// // Scale the mesh to fit the volume
+	// const FVector VolumeSize = VolumeBox.GetSize();
+	// const FVector MeshSize = MeshBound.GetSize();
+	// FVector Scale = VolumeSize / MeshSize;
+	// // Adjust by the bound difference
+	// Scale.X = Scale.X * (1 - FMath::Abs(InBoundDiff.X) - FMath::Abs(InBoundDiff.Y));
+	// Scale.Y = Scale.Y * (1 - FMath::Abs(InBoundDiff.Z) - FMath::Abs(InBoundDiff.W));
+	// Scale.Z = 1.0f;
+	// StaticMeshComponent->SetRelativeScale3D(Scale);
+	// // Update the mesh bounds
+	// MeshBound = StaticMeshComponent->CalcBounds(StaticMeshComponent->GetComponentToWorld()).GetBox();
+	// // Move mesh origin to the center of the volume
+	// const FVector MeshCenter = MeshBound.GetCenter();
+	// const FVector VolumeCenter = VolumeBox.GetCenter();
+	// FVector Offset = VolumeCenter - MeshCenter;
+	// Offset.X = Offset.X - (Offset.X * InBoundDiff.Y);
+	// Offset.Y = Offset.Y - (Offset.Y * InBoundDiff.W);
+	// StaticMeshComponent->AddWorldOffset(Offset);
+	const FTransform& BrushTransform = BrushComponent->GetComponentTransform();
+	// const FTransform InversedTransform = BrushTransform.Inverse() * StaticMeshComponent->GetComponentTransform();
+	StaticMeshComponent->SetRelativeScale3D( FVector::One() / BrushTransform.GetScale3D() );
 	
 	Modify(false);
 	PostEditChange();
