@@ -150,7 +150,9 @@ std::shared_ptr<zeno::remote::HeightField> UZenoPCGVolumeComponent::GetLandscape
 	
 	Result->Nx = Size.X;
 	Result->Ny = Size.Y;
-	Result->LandscapeScale = LandscapeProxy->GetActorScale3D().Z;
+	Result->LandscapeScaleX = LandscapeProxy->GetActorScale3D().X;
+	Result->LandscapeScaleY = LandscapeProxy->GetActorScale3D().Y;
+	Result->LandscapeScaleZ = LandscapeProxy->GetActorScale3D().Z;
 #endif
 	
 	return Result;

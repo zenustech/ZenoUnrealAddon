@@ -7,6 +7,8 @@
 #include "LiveLinkTypes.h"
 #include "ZenoLandscapeObject.generated.h"
 
+class ALandscapeProxy;
+
 UCLASS()
 class ZENOEDITOR_API UZenoLandscapeObject : public UObject
 {
@@ -50,4 +52,12 @@ public:
 	// The rotation of the new landscape
 	UPROPERTY(Category="New Landscape", EditAnywhere, meta=(DisplayName="Rotation", ShowForModes="Import"))
 	FRotator NewLandscape_Rotation = FRotator::ZeroRotator;
+
+	// Target landscape to export
+	UPROPERTY(Category="Export Landscape", EditAnywhere, meta=(DisplayName="Target Landscape", ShowForModes="Export"))
+	TSoftObjectPtr<ALandscapeProxy> Export_TargetLandscape = nullptr;
+
+	// Name for the exporting data
+	UPROPERTY(Category="Export Landscape", EditAnywhere, meta=(DisplayName="Subject Name", ShowForModes="Export"))
+	FString Export_SubjectName = "ReservedName_Landscape";
 };

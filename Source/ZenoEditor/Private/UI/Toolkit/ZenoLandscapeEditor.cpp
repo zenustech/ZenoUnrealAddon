@@ -31,7 +31,9 @@ void UZenoLandscapeEditor::Init()
 {
 	State = NewObject<UZenoLandscapeObject>();
 	UZenoEditorToolkitBase::SetPropertyObject(State)
-	.AddSubMode("Import", FZenoEditorCommand::Get().ImportHeightField.ToSharedRef());
+	.AddSubMode("Import", FZenoEditorCommand::Get().ImportHeightField.ToSharedRef())
+	.AddSubMode("Export", FZenoEditorCommand::Get().ExportHeightField.ToSharedRef())
+	;
 }
 
 void UZenoLandscapeEditor::Register()
