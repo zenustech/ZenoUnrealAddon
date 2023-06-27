@@ -76,7 +76,7 @@ void AZenoPCGVolume::OnGeneratedNewMesh(FRawMesh& RawMesh, const FVector4f& InBo
 	UStaticMesh* StaticMesh = NewObject<UStaticMesh>(this, UStaticMesh::StaticClass(),
 	                                                 MakeUniqueObjectName(
 		                                                 this, UStaticMesh::StaticClass(), FName("StaticMesh")),
-	                                                 RF_Public | RF_Standalone);
+	                                                 RF_Public);
 	StaticMesh->PreEditChange(nullptr);
 	StaticMesh->ImportVersion = LastVersion;
 	FStaticMeshSourceModel& SourceModel = StaticMesh->AddSourceModel();
