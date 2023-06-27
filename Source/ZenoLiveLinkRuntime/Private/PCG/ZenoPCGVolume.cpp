@@ -109,6 +109,8 @@ void AZenoPCGVolume::SetStaticMeshComponent(UStaticMeshComponent* InStaticMeshCo
 	StaticMeshComponent->RegisterComponent();
 	UpdateComponentTransforms();
 
+	FTransform InversedTransform = StaticMeshComponent->GetComponentTransform();
+
 	FBox MeshBound = StaticMeshComponent->CalcBounds(StaticMeshComponent->GetComponentToWorld()).GetBox();
 	const FBox VolumeBox = GetBrushComponent()->CalcBounds(GetBrushComponent()->GetComponentToWorld()).GetBox();
 	// Scale the mesh to fit the volume

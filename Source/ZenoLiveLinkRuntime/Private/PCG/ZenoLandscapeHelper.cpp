@@ -270,14 +270,14 @@ TArray<uint16> Zeno::Helper::GetHeightDataInBound(ALandscapeProxy* Landscape, FB
 		return FIntRect(0, 0, 0, 0);
 	};
 
-	const FIntRect IntersectRect = GetIntersectRect(InBoundsRect, LandscapeExtent);
+	FIntRect IntersectRect = GetIntersectRect(InBoundsRect, LandscapeExtent);
 	const int32 DataWidth = IntersectRect.Width() + 1;
 	const int32 DataHeight = IntersectRect.Height() + 1;
 
 	HeightData.AddZeroed(DataWidth * DataHeight);
 
 	FLandscapeEditDataInterface LandscapeEdit(LandscapeInfo);
-	LandscapeEdit.GetHeightDataFast(IntersectRect.Min.X, IntersectRect.Min.Y, IntersectRect.Max.X, IntersectRect.Max.Y, HeightData.GetData(), 0);
+	LandscapeEdit.GetHeightData(IntersectRect.Min.X, IntersectRect.Min.Y, IntersectRect.Max.X, IntersectRect.Max.Y, HeightData.GetData(), 0);
 
 	OutSize.X = DataWidth;
 	OutSize.Y = DataHeight;
