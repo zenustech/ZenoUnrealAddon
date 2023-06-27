@@ -86,7 +86,7 @@ void AZenoPCGVolume::OnGeneratedNewMesh(FRawMesh& RawMesh, const FVector4f& InBo
 	UStaticMeshComponent* NewStaticMeshComponent = NewObject<UStaticMeshComponent>(
 		this, UStaticMeshComponent::StaticClass(),
 		MakeUniqueObjectName(this, UStaticMeshComponent::StaticClass(), FName("StaticMeshComponent")),
-		RF_Public | RF_Standalone);
+		RF_Public);
 	NewStaticMeshComponent->StaticMeshImportVersion = LastVersion;
 	NewStaticMeshComponent->SetStaticMesh(StaticMesh);
 	SetStaticMeshComponent(NewStaticMeshComponent, InBoundDiff);
