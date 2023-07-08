@@ -47,7 +47,7 @@ void FZenoEditorModule::UnregisterDetailPanelCustomization()
 	// Landscape editor
 	if (UZenoLandscapeEditor* Editor = const_cast<UZenoLandscapeEditor*>(Cast<UZenoLandscapeEditor>(LandscapeEditorGuard->Get())); IsValid(Editor))
 	{
-		Editor->Unregister();
+		// Editor->Unregister();
 	}
 	LandscapeEditorGuard.Reset();
 	
