@@ -10,16 +10,22 @@
 
 void FZenoEditorModule::StartupModule()
 {
-	FZenoEditorCommand::Register();
-	FZenoEditorMenuExtender::Get().Register();
-	RegisterActorFactory();
-	RegisterDetailPanelCustomization();
+	if (!IsRunningCommandlet())
+	{
+		FZenoEditorCommand::Register();
+		FZenoEditorMenuExtender::Get().Register();
+		RegisterActorFactory();
+		RegisterDetailPanelCustomization();
+	}
 }
 
 void FZenoEditorModule::ShutdownModule()
 {
-	UnregisterDetailPanelCustomization();
-	FZenoEditorMenuExtender::Get().Unregister();
+	if (!IsRunningCommandlet())
+	{
+		UnregisterDetailPanelCustomization();
+		FZenoEditorMenuExtender::Get().Unregister();
+	}
 }
 
 void FZenoEditorModule::RegisterActorFactory() const

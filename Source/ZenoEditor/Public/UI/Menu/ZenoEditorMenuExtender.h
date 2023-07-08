@@ -51,6 +51,7 @@ private:
 #define REGISTER_EDITOR_EXTENDER_SERVICE(Name, Service) struct FStaticInitForZenoEditorExtenderNamed##Service \
 	{ \
 		FStaticInitForZenoEditorExtenderNamed##Service() { \
+			if (!IsRunningCommandlet()) \
 			FZenoEditorMenuExtender::Get().Add(Name, Service::Get());\
 		} \
 	}; \

@@ -23,6 +23,7 @@ private:
 #define REGISTER_ZENO_DETAIL_CUSTOMIZATION(Name, Service) struct FStaticInitForZenoEditorDetailCustomizationNamed##Service \
                                            	{ \
                                            		FStaticInitForZenoEditorDetailCustomizationNamed##Service() { \
+                                           			if (!IsRunningCommandlet()) \
                                            			FZenoDetailPanelServiceManager::Get().RegisterDetailCustomization(Name, FOnGetDetailCustomizationInstance::CreateStatic(&##Service::Create));\
                                            		} \
                                            	}; \
