@@ -8,7 +8,9 @@
 #include "IContentBrowserSingleton.h"
 #include "IDesktopPlatform.h"
 #include "IStructureDetailsView.h"
+#include "Framework/Notifications/NotificationManager.h"
 #include "Interfaces/IMainFrameModule.h"
+#include "Widgets/Notifications/SNotificationList.h"
 
 #define LOCTEXT_NAMESPACE "UZenoCommonBlueprintLibrary"
 
@@ -179,6 +181,14 @@ bool UZenoCommonBlueprintLibrary::OpenSettingsModal(TSharedRef<FStructOnScope> I
 	
 	FSlateApplication::Get().AddModalWindow(ModalWindow.ToSharedRef(), ParentWidget, false);
 	return bFlag;
+}
+
+void UZenoCommonBlueprintLibrary::ShowNotification(const FText& InText, const float InDuration)
+{
+	FNotificationInfo NotificationInfo(InText);
+	NotificationInfo.ExpireDuration = InDuration;
+
+	FSlateNotificationManager::Get().AddNotification(NotificationInfo);
 }
 
 #undef LOCTEXT_NAMESPACE

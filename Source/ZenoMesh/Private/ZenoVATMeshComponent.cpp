@@ -124,6 +124,13 @@ void UZenoVATMeshComponent::PostEditChangeProperty(FPropertyChangedEvent& Proper
 		{
 			if (const UZenoMeshInstance* MeshInstance = Cast<UZenoMeshInstance>(MeshData); IsValid(MeshInstance))
 			{
+				MinBounds = MeshInstance->VatMeshData.BoundsMin;
+				MaxBounds = MeshInstance->VatMeshData.BoundsMax;
+				TotalFrame = MeshInstance->VatMeshData.FrameNum;
+				if (MeshInstance->VatMeshData.FrameNum == 0)
+				{
+					TotalFrame = TextureHeight / FMath::Max(1, MeshInstance->VatMeshData.RowsPerFrame);
+				}
 				MarkRenderStateDirty();
 			}
 			else

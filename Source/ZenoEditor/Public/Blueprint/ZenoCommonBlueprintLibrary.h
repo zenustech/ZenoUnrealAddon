@@ -54,4 +54,14 @@ public:
 	 * @return return true if user clicked apply button
 	 */
 	static bool OpenSettingsModal(TSharedRef<FStructOnScope> InObject, const FText& InTitle = NSLOCTEXT("UZenoCommonBlueprintLibrary", "DefualtTitle", "Settings Panel"));
+
+	/**
+	 * @brief Open settings modal, return after close window.
+	 * @param InText Text to show
+	 * @param InDuration Duration to show
+	 * @param InColor Color to show
+	 * @return return true if user clicked apply button
+	 */
+	UFUNCTION(BlueprintCallable)
+	static void ShowNotification(const FText& InText, const float InDuration = 3.0f);
 };

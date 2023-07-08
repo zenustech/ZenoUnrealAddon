@@ -41,7 +41,7 @@ protected:
 
 	/** Playing speed */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Animation Speed", meta = (ZenoVat))
-	float PlaySpeed = 1.0f;
+	float PlaySpeed = 24.0f;
 
 	/** Bounds to scale back position data */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Maximum Bounds", meta = (ZenoVat))
