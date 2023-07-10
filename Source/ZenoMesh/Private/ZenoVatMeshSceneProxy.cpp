@@ -132,7 +132,6 @@ void FZenoVatMeshSceneProxy::GetDynamicMeshElements(const TArray<const FSceneVie
 			UserData.Data = *UniformData;
 			
 			FMeshBatch& Mesh = Collector.AllocateMesh();
-			FMeshBatchElement& BatchElement = Mesh.Elements[0];
 			{
 				Mesh.VertexFactory = VertexFactory;
 				Mesh.MaterialRenderProxy = MaterialProxy;
@@ -150,12 +149,16 @@ void FZenoVatMeshSceneProxy::GetDynamicMeshElements(const TArray<const FSceneVie
 				Mesh.bDitheredLODTransition = true;
 				Mesh.bUseSelectionOutline = IsSelected();
 			}
+
+			Mesh.Elements.AddDefaulted(FMath::Max(0, UniformData->InstancesToWorld.Num() - Mesh.Elements.Num()));
+			for (int32 ElementIdx = 0; ElementIdx < Mesh.Elements.Num(); ElementIdx++)
 			{
+				FMeshBatchElement& BatchElement = Mesh.Elements[ElementIdx];
 				if (BatchElement.PrimitiveIdMode != PrimID_FromPrimitiveSceneInfo)
 				{
-					 FDynamicPrimitiveUniformBuffer& DynamicPrimitiveUniformBuffer = Collector.AllocateOneFrameResource<FDynamicPrimitiveUniformBuffer>();
-					 DynamicPrimitiveUniformBuffer.Set(GetLocalToWorld(), PreviousLocalToWorld, GetBounds(), GetLocalBounds(), true, bHasPrecomputedVolumetricLightmap, bOutputVelocity);
-					 BatchElement.PrimitiveUniformBufferResource = &DynamicPrimitiveUniformBuffer.UniformBuffer;
+					FDynamicPrimitiveUniformBuffer& DynamicPrimitiveUniformBuffer = Collector.AllocateOneFrameResource<FDynamicPrimitiveUniformBuffer>();
+					DynamicPrimitiveUniformBuffer.Set(GetLocalToWorld(), PreviousLocalToWorld, GetBounds(), GetLocalBounds(), true, bHasPrecomputedVolumetricLightmap, bOutputVelocity);
+					BatchElement.PrimitiveUniformBufferResource = &DynamicPrimitiveUniformBuffer.UniformBuffer;
 				}
 				else
 				{
@@ -172,8 +175,10 @@ void FZenoVatMeshSceneProxy::GetDynamicMeshElements(const TArray<const FSceneVie
 
 				// Pass the vertex factory's uniform buffer to FZenoVatMeshVertexFactoryShaderParameters::GetElementShaderBindings
 				BatchElement.VertexFactoryUserData = VertexFactory->GetUniformBuffer();
+
+				BatchElement.UserIndex = ElementIdx;
 			}
-			
+
 			Collector.AddMesh(ViewIndex, Mesh);
 		}
 	}
@@ -200,5 +205,13 @@ void FZenoVatMeshSceneProxy::SetMaterial_RenderThread(const UMaterialInterface* 
 	if (IsValid(InMaterialInterface))
 	{
 		MaterialInterface = InMaterialInterface;
+	}
+}
+
+void FZenoVatMeshSceneProxy::SetInstanceTransforms_RenderThread(const TArray<FMatrix>& InTransforms) const
+{
+	if (!InTransforms.IsEmpty())
+	{
+		UniformData->InstancesToWorld = InTransforms;
 	}
 }

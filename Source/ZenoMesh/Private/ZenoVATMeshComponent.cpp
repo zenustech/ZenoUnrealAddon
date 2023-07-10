@@ -15,7 +15,7 @@ UZenoVATMeshComponent::UZenoVATMeshComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.bStartWithTickEnabled = true;
-	PrimaryComponentTick.TickGroup = TG_PrePhysics;
+	PrimaryComponentTick.TickGroup = TG_DuringPhysics;
 	bAutoRegister	= true;
 	bWantsInitializeComponent = true;
 	bAutoActivate	= true;
@@ -65,6 +65,7 @@ void UZenoVATMeshComponent::PostLoad()
 #if WITH_EDITOR
 	UpdateBounds();
 #endif // WITH_EDITOR
+	UpdateInstanceTransformsToRenderThread();
 }
 
 void UZenoVATMeshComponent::Serialize(FArchive& Ar)
@@ -97,6 +98,7 @@ void UZenoVATMeshComponent::UpdateVarInfoToRenderThread() const
 		{
 			Data.NormalTexture = NormalTexturePath.LoadSynchronous();
 		}
+		Data.InstancesToWorld = CachedInstanceTransforms;
 		ENQUEUE_RENDER_COMMAND(UpdateZenoVatInfo)(
 			[Data, VatSceneProxy](FRHICommandListImmediate& RHICmdList)
 			{
@@ -104,6 +106,58 @@ void UZenoVATMeshComponent::UpdateVarInfoToRenderThread() const
 			}
 		);
 	}
+}
+
+void UZenoVATMeshComponent::UpdateInstanceCount() const
+{
+	TArray<USceneComponent*> ChildrenComponents;
+	GetChildrenComponents(false, ChildrenComponents);
+
+	int32 Result = 0;
+	for (USceneComponent* ChildComponent : ChildrenComponents)
+	{
+		if (ChildComponent->IsA<UZenoVATInstanceComponent>())
+		{
+			Result ++;
+		}
+	}
+
+	NumInstances = Result;
+}
+
+void UZenoVATMeshComponent::UpdateInstanceTransformsToRenderThread() const
+{
+	if (!SceneProxy)
+	{
+		return;
+	}
+	
+	TArray<USceneComponent*> ChildrenComponents;
+	GetChildrenComponents(false, ChildrenComponents);
+
+	UpdateInstanceCount();
+
+	TArray<FMatrix> InstanceTransforms;
+	InstanceTransforms.Reserve(NumInstances);
+	for (const USceneComponent* ChildComponent : ChildrenComponents)
+	{
+		if (ChildComponent->IsA<UZenoVATInstanceComponent>())
+		{
+			InstanceTransforms.Add(ChildComponent->GetRelativeTransform().ToMatrixWithScale());
+		}
+	}
+
+	if (InstanceTransforms.IsEmpty())
+	{
+		InstanceTransforms.Add(FMatrix::Identity);
+	}
+
+	CachedInstanceTransforms = InstanceTransforms;
+
+	ENQUEUE_RENDER_COMMAND(UpdateZenoVatInstanceTransform)([InstanceTransforms, SceneProxy = static_cast<FZenoVatMeshSceneProxy*>(SceneProxy)] (FRHICommandListImmediate& RHICmdList)
+	{
+		SceneProxy->SetInstanceTransforms_RenderThread(InstanceTransforms);
+	});
 }
 
 #if WITH_EDITOR
@@ -178,5 +232,55 @@ void UZenoVATMeshComponent::GetUsedMaterials(TArray<UMaterialInterface*>& OutMat
 {
 	Super::GetUsedMaterials(OutMaterials, bGetDebugMaterials);
 	OutMaterials.Add(MeshMaterial);
+}
+
+void UZenoVATMeshComponent::OnChildAttached(USceneComponent* ChildComponent)
+{
+	Super::OnChildAttached(ChildComponent);
+	if (ChildComponent->IsA<UZenoVATInstanceComponent>())
+	{
+		UpdateInstanceTransformsToRenderThread();
+	}
+}
+
+void UZenoVATMeshComponent::OnChildDetached(USceneComponent* ChildComponent)
+{
+	Super::OnChildDetached(ChildComponent);
+	if (ChildComponent->IsA<UZenoVATInstanceComponent>())
+	{
+		UpdateInstanceTransformsToRenderThread();
+	}
+}
+
+void UZenoVATMeshComponent::OnRegister()
+{
+	Super::OnRegister();
+	UpdateInstanceTransformsToRenderThread();
+}
+
+void UZenoVATInstanceComponent::NotifyParentToRebuildData() const
+{
+	if (const UZenoVATMeshComponent* MeshComponent = Cast<UZenoVATMeshComponent>(GetAttachParent()))
+	{
+		MeshComponent->UpdateInstanceTransformsToRenderThread();
+	}
+}
+
+void UZenoVATInstanceComponent::OnUpdateTransform(EUpdateTransformFlags UpdateTransformFlags, ETeleportType Teleport)
+{
+	Super::OnUpdateTransform(UpdateTransformFlags, Teleport);
+	NotifyParentToRebuildData();
+}
+
+void UZenoVATInstanceComponent::OnComponentCreated()
+{
+	Super::OnComponentCreated();
+	NotifyParentToRebuildData();
+}
+
+void UZenoVATInstanceComponent::OnRegister()
+{
+	Super::OnRegister();
+	NotifyParentToRebuildData();
 }
 #endif // WITH_EDITOR

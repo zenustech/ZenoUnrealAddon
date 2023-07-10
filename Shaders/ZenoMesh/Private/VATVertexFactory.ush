@@ -26,6 +26,8 @@ Texture2D<float4> VatPositionTexture;
 SamplerState VatPositionTextureSampler;
 Texture2D<float4> VatNormalTexture;
 SamplerState VatNormalTextureSampler;
+
+float4x4 VatInstanceTransform;
 /*=============================================================================
 	end Zeno shader binding
 =============================================================================*/
@@ -1057,7 +1059,7 @@ float3 ZenoVatGetWorldNormal(FVertexFactoryInput Input, FVertexFactoryIntermedia
 // ~darczeng start [VAT Offset]
 float4 ZenoVatGetWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates)
 {
-	const FLWCMatrix LocalToWorld = GetInstanceData(Intermediates).LocalToWorld;
+	const FLWCMatrix LocalToWorld = LWCMultiply(VatInstanceTransform, GetInstanceData(Intermediates).LocalToWorld);
 	
 	float4 NewPosition = Input.Position;
 #if NUM_MATERIAL_TEXCOORDS_VERTEX > 1

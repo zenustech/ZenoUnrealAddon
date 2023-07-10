@@ -66,7 +66,12 @@ protected:
 	/** Time passed */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VAT", DisplayName = "Time Passed", AdvancedDisplay)
 	float TimePassed = 0.0f;
-	
+
+	/** Count of instances */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VAT", DisplayName = "Num Instances", meta = (UIMin = 1, ClampMin = 1, UIMax = 20, ClampMax = 30, SliderExponent = 1.0f))
+	mutable int32 NumInstances = 0;
+
+	mutable TArray<FMatrix> CachedInstanceTransforms = { FMatrix::Identity };
 public:
 	virtual FPrimitiveSceneProxy* CreateSceneProxy() override;
 
@@ -82,11 +87,20 @@ public:
 
 	void UpdateVarInfoToRenderThread() const;
 
+	void UpdateInstanceCount() const;
+
+	void UpdateInstanceTransformsToRenderThread() const;
+
 protected:
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	virtual void GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials) const override;
 #endif // WITH_EDITOR
+	
+	virtual void OnChildAttached(USceneComponent* ChildComponent) override;
+	virtual void OnChildDetached(USceneComponent* ChildComponent) override;
+
+	virtual void OnRegister() override;
 
 	friend class FZenoVatMeshSceneProxy;
 	
@@ -115,9 +129,28 @@ struct FZenoVatMeshUniformData
 	UTexture2D* PositionTexture = nullptr;
 	int32 CurrentFrame = 0;
 	UTexture2D* NormalTexture = nullptr;
+	TArray<FMatrix> InstancesToWorld;
 };
 
 struct FZenoVatMeshUniformDataWrapper : public FOneFrameResource
 {
 	FZenoVatMeshUniformData Data;
+};
+
+/**
+ * Component to keep track of the instance data
+ * like position, rotation, scale, etc.
+ */
+UCLASS(ClassGroup=(Zeno), meta=(BlueprintSpawnableComponent))
+class ZENOMESH_API UZenoVATInstanceComponent : public USceneComponent
+{
+	GENERATED_BODY()
+
+public:
+	void NotifyParentToRebuildData() const;
+
+protected:
+	virtual void OnUpdateTransform(EUpdateTransformFlags UpdateTransformFlags, ETeleportType Teleport) override;
+	virtual void OnComponentCreated() override;
+	virtual void OnRegister() override;
 };
