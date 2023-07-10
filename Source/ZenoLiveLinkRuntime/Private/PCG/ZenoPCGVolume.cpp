@@ -129,7 +129,7 @@ void AZenoPCGVolume::SetStaticMeshComponent(UStaticMeshComponent* InStaticMeshCo
 	// Offset.X = Offset.X - (Offset.X * InBoundDiff.Y);
 	// Offset.Y = Offset.Y - (Offset.Y * InBoundDiff.W);
 	// StaticMeshComponent->AddWorldOffset(Offset);
-	const FTransform& BrushTransform = BrushComponent->GetComponentTransform();
+	const FTransform& BrushTransform = GetBrushComponent()->GetComponentTransform();
 	// const FTransform InversedTransform = BrushTransform.Inverse() * StaticMeshComponent->GetComponentTransform();
 	StaticMeshComponent->SetRelativeScale3D( FVector::One() / BrushTransform.GetScale3D() );
 	
