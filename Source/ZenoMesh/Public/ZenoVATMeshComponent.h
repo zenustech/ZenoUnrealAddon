@@ -89,6 +89,7 @@ public:
 
 	void UpdateInstanceCount() const;
 
+	UFUNCTION(BlueprintCallable)
 	void UpdateInstanceTransformsToRenderThread() const;
 
 protected:
