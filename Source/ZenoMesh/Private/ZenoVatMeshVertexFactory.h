@@ -29,6 +29,7 @@ private:
 	LAYOUT_FIELD(FShaderParameter, TotalFrame);
 	LAYOUT_FIELD(FShaderParameter, TextureHeight);
 	LAYOUT_FIELD(FShaderParameter, CurrentFrame);
+	LAYOUT_FIELD(FShaderParameter, InstanceTransform);
 	// LAYOUT_FIELD(FShaderParameter, PlaySpeed);
 	// LAYOUT_FIELD(FShaderParameter, bAutoPlay);
 	LAYOUT_FIELD(FShaderResourceParameter, PositionTexture);

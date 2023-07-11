@@ -25,6 +25,7 @@ void FZenoVatMeshVertexFactoryShaderParameters::Bind(const FShaderParameterMap& 
 	CurrentFrame.Bind(ParameterMap, TEXT("VatCurrentFrame"));
 	NormalTexture.Bind(ParameterMap, TEXT("VatNormalTexture"));
 	NormalTextureSampler.Bind(ParameterMap, TEXT("VatNormalTextureSampler"));
+	InstanceTransform.Bind(ParameterMap, TEXT("VatInstanceTransform"));
 }
 
 void FZenoVatMeshVertexFactoryShaderParameters::GetElementShaderBindings(const FSceneInterface* Scene,
@@ -51,6 +52,15 @@ void FZenoVatMeshVertexFactoryShaderParameters::GetElementShaderBindings(const F
 	// ShaderBindings.Add(PlaySpeed, BatchUserData->Data.PlaySpeed);
 	// ShaderBindings.Add(bAutoPlay, BatchUserData->Data.bAutoPlay);
 	ShaderBindings.Add(CurrentFrame, BatchUserData->Data.CurrentFrame);
+
+	if (BatchUserData->Data.InstancesToWorld.IsValidIndex(BatchElement.UserIndex))
+	{
+		ShaderBindings.Add(InstanceTransform, FMatrix44f(BatchUserData->Data.InstancesToWorld[BatchElement.UserIndex]));
+	}
+	else
+	{
+		ShaderBindings.Add(InstanceTransform, FMatrix44f::Identity);
+	}
 
 	// We always need to disable filtering for the position texture as we just sample a single point.
 	FRHISamplerState* SamplerStatePoint = TStaticSamplerState<SF_Point>::GetRHI();

@@ -76,7 +76,7 @@ void AZenoPCGVolume::OnGeneratedNewMesh(FRawMesh& RawMesh, const FVector4f& InBo
 	UStaticMesh* StaticMesh = NewObject<UStaticMesh>(this, UStaticMesh::StaticClass(),
 	                                                 MakeUniqueObjectName(
 		                                                 this, UStaticMesh::StaticClass(), FName("StaticMesh")),
-	                                                 RF_Public | RF_Standalone);
+	                                                 RF_Public);
 	StaticMesh->PreEditChange(nullptr);
 	StaticMesh->ImportVersion = LastVersion;
 	FStaticMeshSourceModel& SourceModel = StaticMesh->AddSourceModel();
@@ -86,7 +86,7 @@ void AZenoPCGVolume::OnGeneratedNewMesh(FRawMesh& RawMesh, const FVector4f& InBo
 	UStaticMeshComponent* NewStaticMeshComponent = NewObject<UStaticMeshComponent>(
 		this, UStaticMeshComponent::StaticClass(),
 		MakeUniqueObjectName(this, UStaticMeshComponent::StaticClass(), FName("StaticMeshComponent")),
-		RF_Public | RF_Standalone);
+		RF_Public);
 	NewStaticMeshComponent->StaticMeshImportVersion = LastVersion;
 	NewStaticMeshComponent->SetStaticMesh(StaticMesh);
 	SetStaticMeshComponent(NewStaticMeshComponent, InBoundDiff);
@@ -129,7 +129,7 @@ void AZenoPCGVolume::SetStaticMeshComponent(UStaticMeshComponent* InStaticMeshCo
 	// Offset.X = Offset.X - (Offset.X * InBoundDiff.Y);
 	// Offset.Y = Offset.Y - (Offset.Y * InBoundDiff.W);
 	// StaticMeshComponent->AddWorldOffset(Offset);
-	const FTransform& BrushTransform = BrushComponent->GetComponentTransform();
+	const FTransform& BrushTransform = GetBrushComponent()->GetComponentTransform();
 	// const FTransform InversedTransform = BrushTransform.Inverse() * StaticMeshComponent->GetComponentTransform();
 	StaticMeshComponent->SetRelativeScale3D( FVector::One() / BrushTransform.GetScale3D() );
 	

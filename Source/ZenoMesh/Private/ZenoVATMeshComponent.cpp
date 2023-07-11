@@ -15,7 +15,7 @@ UZenoVATMeshComponent::UZenoVATMeshComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 	PrimaryComponentTick.bStartWithTickEnabled = true;
-	PrimaryComponentTick.TickGroup = TG_PrePhysics;
+	PrimaryComponentTick.TickGroup = TG_DuringPhysics;
 	bAutoRegister	= true;
 	bWantsInitializeComponent = true;
 	bAutoActivate	= true;
@@ -51,20 +51,38 @@ void UZenoVATMeshComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 FBoxSphereBounds UZenoVATMeshComponent::CalcBounds(const FTransform& LocalToWorld) const
 {
-	FBoxSphereBounds NewBounds(FBox{ FVector { MinBounds }, FVector { MaxBounds } }.TransformBy(LocalToWorld));
+#if 0
+	FBoxSphereBounds Result { ForceInitToZero };
+
+	const FVector3d VatBoundExtent = FVector3d(MaxBounds - MinBounds);
+	const FBoxSphereBounds SingleVatBounds = FBoxSphereBounds( FVector::ZeroVector, VatBoundExtent, VatBoundExtent.GetMax());
+
+	TArray<USceneComponent*> ChildrenComponents;
+	GetChildrenComponents(false, ChildrenComponents);
+	for (const USceneComponent* Child : ChildrenComponents)
+	{
+		if (Child->IsA<UZenoVATInstanceComponent>())
+		{
+			FTransform ChildTransform = Child->GetRelativeTransform();
+			Result = Result + SingleVatBounds.TransformBy(ChildTransform).TransformBy(LocalToWorld);
+		}
+	}
+
+	if (Result == FBoxSphereBounds(ForceInitToZero))
+	{
+		Result = SingleVatBounds;
+	}
 	
-	NewBounds.BoxExtent *= BoundsScale;
-	NewBounds.SphereRadius *= BoundsScale;
-	
-	return NewBounds;
+	return Result.ExpandBy(BoundsScale);
+#else // Disable bounds calculation for debug
+    return FBoxSphereBounds(LocalToWorld.GetLocation(), FVector(1000000.0f, 1000000.0f, 1000000.0f), 1000000.0f);
+#endif
 }
 
 void UZenoVATMeshComponent::PostLoad()
 {
 	Super::PostLoad();
-#if WITH_EDITOR
 	UpdateBounds();
-#endif // WITH_EDITOR
 }
 
 void UZenoVATMeshComponent::Serialize(FArchive& Ar)
@@ -97,6 +115,7 @@ void UZenoVATMeshComponent::UpdateVarInfoToRenderThread() const
 		{
 			Data.NormalTexture = NormalTexturePath.LoadSynchronous();
 		}
+		Data.InstancesToWorld = CachedInstanceTransforms;
 		ENQUEUE_RENDER_COMMAND(UpdateZenoVatInfo)(
 			[Data, VatSceneProxy](FRHICommandListImmediate& RHICmdList)
 			{
@@ -106,7 +125,83 @@ void UZenoVATMeshComponent::UpdateVarInfoToRenderThread() const
 	}
 }
 
+void UZenoVATMeshComponent::UpdateInstanceCount() const
+{
+	TArray<USceneComponent*> ChildrenComponents;
+	GetChildrenComponents(false, ChildrenComponents);
+
+	int32 Result = 0;
+	for (USceneComponent* ChildComponent : ChildrenComponents)
+	{
+		if (ChildComponent->IsA<UZenoVATInstanceComponent>())
+		{
+			Result ++;
+		}
+	}
+
+	NumInstances = Result;
+}
+
+void UZenoVATMeshComponent::UpdateInstanceTransformsToRenderThread() const
+{
+	if (!SceneProxy)
+	{
+		return;
+	}
+	
+	TArray<USceneComponent*> ChildrenComponents;
+	GetChildrenComponents(false, ChildrenComponents);
+
+	UpdateInstanceCount();
+
+	TArray<FMatrix> InstanceTransforms;
+	InstanceTransforms.Reserve(NumInstances);
+	for (const USceneComponent* ChildComponent : ChildrenComponents)
+	{
+		if (ChildComponent->IsA<UZenoVATInstanceComponent>())
+		{
+			InstanceTransforms.Add(ChildComponent->GetRelativeTransform().ToMatrixWithScale());
+		}
+	}
+
+	if (InstanceTransforms.IsEmpty())
+	{
+		InstanceTransforms.Add(FMatrix::Identity);
+	}
+
+	CachedInstanceTransforms = InstanceTransforms;
+
+	ENQUEUE_RENDER_COMMAND(UpdateZenoVatInstanceTransform)([InstanceTransforms, SceneProxy = static_cast<FZenoVatMeshSceneProxy*>(SceneProxy)] (FRHICommandListImmediate& RHICmdList)
+	{
+		SceneProxy->SetInstanceTransforms_RenderThread(InstanceTransforms);
+	});
+}
+
+void UZenoVATMeshComponent::SetCurrentFrame(int32 Value)
+{
+	CurrentFrame = Value;
+	UpdateVarInfoToRenderThread();
+}
+
+void UZenoVATMeshComponent::SetCurrentFrame_Interp(float Value)
+{
+	CurrentFrame_Interp = Value;
+	SetCurrentFrame(FMath::Clamp(Value, 0, TotalFrame - 1));
+}
+
+void UZenoVATMeshComponent::CreateRenderState_Concurrent(FRegisterComponentContext* Context)
+{
+	Super::CreateRenderState_Concurrent(Context);
+	UpdateInstanceTransformsToRenderThread();
+}
+
 #if WITH_EDITOR
+void UZenoVATMeshComponent::PostEditComponentMove(bool bFinished)
+{
+	Super::PostEditComponentMove(bFinished);
+	UpdateInstanceTransformsToRenderThread();
+}
+
 void UZenoVATMeshComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	if (PropertyChangedEvent.MemberProperty != nullptr)
@@ -124,6 +219,13 @@ void UZenoVATMeshComponent::PostEditChangeProperty(FPropertyChangedEvent& Proper
 		{
 			if (const UZenoMeshInstance* MeshInstance = Cast<UZenoMeshInstance>(MeshData); IsValid(MeshInstance))
 			{
+				MinBounds = MeshInstance->VatMeshData.BoundsMin;
+				MaxBounds = MeshInstance->VatMeshData.BoundsMax;
+				TotalFrame = MeshInstance->VatMeshData.FrameNum;
+				if (MeshInstance->VatMeshData.FrameNum == 0)
+				{
+					TotalFrame = TextureHeight / FMath::Max(1, MeshInstance->VatMeshData.RowsPerFrame);
+				}
 				MarkRenderStateDirty();
 			}
 			else
@@ -159,9 +261,7 @@ void UZenoVATMeshComponent::PostEditChangeProperty(FPropertyChangedEvent& Proper
 		if (PropertyChangedEvent.MemberProperty->HasMetaData(TEXT("ZenoVat")))
 		{
 			UpdateVarInfoToRenderThread();
-#if WITH_EDITOR
 			UpdateBounds();
-#endif // WITH_EDITOR
 		}
 	}
 	Super::PostEditChangeProperty(PropertyChangedEvent);
@@ -171,5 +271,73 @@ void UZenoVATMeshComponent::GetUsedMaterials(TArray<UMaterialInterface*>& OutMat
 {
 	Super::GetUsedMaterials(OutMaterials, bGetDebugMaterials);
 	OutMaterials.Add(MeshMaterial);
+}
+
+void UZenoVATMeshComponent::OnChildAttached(USceneComponent* ChildComponent)
+{
+	Super::OnChildAttached(ChildComponent);
+	if (ChildComponent->IsA<UZenoVATInstanceComponent>())
+	{
+		UpdateBounds();
+		UpdateInstanceTransformsToRenderThread();
+	}
+}
+
+void UZenoVATMeshComponent::OnChildDetached(USceneComponent* ChildComponent)
+{
+	Super::OnChildDetached(ChildComponent);
+	if (ChildComponent->IsA<UZenoVATInstanceComponent>())
+	{
+		UpdateBounds();
+		UpdateInstanceTransformsToRenderThread();
+	}
+}
+
+void UZenoVATMeshComponent::OnRegister()
+{
+	Super::OnRegister();
+	UpdateBounds();
+}
+
+void UZenoVATMeshComponent::PostInterpChange(FProperty* PropertyThatChanged)
+{
+	static FName CurrentFrameName = GET_MEMBER_NAME_CHECKED(UZenoVATMeshComponent, CurrentFrame_Interp);
+	
+	Super::PostInterpChange(PropertyThatChanged);
+
+	const FName PropertyName = PropertyThatChanged->GetFName();
+	if (PropertyName == CurrentFrameName)
+	{
+		CurrentFrame = FMath::Clamp(FMath::RoundToInt(CurrentFrame_Interp), 0, TotalFrame - 1);
+		UpdateVarInfoToRenderThread();
+		UpdateInstanceTransformsToRenderThread();
+	}
+}
+
+void UZenoVATInstanceComponent::NotifyParentToRebuildData() const
+{
+	if (const UZenoVATMeshComponent* MeshComponent = Cast<UZenoVATMeshComponent>(GetAttachParent()))
+	{
+		MeshComponent->UpdateInstanceTransformsToRenderThread();
+	}
+}
+
+void UZenoVATInstanceComponent::OnUpdateTransform(EUpdateTransformFlags UpdateTransformFlags, ETeleportType Teleport)
+{
+	Super::OnUpdateTransform(UpdateTransformFlags, Teleport);
+	NotifyParentToRebuildData();
+}
+
+void UZenoVATInstanceComponent::OnComponentCreated()
+{
+	Super::OnComponentCreated();
+	// Use parent's OnChildAttached to drive update
+	// NotifyParentToRebuildData();
+}
+
+void UZenoVATInstanceComponent::OnRegister()
+{
+	Super::OnRegister();
+	NotifyParentToRebuildData();
 }
 #endif // WITH_EDITOR

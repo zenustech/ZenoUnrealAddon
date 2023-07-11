@@ -43,14 +43,11 @@ void FVATEditorExtenderService::ExtendMenuBar(FMenuBarBuilder& Builder)
 
 void FVATEditorExtenderService::ExtendVATPullDownMenu(FMenuBuilder& Builder)
 {
-	Builder.AddMenuEntry(FZenoEditorCommand::Get().ImportWavefrontMesh);
 	Builder.AddMenuEntry(FZenoEditorCommand::Get().ImportVAT);
 }
 
 void FVATEditorExtenderService::MapAction()
 {
-	CommandList->MapAction(FZenoEditorCommand::Get().Debug, FExecuteAction::CreateRaw(this, &FVATEditorExtenderService::Debug));
-	CommandList->MapAction(FZenoEditorCommand::Get().ImportWavefrontMesh, FExecuteAction::CreateRaw(this, &FVATEditorExtenderService::ImportWavefrontObjFile));
 	CommandList->MapAction(FZenoEditorCommand::Get().ImportVAT, FExecuteAction::CreateRaw(this, &FVATEditorExtenderService::ImportVAT));
 }
 
@@ -86,9 +83,15 @@ void FVATEditorExtenderService::ImportVAT()
 
 	const FString& FilePath = ImportSettings->FilePath.FilePath;
 
+	if (!FilePath.EndsWith(".obj"))
+	{
+		UZenoCommonBlueprintLibrary::ShowNotification(LOCTEXT("FileTypeNotObj", "File type must be .obj"));
+		return;
+	}
+	
 	if (!bContinue || FilePath.IsEmpty() || !FPaths::FileExists(FilePath))	
 	{
-		// TODO [darc] : show warning :
+		UZenoCommonBlueprintLibrary::ShowNotification(LOCTEXT("FileNotFound", "File not found"));
 		return;
 	}
 
@@ -114,6 +117,11 @@ void FVATEditorExtenderService::ImportVAT()
 		UPackage* Package = CreatePackage(*SavePackageName);
 		
 		UZenoMeshInstance* Instance = Context.CreateMeshInstance(Package, *SaveAssetName, ImportSettings->Type == EZenoVATType::DynamicRemesh);
+		Instance->VatMeshData.RowsPerFrame = Context.Metadata.RowsPerFrame;
+		Instance->VatMeshData.BoundsMax = Context.Metadata.BoundsMax;
+		Instance->VatMeshData.BoundsMin = Context.Metadata.BoundsMin;
+		Instance->VatMeshData.TextureWidth = Context.Metadata.TextureWidth;
+		Instance->VatMeshData.FrameNum = Context.Metadata.FrameNum;
 		FAssetRegistryModule::AssetCreated(Instance);
 	}
 }

@@ -29,6 +29,8 @@ public:
 
 	void SetMaterial_RenderThread(const UMaterialInterface* InMaterialInterface);
 
+	void SetInstanceTransforms_RenderThread(const TArray<FMatrix>& InTransforms) const;
+
 private:
 	FMaterialRelevance MaterialRelevance;
 

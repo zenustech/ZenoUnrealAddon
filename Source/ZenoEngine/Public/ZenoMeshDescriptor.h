@@ -50,7 +50,12 @@ protected:
 	UPROPERTY()
 	FZenoMeshData MeshData;
 
+	UPROPERTY()
+	FZenoVatMetadata VatMeshData;
+
 	friend struct FWavefrontObjectContext;
 	friend class FZenoVatMeshSceneProxy;
+	friend class FVATEditorExtenderService;
+	friend class UZenoVATMeshComponent;
 	
 };

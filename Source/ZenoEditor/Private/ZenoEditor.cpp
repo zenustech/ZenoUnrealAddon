@@ -10,16 +10,22 @@
 
 void FZenoEditorModule::StartupModule()
 {
-	FZenoEditorCommand::Register();
-	FZenoEditorMenuExtender::Get().Register();
-	RegisterActorFactory();
-	RegisterDetailPanelCustomization();
+	if (!IsRunningCommandlet())
+	{
+		FZenoEditorCommand::Register();
+		FZenoEditorMenuExtender::Get().Register();
+		RegisterActorFactory();
+		RegisterDetailPanelCustomization();
+	}
 }
 
 void FZenoEditorModule::ShutdownModule()
 {
-	UnregisterDetailPanelCustomization();
-	FZenoEditorMenuExtender::Get().Unregister();
+	if (!IsRunningCommandlet())
+	{
+		UnregisterDetailPanelCustomization();
+		FZenoEditorMenuExtender::Get().Unregister();
+	}
 }
 
 void FZenoEditorModule::RegisterActorFactory() const
@@ -47,7 +53,7 @@ void FZenoEditorModule::UnregisterDetailPanelCustomization()
 	// Landscape editor
 	if (UZenoLandscapeEditor* Editor = const_cast<UZenoLandscapeEditor*>(Cast<UZenoLandscapeEditor>(LandscapeEditorGuard->Get())); IsValid(Editor))
 	{
-		Editor->Unregister();
+		// Editor->Unregister();
 	}
 	LandscapeEditorGuard.Reset();
 	
