@@ -51,20 +51,34 @@ void UZenoVATMeshComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 FBoxSphereBounds UZenoVATMeshComponent::CalcBounds(const FTransform& LocalToWorld) const
 {
-	FBoxSphereBounds NewBounds(FBox{ FVector { MinBounds }, FVector { MaxBounds } }.TransformBy(LocalToWorld));
+	FBoxSphereBounds Result { ForceInitToZero };
+
+	const FVector3d VatBoundExtent = FVector3d(MaxBounds - MinBounds);
+	const FBoxSphereBounds SingleVatBounds = FBoxSphereBounds( FVector::ZeroVector, VatBoundExtent, VatBoundExtent.GetMax());
+
+	TArray<USceneComponent*> ChildrenComponents;
+	GetChildrenComponents(false, ChildrenComponents);
+	for (const USceneComponent* Child : ChildrenComponents)
+	{
+		if (Child->IsA<UZenoVATInstanceComponent>())
+		{
+			FTransform ChildTransform = Child->GetRelativeTransform();
+			Result = Result + SingleVatBounds.TransformBy(ChildTransform).TransformBy(LocalToWorld);
+		}
+	}
+
+	if (Result == FBoxSphereBounds(ForceInitToZero))
+	{
+		Result = SingleVatBounds;
+	}
 	
-	NewBounds.BoxExtent *= BoundsScale;
-	NewBounds.SphereRadius *= BoundsScale;
-	
-	return NewBounds;
+	return Result.ExpandBy(BoundsScale);
 }
 
 void UZenoVATMeshComponent::PostLoad()
 {
 	Super::PostLoad();
-#if WITH_EDITOR
 	UpdateBounds();
-#endif // WITH_EDITOR
 	UpdateInstanceTransformsToRenderThread();
 }
 
@@ -220,9 +234,7 @@ void UZenoVATMeshComponent::PostEditChangeProperty(FPropertyChangedEvent& Proper
 		if (PropertyChangedEvent.MemberProperty->HasMetaData(TEXT("ZenoVat")))
 		{
 			UpdateVarInfoToRenderThread();
-#if WITH_EDITOR
 			UpdateBounds();
-#endif // WITH_EDITOR
 		}
 	}
 	Super::PostEditChangeProperty(PropertyChangedEvent);
@@ -239,6 +251,7 @@ void UZenoVATMeshComponent::OnChildAttached(USceneComponent* ChildComponent)
 	Super::OnChildAttached(ChildComponent);
 	if (ChildComponent->IsA<UZenoVATInstanceComponent>())
 	{
+		UpdateBounds();
 		UpdateInstanceTransformsToRenderThread();
 	}
 }
@@ -248,6 +261,7 @@ void UZenoVATMeshComponent::OnChildDetached(USceneComponent* ChildComponent)
 	Super::OnChildDetached(ChildComponent);
 	if (ChildComponent->IsA<UZenoVATInstanceComponent>())
 	{
+		UpdateBounds();
 		UpdateInstanceTransformsToRenderThread();
 	}
 }
@@ -256,6 +270,7 @@ void UZenoVATMeshComponent::OnRegister()
 {
 	Super::OnRegister();
 	UpdateInstanceTransformsToRenderThread();
+	UpdateBounds();
 }
 
 void UZenoVATInstanceComponent::NotifyParentToRebuildData() const
