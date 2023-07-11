@@ -46,6 +46,10 @@ FZenoVatMeshSceneProxy::FZenoVatMeshSceneProxy(const UPrimitiveComponent* InComp
 	{
 		UniformData->NormalTexture = Component->NormalTexturePath.LoadSynchronous();
 	}
+	if (UniformData->InstancesToWorld.IsEmpty())
+	{
+		UniformData->InstancesToWorld.Add(FMatrix::Identity);
+	}
 }
 
 FZenoVatMeshSceneProxy::~FZenoVatMeshSceneProxy()

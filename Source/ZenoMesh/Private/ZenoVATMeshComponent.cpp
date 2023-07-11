@@ -51,6 +51,7 @@ void UZenoVATMeshComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 
 FBoxSphereBounds UZenoVATMeshComponent::CalcBounds(const FTransform& LocalToWorld) const
 {
+#if 0
 	FBoxSphereBounds Result { ForceInitToZero };
 
 	const FVector3d VatBoundExtent = FVector3d(MaxBounds - MinBounds);
@@ -73,13 +74,15 @@ FBoxSphereBounds UZenoVATMeshComponent::CalcBounds(const FTransform& LocalToWorl
 	}
 	
 	return Result.ExpandBy(BoundsScale);
+#else // Disable bounds calculation for debug
+    return FBoxSphereBounds(LocalToWorld.GetLocation(), FVector(1000000.0f, 1000000.0f, 1000000.0f), 1000000.0f);
+#endif
 }
 
 void UZenoVATMeshComponent::PostLoad()
 {
 	Super::PostLoad();
 	UpdateBounds();
-	UpdateInstanceTransformsToRenderThread();
 }
 
 void UZenoVATMeshComponent::Serialize(FArchive& Ar)
@@ -174,7 +177,25 @@ void UZenoVATMeshComponent::UpdateInstanceTransformsToRenderThread() const
 	});
 }
 
+void UZenoVATMeshComponent::SetCurrentFrame(int32 Value)
+{
+	CurrentFrame = Value;
+	UpdateVarInfoToRenderThread();
+}
+
+void UZenoVATMeshComponent::CreateRenderState_Concurrent(FRegisterComponentContext* Context)
+{
+	Super::CreateRenderState_Concurrent(Context);
+	UpdateInstanceTransformsToRenderThread();
+}
+
 #if WITH_EDITOR
+void UZenoVATMeshComponent::PostEditComponentMove(bool bFinished)
+{
+	Super::PostEditComponentMove(bFinished);
+	UpdateInstanceTransformsToRenderThread();
+}
+
 void UZenoVATMeshComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	if (PropertyChangedEvent.MemberProperty != nullptr)
@@ -269,8 +290,21 @@ void UZenoVATMeshComponent::OnChildDetached(USceneComponent* ChildComponent)
 void UZenoVATMeshComponent::OnRegister()
 {
 	Super::OnRegister();
-	UpdateInstanceTransformsToRenderThread();
 	UpdateBounds();
+}
+
+void UZenoVATMeshComponent::PostInterpChange(FProperty* PropertyThatChanged)
+{
+	static FName CurrentFrameName = GET_MEMBER_NAME_CHECKED(UZenoVATMeshComponent, CurrentFrame);
+	
+	Super::PostInterpChange(PropertyThatChanged);
+
+	const FName PropertyName = PropertyThatChanged->GetFName();
+	if (PropertyName == CurrentFrameName)
+	{
+		UpdateVarInfoToRenderThread();
+		UpdateInstanceTransformsToRenderThread();
+	}
 }
 
 void UZenoVATInstanceComponent::NotifyParentToRebuildData() const
@@ -290,7 +324,8 @@ void UZenoVATInstanceComponent::OnUpdateTransform(EUpdateTransformFlags UpdateTr
 void UZenoVATInstanceComponent::OnComponentCreated()
 {
 	Super::OnComponentCreated();
-	NotifyParentToRebuildData();
+	// Use parent's OnChildAttached to drive update
+	// NotifyParentToRebuildData();
 }
 
 void UZenoVATInstanceComponent::OnRegister()

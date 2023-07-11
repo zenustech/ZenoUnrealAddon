@@ -56,7 +56,7 @@ protected:
 	UMaterialInterface* MeshMaterial = nullptr;
 
 	/** Current Frame */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Current Frame", meta = (ZenoVat, UIMin = 0, ClampMin = 0))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Current Frame", meta = (ZenoVat, UIMin = 0, ClampMin = 0), Interp)
 	int32 CurrentFrame = 0;
 
 	/** Base mesh data */
@@ -71,6 +71,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VAT", DisplayName = "Num Instances", meta = (UIMin = 1, ClampMin = 1, UIMax = 20, ClampMax = 30, SliderExponent = 1.0f))
 	mutable int32 NumInstances = 0;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "VAT")
 	mutable TArray<FMatrix> CachedInstanceTransforms = { FMatrix::Identity };
 public:
 	virtual FPrimitiveSceneProxy* CreateSceneProxy() override;
@@ -92,16 +93,23 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void UpdateInstanceTransformsToRenderThread() const;
 
+	UFUNCTION(CallInEditor)
+	void SetCurrentFrame(int32 Value);
+
+	virtual void CreateRenderState_Concurrent(FRegisterComponentContext* Context) override;
+
 protected:
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 	virtual void GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials) const override;
+	virtual void PostEditComponentMove(bool bFinished) override;
 #endif // WITH_EDITOR
 	
 	virtual void OnChildAttached(USceneComponent* ChildComponent) override;
 	virtual void OnChildDetached(USceneComponent* ChildComponent) override;
 
 	virtual void OnRegister() override;
+	virtual void PostInterpChange(FProperty* PropertyThatChanged) override;
 
 	friend class FZenoVatMeshSceneProxy;
 	
