@@ -56,8 +56,12 @@ protected:
 	UMaterialInterface* MeshMaterial = nullptr;
 
 	/** Current Frame */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Current Frame", meta = (ZenoVat, UIMin = 0, ClampMin = 0), Interp)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Current Frame", meta = (ZenoVat, UIMin = 0, ClampMin = 0))
 	int32 CurrentFrame = 0;
+
+	/** Current Frame Interp */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Current Frame(For Interp)", AdvancedDisplay, meta = (ZenoVat, UIMin = 0, ClampMin = 0), Interp)
+	float CurrentFrame_Interp = 0;
 
 	/** Base mesh data */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Mesh Data")
@@ -95,6 +99,9 @@ public:
 
 	UFUNCTION(CallInEditor)
 	void SetCurrentFrame(int32 Value);
+	
+	UFUNCTION(CallInEditor)
+	void SetCurrentFrame_Interp(float Value);
 
 	virtual void CreateRenderState_Concurrent(FRegisterComponentContext* Context) override;
 

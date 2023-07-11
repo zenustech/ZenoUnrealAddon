@@ -183,6 +183,12 @@ void UZenoVATMeshComponent::SetCurrentFrame(int32 Value)
 	UpdateVarInfoToRenderThread();
 }
 
+void UZenoVATMeshComponent::SetCurrentFrame_Interp(float Value)
+{
+	CurrentFrame_Interp = Value;
+	SetCurrentFrame(FMath::Clamp(Value, 0, TotalFrame - 1));
+}
+
 void UZenoVATMeshComponent::CreateRenderState_Concurrent(FRegisterComponentContext* Context)
 {
 	Super::CreateRenderState_Concurrent(Context);
@@ -295,13 +301,14 @@ void UZenoVATMeshComponent::OnRegister()
 
 void UZenoVATMeshComponent::PostInterpChange(FProperty* PropertyThatChanged)
 {
-	static FName CurrentFrameName = GET_MEMBER_NAME_CHECKED(UZenoVATMeshComponent, CurrentFrame);
+	static FName CurrentFrameName = GET_MEMBER_NAME_CHECKED(UZenoVATMeshComponent, CurrentFrame_Interp);
 	
 	Super::PostInterpChange(PropertyThatChanged);
 
 	const FName PropertyName = PropertyThatChanged->GetFName();
 	if (PropertyName == CurrentFrameName)
 	{
+		CurrentFrame = FMath::Clamp(FMath::RoundToInt(CurrentFrame_Interp), 0, TotalFrame - 1);
 		UpdateVarInfoToRenderThread();
 		UpdateInstanceTransformsToRenderThread();
 	}
