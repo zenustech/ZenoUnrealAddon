@@ -167,6 +167,6 @@ public:
 
 protected:
 	virtual void OnUpdateTransform(EUpdateTransformFlags UpdateTransformFlags, ETeleportType Teleport) override;
-	virtual void OnComponentCreated() override;
-	virtual void OnRegister() override;
+	virtual void CreateRenderState_Concurrent(FRegisterComponentContext* Context) override;
+	virtual void PostEditComponentMove(bool bFinished) override;
 };
