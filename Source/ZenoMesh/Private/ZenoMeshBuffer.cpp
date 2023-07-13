@@ -2,6 +2,12 @@
 
 #include "DataDrivenShaderPlatformInfo.h"
 
+#if PLATFORM_USES_GLES
+typedef uint16 DynamicMeshIndexType;
+#else
+typedef int32 DynamicMeshIndexType;
+#endif
+
 FZenoMeshVertex::FZenoMeshVertex() = default;
 
 FZenoMeshVertex::FZenoMeshVertex(const FVector3f& InPosition):
@@ -30,6 +36,22 @@ FZenoMeshVertex::FZenoMeshVertex(const FVector3f& InPosition, const FVector2f& I
 	{
 		TextureCoordinate[Idx] = InTexCoord;
 	}
+}
+
+FBufferRHIRef FZenoMeshBufferAllocator::AllocVertexBuffer(uint32 Stride, uint32 NumElements)
+{
+	const uint32 SizeInBytes = GetVertexBufferSize(Stride, NumElements);
+
+	FRHIResourceCreateInfo CreateInfo(TEXT("FDynamicMeshBufferAllocator"));
+	return RHICreateVertexBuffer(SizeInBytes, BUF_Static | BUF_ShaderResource, CreateInfo);
+}
+
+FBufferRHIRef FZenoMeshBufferAllocator::AllocIndexBuffer(uint32 NumElements)
+{
+	const uint32 SizeInBytes = GetIndexBufferSize(NumElements);
+
+	FRHIResourceCreateInfo CreateInfo(TEXT("FDynamicMeshBufferAllocator"));
+	return RHICreateIndexBuffer(sizeof(DynamicMeshIndexType), SizeInBytes, BUF_Static, CreateInfo);
 }
 
 void FZenoMeshPrimitiveUniformBuffer::InitPrimitiveResource()

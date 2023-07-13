@@ -20,6 +20,9 @@ struct ZENOMESH_API FZenoMeshVertex
 
 class ZENOMESH_API FZenoMeshBufferAllocator : public FDynamicMeshBufferAllocator
 {
+public:
+	virtual FBufferRHIRef AllocVertexBuffer(uint32 Stride, uint32 NumElements) override;
+	virtual FBufferRHIRef AllocIndexBuffer(uint32 NumElements) override;
 };
 
 class FZenoMeshPrimitiveUniformBuffer : public FDynamicPrimitiveResource, public TUniformBuffer<FPrimitiveUniformShaderParameters>
