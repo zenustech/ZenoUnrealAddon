@@ -28,7 +28,7 @@ FVATEditorExtenderService::FVATEditorExtenderService()
 void FVATEditorExtenderService::Register()
 {
 	FZenoEditorExtenderServiceBase::Register();
-	MenuBarExtender->AddMenuBarExtension("Help", EExtensionHook::After, CommandList, FMenuBarExtensionDelegate::CreateRaw(this, &FVATEditorExtenderService::ExtendMenuBar));
+	MenuBarExtender->AddMenuBarExtension("Help", EExtensionHook::Before, CommandList, FMenuBarExtensionDelegate::CreateRaw(this, &FVATEditorExtenderService::ExtendMenuBar));
 }
 
 void FVATEditorExtenderService::Unregister()
@@ -38,7 +38,7 @@ void FVATEditorExtenderService::Unregister()
 
 void FVATEditorExtenderService::ExtendMenuBar(FMenuBarBuilder& Builder)
 {
-	Builder.AddPullDownMenu(LOCTEXT("Zeno", "Zeno VAT"), LOCTEXT("ZenoTooltip", "Zeno Tools"), FNewMenuDelegate::CreateRaw(this, &FVATEditorExtenderService::ExtendVATPullDownMenu), ZenoVATHookLabel, ZenoVATHookLabel);
+	Builder.AddPullDownMenu(LOCTEXT("Zeno", "Zeno"), LOCTEXT("ZenoTooltip", "Zeno Tools"), FNewMenuDelegate::CreateRaw(this, &FVATEditorExtenderService::ExtendVATPullDownMenu), ZenoVATHookLabel, ZenoVATHookLabel);
 }
 
 void FVATEditorExtenderService::ExtendVATPullDownMenu(FMenuBuilder& Builder)
@@ -58,18 +58,6 @@ void FVATEditorExtenderService::Debug()
 	{
 		FVATInfo Info;
 		UVATUtility::ParseBinaryInfo(Files[0], Info);
-	}
-}
-
-void FVATEditorExtenderService::ImportWavefrontObjFile()
-{
-	TArray<FString> Files;
-	if (UZenoCommonBlueprintLibrary::OpenSystemFilePicker(Files, "Open File", "", "", "OBJ File(With Zeno VAT Binary)|*.obj") && Files.Num() > 0)
-	{
-		for (const FString& File : Files)
-		{
-			ProcessObjFileImport(File);
-		}
 	}
 }
 

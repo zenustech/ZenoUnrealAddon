@@ -29,5 +29,16 @@ public class ZenoMesh : ModuleRules
                 "ZenoEngine",
             }
         );
+
+        if (Target.bBuildEditor)
+        {
+            PrivateDependencyModuleNames.AddRange(
+                new string[]
+                {
+                    "ViewportInteraction",
+                    "ComponentVisualizers",
+                }
+            );
+        }
     }
 }

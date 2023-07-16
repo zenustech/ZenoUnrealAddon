@@ -178,7 +178,12 @@ public:
 
 	virtual bool SupportsPositionOnlyStream() const override
 	{
-		return RHISupportsManualVertexFetch(Get)
+		return RHISupportsManualVertexFetch(GMaxRHIShaderPlatform);
+	}
+
+	virtual bool SupportsPositionAndNormalOnlyStream() const override
+	{
+		return RHISupportsManualVertexFetch(GMaxRHIShaderPlatform);
 	}
 
 	static bool ShouldCompilePermutation(const FVertexFactoryShaderPermutationParameters& InParameters)
