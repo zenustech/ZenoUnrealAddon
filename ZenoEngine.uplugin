@@ -39,6 +39,11 @@
 			"Name": "ZenoMesh",
 			"Type": "Runtime",
 			"LoadingPhase": "PostConfigInit"
+		},
+		{
+			"Name": "ZenoRenderPipeline",
+			"Type": "Runtime",
+			"LoadingPhase": "PostConfigInit"
 		}
 	]
 }
