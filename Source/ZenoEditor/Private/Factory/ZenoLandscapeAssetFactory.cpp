@@ -3,6 +3,8 @@
 
 #include "Factory/ZenoLandscapeAssetFactory.h"
 
+#define LOCTEXT_NAMESPACE "ZenoLandscapeAssetFactory"
+
 UZenoLandscapeAssetFactory::UZenoLandscapeAssetFactory(const FObjectInitializer& ObjectInitializer)
 {
 	Formats.Add("zlasset");
@@ -21,3 +23,10 @@ bool UZenoLandscapeAssetFactory::CanCreateNew() const
 {
 	return true;
 }
+
+FText UZenoLandscapeAssetFactory::GetDisplayName() const
+{
+	return LOCTEXT("Name", "Zeno Landscape Asset");
+}
+
+#undef LOCTEXT_NAMESPACE
