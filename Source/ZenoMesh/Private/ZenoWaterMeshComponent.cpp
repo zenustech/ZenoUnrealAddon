@@ -5,22 +5,21 @@
 #include "MeshDrawShaderBindings.h"
 #include "MeshMaterialShader.h"
 #include "ZenoMeshBuffer.h"
+#include "ZenoMeshCommon.h"
 #include "Materials/MaterialRenderProxy.h"
 
-class FZenoWaterMeshVertexFactory : public FLocalVertexFactory
+class FZenoWaterMeshVertexFactory : public FZenoMeshVertexFactoryBase
 {
 	DECLARE_VERTEX_FACTORY_TYPE(FZenoWaterMeshVertexFactory);
 	
 public:
-	using Super = FLocalVertexFactory;
+	using Super = FZenoMeshVertexFactoryBase;
 	
 	FZenoWaterMeshVertexFactory(const FIntPoint& InQuads, const FIntPoint& InPrecision, ERHIFeatureLevel::Type InFeatureLevel, const char* InDebugName = "WaterMeshVertexFactory")
-		: FLocalVertexFactory(InFeatureLevel, InDebugName)
+		: FZenoMeshVertexFactoryBase(InFeatureLevel, InDebugName, new FZenoMeshVertexBuffer(1, 0, true, BufferAllocator), new FZenoMeshIndexBuffer(BufferAllocator))
 		, QuadSize(InQuads)
 		, Precision(InPrecision)
 	{
-		VertexBuffer = new FZenoMeshVertexBuffer(1, 0, true, BufferAllocator);
-		IndexBuffer = new FZenoMeshIndexBuffer(BufferAllocator);
 	}
 
 	virtual ~FZenoWaterMeshVertexFactory() override
@@ -61,119 +60,7 @@ public:
 			}
 		}
 		
-		BeginInitResource(VertexBuffer);
-		BeginInitResource(IndexBuffer);
-
-		ENQUEUE_RENDER_COMMAND(InitZenoWaterMeshVertexFactory)(
-			[this](FRHICommandListImmediate& RHICmdList)
-			{
-				FDataType Data;
-				Data.PositionComponent = FVertexStreamComponent(
-					&VertexBuffer->PositionBuffer,
-					0,
-					sizeof(FZenoMeshVertexBuffer::FPositionType),
-					VET_Float3
-				);
-
-				Data.NumTexCoords = VertexBuffer->GetNumTexCoords();
-				{
-					Data.LightMapCoordinateIndex = VertexBuffer->GetLightmapCoordinateIndex();
-					Data.PositionComponentSRV = VertexBuffer->PositionBufferSRV;
-					Data.TangentsSRV = VertexBuffer->TangentBufferSRV;
-					Data.TextureCoordinatesSRV = VertexBuffer->TexCoordBufferSRV;
-					Data.ColorComponentsSRV = VertexBuffer->ColorBufferSRV;
-				}
-
-				{
-					EVertexElementType UVDoubleWideVertexElementType = VET_None;
-					EVertexElementType UVVertexElementType = VET_None;
-					uint32 UVSizeInBytes = 0;
-					if (VertexBuffer->IsUse16BitTexCoord())
-					{
-						UVSizeInBytes = sizeof(FVector2DHalf);
-						UVDoubleWideVertexElementType = VET_Half4;
-						UVVertexElementType = VET_Half2;
-					}
-					else
-					{
-						UVSizeInBytes = sizeof(FVector2f);
-						UVDoubleWideVertexElementType = VET_Float4;
-						UVVertexElementType = VET_Float2;
-					}
-
-					const int32 NumTexCoord = VertexBuffer->GetNumTexCoords();
-					
-					int32 UVIndex;
-					const uint32 UVStride = UVSizeInBytes * NumTexCoord;
-					for (UVIndex = 0; UVIndex < NumTexCoord - 1; UVIndex += 2)
-					{
-						Data.TextureCoordinates.Add(
-							 FVertexStreamComponent(
-								  &VertexBuffer->TexCoordBuffer,
-								  UVSizeInBytes * UVIndex,
-								  UVStride,
-								  UVDoubleWideVertexElementType,
-								  EVertexStreamUsage::ManualFetch
-							 )
-						);
-					}
-
-					if (UVIndex < NumTexCoord)
-					{
-						Data.TextureCoordinates.Add(
-							 FVertexStreamComponent(
-									  &VertexBuffer->TexCoordBuffer,
-									  UVSizeInBytes * UVIndex,
-									  UVStride,
-									  UVVertexElementType,
-									  EVertexStreamUsage::ManualFetch
-								  )
-						);
-					}
-
-					Data.TangentBasisComponents[0] = FVertexStreamComponent(
-						&VertexBuffer->TangentBuffer,
-						0,
-						2 * sizeof(FPackedNormal),
-						VET_PackedNormal,
-						EVertexStreamUsage::ManualFetch
-					);
-					Data.TangentBasisComponents[1] = FVertexStreamComponent(
-						&VertexBuffer->TangentBuffer,
-						sizeof(FPackedNormal),
-						2 * sizeof(FPackedNormal),
-						VET_PackedNormal,
-						EVertexStreamUsage::ManualFetch
-					);
-
-					Data.ColorComponent = FVertexStreamComponent(
-						&VertexBuffer->ColorBuffer,
-						0,
-						sizeof(FColor),
-						VET_Color,
-						EVertexStreamUsage::ManualFetch
-					);
-				}
-				SetData(Data);
-			}
-		);
-		
 		Super::InitResource();
-	}
-
-	virtual void ReleaseResource() override
-	{
-		Super::ReleaseResource();
-		if (VertexBuffer)
-		{
-			VertexBuffer->ReleaseResource();
-			delete VertexBuffer;
-		}
-		if (IndexBuffer)
-		{
-			IndexBuffer->ReleaseResource();
-			delete IndexBuffer;
-		}
 	}
 
 	virtual bool SupportsPositionOnlyStream() const override
@@ -186,11 +73,6 @@ public:
 		return RHISupportsManualVertexFetch(GMaxRHIShaderPlatform);
 	}
 
-	static bool ShouldCompilePermutation(const FVertexFactoryShaderPermutationParameters& InParameters)
-	{
-		return InParameters.MaterialParameters.MaterialDomain != MD_UI;
-	}
-
 	static void ModifyCompilationEnvironment(const FVertexFactoryShaderPermutationParameters& InParameters,
 	                                         FShaderCompilerEnvironment& OutEnvironment)
 	{
@@ -200,10 +82,6 @@ public:
 protected:
 	FIntPoint QuadSize;
 	FIntPoint Precision;
-	
-	FZenoMeshVertexBuffer* VertexBuffer = nullptr;
-	FZenoMeshIndexBuffer* IndexBuffer = nullptr;
-	FZenoMeshBufferAllocator BufferAllocator;
 
 	friend class FZenoWaterMeshSceneProxy;
 };
