@@ -23,7 +23,13 @@ public:
 	FZenoMeshVertexFactoryBase(ERHIFeatureLevel::Type InFeatureLevel, const char* InDebugName, FZenoMeshVertexBuffer* InVertexBuffer = nullptr, FZenoMeshIndexBuffer* InIndexBuffer = nullptr);
 	virtual ~FZenoMeshVertexFactoryBase() override;
 
+	/**
+	 * @brief Setup vertex stream structure for this vertex factory to working with zeno mesh buffer
+	 */
 	virtual void InitResource() override;
+	/**
+	 * @brief Call by FRenderResource::InitResource() if GIsRHIInitialized
+	 */
 	virtual void InitRHI() override;
 
 	virtual void ReleaseRHI() override;

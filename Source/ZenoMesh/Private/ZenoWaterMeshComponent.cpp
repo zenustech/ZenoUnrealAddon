@@ -8,6 +8,14 @@
 #include "ZenoMeshCommon.h"
 #include "Materials/MaterialRenderProxy.h"
 
+
+static TAutoConsoleVariable<float> CVarWaterTimeDelta(
+	TEXT("z.Water.Delta"),
+	0.01f,
+	TEXT("Water time delta"),
+	ECVF_RenderThreadSafe | ECVF_Scalability
+);
+
 class FZenoWaterMeshVertexFactory : public FZenoMeshVertexFactoryBase
 {
 	DECLARE_VERTEX_FACTORY_TYPE(FZenoWaterMeshVertexFactory);
@@ -52,11 +60,11 @@ public:
 			{
 				const int32 Index = y * VertexNum.X + x;
 				IndexBuffer->Indices.Emplace(Index);
-				IndexBuffer->Indices.Emplace(Index + 1);
 				IndexBuffer->Indices.Emplace(Index + VertexNum.X);
 				IndexBuffer->Indices.Emplace(Index + 1);
+				IndexBuffer->Indices.Emplace(Index + 1);
+				IndexBuffer->Indices.Emplace(Index + VertexNum.X);
 				IndexBuffer->Indices.Emplace(Index + VertexNum.X + 1);
-				IndexBuffer->Indices.Emplace(Index + VertexNum.X);
 			}
 		}
 		
@@ -65,12 +73,25 @@ public:
 
 	virtual bool SupportsPositionOnlyStream() const override
 	{
-		return RHISupportsManualVertexFetch(GMaxRHIShaderPlatform);
+		// return RHISupportsManualVertexFetch(GMaxRHIShaderPlatform);
+		return false;
 	}
 
 	virtual bool SupportsPositionAndNormalOnlyStream() const override
 	{
-		return RHISupportsManualVertexFetch(GMaxRHIShaderPlatform);
+		// return RHISupportsManualVertexFetch(GMaxRHIShaderPlatform);
+		return false;
+	}
+	
+	FORCEINLINE float GetWaterTime() const
+	{
+		static float WaterTime = 0.0f;
+		return WaterTime += CVarWaterTimeDelta.GetValueOnRenderThread();
+	}
+
+	FORCEINLINE float GetWaterDepth_RenderThread() const
+	{
+		return WaterDepth;
 	}
 
 	static void ModifyCompilationEnvironment(const FVertexFactoryShaderPermutationParameters& InParameters,
@@ -83,6 +104,8 @@ protected:
 	FIntPoint QuadSize;
 	FIntPoint Precision;
 
+	float WaterDepth;
+
 	friend class FZenoWaterMeshSceneProxy;
 };
 
@@ -91,7 +114,11 @@ class FZenoWaterMeshVertexFactoryShaderParameters : public FVertexFactoryShaderP
 	DECLARE_TYPE_LAYOUT(FZenoWaterMeshVertexFactoryShaderParameters, NonVirtual);
 
 public:
-	void Bind(const FShaderParameterMap& ParameterMap) {}
+	void Bind(const FShaderParameterMap& ParameterMap)
+	{
+		WaterTime.Bind(ParameterMap, TEXT("WaterTime"));
+		WaterDepth.Bind(ParameterMap, TEXT("WaterDepth"));
+	}
 	void GetElementShaderBindings(
     		const FSceneInterface* Scene,
     		const FSceneView* View,
@@ -111,8 +138,13 @@ public:
 		{
 			ShaderBindings.Add(Shader->GetUniformBufferParameter<FLocalVertexFactoryUniformShaderParameters>(), VertexFactoryUniformBuffer);
 		}
+
+		ShaderBindings.Add(WaterTime, ZenoWaterMeshVertexFactory->GetWaterTime());
+		ShaderBindings.Add(WaterDepth, ZenoWaterMeshVertexFactory->GetWaterDepth_RenderThread());
 	}
 private:
+	LAYOUT_FIELD(FShaderParameter, WaterTime);
+	LAYOUT_FIELD(FShaderParameter, WaterDepth);
 };
 
 class FZenoWaterMeshSceneProxy final : public FPrimitiveSceneProxy
@@ -126,7 +158,9 @@ public:
 
 		QuadSize = WaterComponent->GridSize;
 		Precision =  WaterComponent->Precision;
+		MaterialInterface = WaterComponent->WaterMaterial;
 		VertexFactory = new FZenoWaterMeshVertexFactory(QuadSize, Precision, GetScene().GetFeatureLevel(), TCHAR_TO_ANSI(*WaterComponent->GetName()));
+		VertexFactory->WaterDepth = WaterComponent->WaterDepth;
 	}
 
 	explicit FZenoWaterMeshSceneProxy(FPrimitiveSceneProxy const& PrimitiveSceneProxy) = delete;
@@ -148,8 +182,7 @@ public:
 	
 	virtual uint32 GetMemoryFootprint() const override
 	{
-		// TODO [darc] : memory footprint :
-		return 0;
+		return sizeof(*this) + GetAllocatedSize();
 	}
 
 	virtual void GetDynamicMeshElements(const TArray<const FSceneView*>& Views, const FSceneViewFamily& ViewFamily, uint32 VisibilityMap, FMeshElementCollector& Collector) const override
@@ -176,9 +209,9 @@ public:
 		}
 
 		
-		const FMaterialRenderProxy* MaterialProxy = bWireframe
-														? WireframeMaterialInstance
-														: UMaterial::GetDefaultMaterial(MD_Surface)->GetRenderProxy();
+	const FMaterialRenderProxy* MaterialProxy = bWireframe
+		                                            ? WireframeMaterialInstance
+		                                            : MaterialInterface.IsValid() ? MaterialInterface->GetRenderProxy() : UMaterial::GetDefaultMaterial(MD_Surface)->GetRenderProxy();
 
 		for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ViewIndex++)
 		{
@@ -191,11 +224,11 @@ public:
 					MeshBatch.VertexFactory = VertexFactory;
 					MeshBatch.MaterialRenderProxy = MaterialProxy;
 
-					MeshBatch.CastShadow = IsShadowCast(View);
+					MeshBatch.CastShadow = false;
 					MeshBatch.bWireframe = bWireframe;
 					MeshBatch.bCanApplyViewModeOverrides = true;
 					MeshBatch.ReverseCulling = IsLocalToWorldDeterminantNegative();
-					MeshBatch.bDisableBackfaceCulling = true;
+					MeshBatch.bDisableBackfaceCulling = MaterialRelevance.bTwoSided;
 					MeshBatch.Type = PT_TriangleList;
 					MeshBatch.DepthPriorityGroup = SDPG_World;
 					MeshBatch.bUseForDepthPass = true;
@@ -241,7 +274,7 @@ public:
 		Result.bUsesLightingChannels = GetLightingChannelMask() != GetDefaultLightingChannelMask();
 		Result.bRenderCustomDepth = ShouldRenderCustomDepth();
 		Result.bTranslucentSelfShadow = bCastVolumetricTranslucentShadow;
-		// MaterialRelevance.SetPrimitiveViewRelevance(Result);
+		MaterialRelevance.SetPrimitiveViewRelevance(Result);
 		Result.bVelocityRelevance = DrawsVelocity() && Result.bOpaque && Result.bRenderInMainPass;
 		return Result;
 	}
@@ -252,6 +285,10 @@ protected:
 	FIntPoint QuadSize = FIntPoint(10, 10);
 	
 	FIntPoint Precision = FIntPoint(10, 10);
+	
+	TSoftObjectPtr<UMaterialInterface> MaterialInterface;
+	
+	FMaterialRelevance MaterialRelevance;
 
 	/** One vertex factory per proxy */
 	FZenoWaterMeshVertexFactory* VertexFactory = nullptr;
@@ -272,13 +309,20 @@ FPrimitiveSceneProxy* UZenoWaterMeshComponent::CreateSceneProxy()
 	return new FZenoWaterMeshSceneProxy(this, FName("ZenoWaterMesh"));
 }
 
+void UZenoWaterMeshComponent::GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials) const
+{
+	Super::GetUsedMaterials(OutMaterials, bGetDebugMaterials);
+	OutMaterials.Add(WaterMaterial);
+}
+
 FBoxSphereBounds UZenoWaterMeshComponent::CalcBounds(const FTransform& LocalToWorld) const
 {
 #if 0
-	const FVector Extent(GridSize.X, GridSize.Y, 128.0);
+	FVector Scale = LocalToWorld.GetScale3D() * WaterDepth;
+	FVector Extent(GridSize.X * Scale.X, GridSize.Y * Scale.Y, Scale.Z);
 	return FBoxSphereBounds(LocalToWorld.GetLocation(), Extent, Extent.GetMax());
 #else // For debug
-	return FBoxSphereBounds(LocalToWorld.GetLocation(), FVector(100000.0f), 100000.0f);
+	return FBoxSphereBounds(FVector::Zero(), FVector(900000.0f), 900000.0f).TransformBy(LocalToWorld);
 #endif
 }
 
@@ -291,9 +335,9 @@ IMPLEMENT_VERTEX_FACTORY_TYPE(
 	FZenoWaterMeshVertexFactory,
 	"/Plugin/ZenoMesh/Private/WaterVertexFactory.ush",
 	EVertexFactoryFlags::UsedWithMaterials
-	| EVertexFactoryFlags::SupportsPositionOnly
+	// | EVertexFactoryFlags::SupportsPositionOnly
 	| EVertexFactoryFlags::SupportsCachingMeshDrawCommands
-	| EVertexFactoryFlags::SupportsDynamicLighting
-	| EVertexFactoryFlags::SupportsStaticLighting
+	// | EVertexFactoryFlags::SupportsDynamicLighting
+	// | EVertexFactoryFlags::SupportsStaticLighting
 );
 
