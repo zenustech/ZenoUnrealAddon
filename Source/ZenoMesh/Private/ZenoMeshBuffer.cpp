@@ -1,6 +1,8 @@
 ﻿#include "..\Public\ZenoMeshBuffer.h"
 
+#ifdef UE_5_2_OR_LATER
 #include "DataDrivenShaderPlatformInfo.h"
+#endif
 
 #if PLATFORM_USES_GLES
 typedef uint16 DynamicMeshIndexType;

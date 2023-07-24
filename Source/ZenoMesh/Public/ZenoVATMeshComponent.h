@@ -51,7 +51,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Minimum Bounds", meta = (ZenoVat))
 	FVector3f MinBounds = FVector3f::Zero();
 
-	/** Bounds to scale back position data */
+	/** Material of this mesh, required enable UV channels */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "VAT", DisplayName = "Material")
 	UMaterialInterface* MeshMaterial = nullptr;
 

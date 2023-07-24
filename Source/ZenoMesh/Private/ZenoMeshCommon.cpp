@@ -3,7 +3,9 @@
 
 #include "ZenoMeshCommon.h"
 
+#ifdef UE_5_2_OR_LATER
 #include "MaterialDomain.h"
+#endif
 #include "MeshMaterialShader.h"
 
 FZenoMeshVertexFactoryBase::FZenoMeshVertexFactoryBase(ERHIFeatureLevel::Type InFeatureLevel, const char* InDebugName, FZenoMeshVertexBuffer* InVertexBuffer/* = nullptr*/, FZenoMeshIndexBuffer* InIndexBuffer/* = nullptr*/)

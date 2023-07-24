@@ -1,12 +1,14 @@
 ﻿#include "ZenoWaterMeshComponent.h"
 
+#ifdef UE_5_2_OR_LATER
 #include "DataDrivenShaderPlatformInfo.h"
 #include "MaterialDomain.h"
+#include "Materials/MaterialRenderProxy.h"
+#endif
 #include "MeshDrawShaderBindings.h"
 #include "MeshMaterialShader.h"
 #include "ZenoMeshBuffer.h"
 #include "ZenoMeshCommon.h"
-#include "Materials/MaterialRenderProxy.h"
 
 
 static TAutoConsoleVariable<float> CVarWaterTimeDelta(
@@ -315,14 +317,19 @@ void UZenoWaterMeshComponent::GetUsedMaterials(TArray<UMaterialInterface*>& OutM
 	OutMaterials.Add(WaterMaterial);
 }
 
+void UZenoWaterMeshComponent::CreateRenderState_Concurrent(FRegisterComponentContext* Context)
+{
+	Super::CreateRenderState_Concurrent(Context);
+}
+
 FBoxSphereBounds UZenoWaterMeshComponent::CalcBounds(const FTransform& LocalToWorld) const
 {
-#if 0
-	FVector Scale = LocalToWorld.GetScale3D() * WaterDepth;
-	FVector Extent(GridSize.X * Scale.X, GridSize.Y * Scale.Y, Scale.Z);
-	return FBoxSphereBounds(LocalToWorld.GetLocation(), Extent, Extent.GetMax());
+#if 1
+	FVector Extent(GridSize.X, GridSize.Y, WaterDepth);
+	Extent *= BoundsScale;
+	return FBoxSphereBounds(FVector::Zero(), Extent, Extent.GetMax()).TransformBy(LocalToWorld);
 #else // For debug
-	return FBoxSphereBounds(FVector::Zero(), FVector(900000.0f), 900000.0f).TransformBy(LocalToWorld);
+    return FBoxSphereBounds(LocalToWorld.GetLocation(), FVector(1000000.0f, 1000000.0f, 1000000.0f), 1000000.0f);
 #endif
 }
 
@@ -336,7 +343,7 @@ IMPLEMENT_VERTEX_FACTORY_TYPE(
 	"/Plugin/ZenoMesh/Private/WaterVertexFactory.ush",
 	EVertexFactoryFlags::UsedWithMaterials
 	// | EVertexFactoryFlags::SupportsPositionOnly
-	| EVertexFactoryFlags::SupportsCachingMeshDrawCommands
+	// | EVertexFactoryFlags::SupportsCachingMeshDrawCommands
 	// | EVertexFactoryFlags::SupportsDynamicLighting
 	// | EVertexFactoryFlags::SupportsStaticLighting
 );

@@ -5,7 +5,7 @@
 #include "ZenoWaterMeshComponent.generated.h"
 
 UCLASS(ClassGroup=(Zeno), meta=(BlueprintSpawnableComponent))
-class ZENOMESH_API UZenoWaterMeshComponent : public UMeshComponent
+class ZENOMESH_API UZenoWaterMeshComponent : public UPrimitiveComponent
 {
 	GENERATED_BODY()
 
@@ -15,6 +15,8 @@ public:
 	virtual FPrimitiveSceneProxy* CreateSceneProxy() override;
 	
 	virtual void GetUsedMaterials(TArray<UMaterialInterface*>& OutMaterials, bool bGetDebugMaterials) const override;
+
+	virtual void CreateRenderState_Concurrent(FRegisterComponentContext* Context) override;
 
 protected:
 	/** Water plane size */
