@@ -23,7 +23,52 @@ void BeginInitResourceIfNotNull(FRenderResource* Resource)
 	if (Resource != nullptr) BeginInitResource(Resource);
 }
 
-class FZenoWaterMeshSceneProxy : public FPrimitiveSceneProxy {};
+class FZenoWaterMeshSceneProxy : public FPrimitiveSceneProxy {
+public:
+	FZenoWaterMeshSceneProxy(const UPrimitiveComponent* InComponent, const FName& ResourceName)
+		: FPrimitiveSceneProxy(InComponent, ResourceName)
+	{
+		const UZenoWaterMeshComponent* WaterMeshComponent = Cast<UZenoWaterMeshComponent>(InComponent);
+		check(WaterMeshComponent->RenderData.IsValid());
+		
+		RenderData = WaterMeshComponent->RenderData.ToSharedRef();
+	}
+
+	virtual SIZE_T GetTypeHash() const override
+	{
+		static size_t UniquePointer;
+		return reinterpret_cast<size_t>(&UniquePointer);
+	}
+	
+	virtual uint32 GetMemoryFootprint() const override
+	{
+		return sizeof(*this) + GetAllocatedSize();
+	}
+
+	virtual FPrimitiveViewRelevance GetViewRelevance(const FSceneView* View) const override
+	{
+		const bool bValid = true;
+		const bool bIsHiddenInEditor = View->Family->EngineShowFlags.Editor;
+
+		FPrimitiveViewRelevance Result;
+		Result.bDrawRelevance = bValid && IsShown(View) && !bIsHiddenInEditor;
+		Result.bShadowRelevance = bValid && IsShadowCast(View) && ShouldRenderInMainPass() &&!bIsHiddenInEditor;
+		Result.bDynamicRelevance = true;
+		Result.bStaticRelevance = false;
+		Result.bRenderInMainPass = ShouldRenderInMainPass();
+		Result.bUsesLightingChannels = GetLightingChannelMask() != GetDefaultLightingChannelMask();
+		Result.bRenderCustomDepth = ShouldRenderCustomDepth();
+		Result.bTranslucentSelfShadow = false;
+		ViewRelevance.SetPrimitiveViewRelevance(Result);
+		Result.bVelocityRelevance = DrawsVelocity() && Result.bOpaque && Result.bRenderInMainPass;
+		return Result;
+	}
+
+private:
+	TSharedRef<FZenoWaterMeshRenderData> RenderData;
+
+	FMaterialRelevance ViewRelevance;
+};
 
 FZenoWaterMeshRenderData::FZenoWaterMeshRenderData(bool bInKeepCPUData/* = true*/)
 	: bKeepCPUData(bInKeepCPUData)
@@ -161,7 +206,7 @@ FPrimitiveSceneProxy* UZenoWaterMeshComponent::CreateSceneProxy()
 {
 	if (RenderData.IsValid())
 	{
-		return Super::CreateSceneProxy();
+		return new FZenoWaterMeshSceneProxy(this, TEXT("UZenoWaterMeshComponent"));
 	}
 	return nullptr;
 }
