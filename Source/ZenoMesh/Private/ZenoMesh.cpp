@@ -15,6 +15,8 @@ void FZenoMeshModule::ShutdownModule()
 {
 }
 
+DEFINE_LOG_CATEGORY(LogZenoMesh);
+
 #undef LOCTEXT_NAMESPACE
     
 IMPLEMENT_MODULE(FZenoMeshModule, ZenoMesh)

@@ -45,3 +45,5 @@ protected:
 	FZenoMeshIndexBuffer* IndexBuffer = nullptr;
 	FZenoMeshBufferAllocator BufferAllocator;
 };
+
+DECLARE_LOG_CATEGORY_EXTERN(LogZenoMesh, Log, All);
