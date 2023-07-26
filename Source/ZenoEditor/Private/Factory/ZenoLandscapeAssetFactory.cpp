@@ -72,7 +72,7 @@ UObject* UZenoLandscapeAssetFactory::FactoryCreateBinary(UClass* InClass, UObjec
 			LandscapeAsset->Transform.Scale = FVector(Transform.Scale[0], Transform.Scale[2], Transform.Scale[1]);
 			if (!BaseColorTextureRef.Guid.empty())
 			{
-				FString Key(Name.c_str());
+				FString Key(BaseColorTextureRef.Guid.c_str());
 				if (UTexture2D* Texture = NameToTexture.FindRef(Key))
 				{
 					LandscapeAsset->BaseColorTexture = Texture;
@@ -96,7 +96,7 @@ UObject* UZenoLandscapeAssetFactory::FactoryCreateBinary(UClass* InClass, UObjec
 			TArray64<uint8> RawData;
 			if (ImageWrapper->GetBitDepth() == 8 && ImageWrapper->GetRaw(ERGBFormat::BGRA, 8, RawData))
 			{
-				UTexture2D* Texture = NewObject<UTexture2D>(AssetBundle, UTexture2D::StaticClass(), FName(Name.c_str()), Flags);
+				UTexture2D* Texture = NewObject<UTexture2D>(AssetBundle, UTexture2D::StaticClass(), FName(Name.c_str()), RF_Public);
 				Texture->Source.Init(Width, Height, 1, 1, ETextureSourceFormat::TSF_BGRA8, RawData.GetData());
 				Texture->SRGB = true;
 				Texture->CompressionSettings = TC_Default;
@@ -115,7 +115,7 @@ UObject* UZenoLandscapeAssetFactory::FactoryCreateBinary(UClass* InClass, UObjec
 			}
 			else if (ImageWrapper->GetBitDepth() == 16 && ImageWrapper->GetRaw(ERGBFormat::Gray, 16, RawData))
 			{
-				UTexture2D* Texture = NewObject<UTexture2D>(AssetBundle, UTexture2D::StaticClass(), FName(Name.c_str()), Flags);
+				UTexture2D* Texture = NewObject<UTexture2D>(AssetBundle, UTexture2D::StaticClass(), FName(Name.c_str()), RF_Public);
 				Texture->Source.Init(Width, Height, 1, 1, ETextureSourceFormat::TSF_G16, RawData.GetData());
 				Texture->SRGB = false;
 				Texture->CompressionSettings = TC_Default;
@@ -123,7 +123,12 @@ UObject* UZenoLandscapeAssetFactory::FactoryCreateBinary(UClass* InClass, UObjec
 				
 				Texture->UpdateResource();
 				
-				*NameToTextureMap[FString(Name.c_str())] = Texture;
+				FString Key(Name.c_str());
+				NameToTexture.Add(Key, Texture);
+				if (UTexture2D** Ptr = NameToTextureMap.FindRef(Key))
+				{
+					*Ptr = Texture;
+				}
 				
 				AssetBundle->UsedTextures.Add(Texture);
 			}
