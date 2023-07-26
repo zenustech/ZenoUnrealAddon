@@ -1,7 +1,9 @@
 ﻿#include "ZenoVatMeshVertexFactory.h"
 
+#ifdef UE_5_2_OR_LATER
 #include "DataDrivenShaderPlatformInfo.h"
 #include "MaterialDomain.h"
+#endif
 #include "MeshDrawShaderBindings.h"
 #include "MeshMaterialShader.h"
 #include "ZenoMeshBuffer.h"

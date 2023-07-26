@@ -1,10 +1,12 @@
 ﻿#include "ZenoVatMeshSceneProxy.h"
 
+#ifdef UE_5_2_OR_LATER
 #include "MaterialDomain.h"
+#include "Materials/MaterialRenderProxy.h"
+#endif
 #include "ZenoMeshDescriptor.h"
 #include "ZenoVATMeshComponent.h"
 #include "ZenoVatMeshVertexFactory.h"
-#include "Materials/MaterialRenderProxy.h"
 
 FZenoVatMeshSceneProxy::FZenoVatMeshSceneProxy(const UPrimitiveComponent* InComponent, const FName& ResourceName)
 	: FPrimitiveSceneProxy(InComponent, ResourceName)

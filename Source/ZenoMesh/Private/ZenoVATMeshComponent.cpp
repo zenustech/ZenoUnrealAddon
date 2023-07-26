@@ -328,16 +328,18 @@ void UZenoVATInstanceComponent::OnUpdateTransform(EUpdateTransformFlags UpdateTr
 	NotifyParentToRebuildData();
 }
 
-void UZenoVATInstanceComponent::OnComponentCreated()
+void UZenoVATInstanceComponent::CreateRenderState_Concurrent(FRegisterComponentContext* Context)
 {
-	Super::OnComponentCreated();
-	// Use parent's OnChildAttached to drive update
-	// NotifyParentToRebuildData();
+	Super::CreateRenderState_Concurrent(Context);
+	NotifyParentToRebuildData();
 }
 
-void UZenoVATInstanceComponent::OnRegister()
+void UZenoVATInstanceComponent::PostEditComponentMove(bool bFinished)
 {
-	Super::OnRegister();
-	NotifyParentToRebuildData();
+	Super::PostEditComponentMove(bFinished);
+	if (bFinished)
+	{
+		NotifyParentToRebuildData();
+	}
 }
 #endif // WITH_EDITOR

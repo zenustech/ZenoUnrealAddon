@@ -22,4 +22,5 @@ public:
 	// Landscape
 	TSharedPtr<FUICommandInfo> ImportHeightField;
 	TSharedPtr<FUICommandInfo> ExportHeightField;
+	// Live link quick connection
 };

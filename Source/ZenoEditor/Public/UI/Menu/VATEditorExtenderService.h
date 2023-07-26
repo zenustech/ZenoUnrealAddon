@@ -17,7 +17,6 @@ public:
 
 private:
 	void Debug();
-	void ImportWavefrontObjFile();
 	void ImportVAT();
 
 	static void ProcessObjFileImport(const FString& FilePath);

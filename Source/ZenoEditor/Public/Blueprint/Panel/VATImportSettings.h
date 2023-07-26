@@ -8,7 +8,7 @@
 
 
 UENUM(BlueprintType)
-enum class EZenoVATType
+enum class EZenoVATType : uint8
 {
 	SoftBody,
 	DynamicRemesh,
