@@ -12,69 +12,6 @@
 
 #include "/Engine/Generated/UniformBuffers/PrecomputedLightingBuffer.ush"
 
-#define WATER_DRAG_MULTIPLIER 0.28f
-#define NORMAL_ITERATIONS 25
-#define VERTEX_ITERATIONS 3
-
-float WaterTime = 0;
-float WaterDepth = 0;
-
-float2 WaveDx1(float2 Position, float2 WaveDir, float WaveLength, float WaveSpeed, float WaveTime)
-{
-	float2 WavePos = Position * WaveDir;
-	float WavePhase = WavePos.x + WavePos.y + WaveTime * WaveSpeed;
-	float WaveFactor = sin(WavePhase * 6.283185307179586476925286766559f / WaveLength);
-	return WaveFactor * WaveDir;
-}
-
-// Calculates wave value and its derivative, 
-// for the wave direction, position in space, wave frequency and time
-float2 WaveDx(float2 Position, float2 Direction, float Frequency, float TimeShift)
-{
-	float X = dot(Position, Direction) * Frequency + TimeShift;
-	float Wave = exp2(sin(X) - 1.0f);
-	float Dx = Wave * cos(X);
-	return float2(Wave, -Dx);
-}
-
-// Calculates waves by summing octaves of various waves with various parameters
-float GetWaves(float2 Position, int Iterations)
-{
-	float Iter = 0.0;
-	float Frequency = 1.0;
-	float TimeMultiplier = 2.0;
-	float Weight = 1.0;
-	float SumOfValues = 0.0;
-	float SumOfWeights = 0.0;
-	for (int Idx = 0; Idx < Iterations; Idx++)
-	{
-		float2 P = float2(sin(Iter), cos(Iter));
-		float2 Res = WaveDx(Position, P, Frequency, TimeMultiplier * WaterTime);
-		Position += P * Res.y * Weight * WATER_DRAG_MULTIPLIER;
-		SumOfValues += Res.x * Weight;
-		SumOfWeights += Weight;
-		Weight *= 0.82;
-		Frequency *= 1.18;
-		TimeMultiplier *= 1.07;
-		Iter += 1232.399963;
-	}
-	return SumOfValues / SumOfWeights;
-}
-
-float3 GetNormal(float4 Position, float Err)
-{
-	return float3(0.0, 0.0, 1.0);
-	float2 Ex = float2(Err, 0);
-	float H = GetWaves(Position.xy, NORMAL_ITERATIONS) * 1.0;
-	float3 A = float3(Position.xy, H);
-	return normalize(
-		cross(
-			A - float3(Position.x - Err, GetWaves(Position.xy - Ex, NORMAL_ITERATIONS) * 1.0, Position.z),
-			A - float3(Position.x, GetWaves(Position.xy + Ex, NORMAL_ITERATIONS) * 1.0, Position.z + Err)
-		)
-	);
-}
-
 #if USE_INSTANCE_CULLING || USE_INSTANCING
 	#if USE_DITHERED_LOD_TRANSITION
 		float4 InstancingViewZCompareZero;  // w contains random lod scale 
@@ -273,6 +210,60 @@ FVertexFactoryInput LoadVertexFactoryInputForHGS(uint TriangleIndex, int VertexI
 }
 #endif
 
+#define WATER_DRAG_MULTIPLIER 0.28f
+#define NORMAL_ITERATIONS 25
+#define VERTEX_ITERATIONS 3
+
+float WaterTime;
+// float WaterDepth;
+#define WaterDepth 1.0f
+
+// Calculates wave value and its derivative, 
+// for the wave direction, position in space, wave frequency and time
+float2 WaveDx(float2 Position, float2 Direction, float Frequency, float TimeShift)
+{
+	float X = dot(Position, Direction) * Frequency + TimeShift;
+	float Wave = exp2(sin(X) - 1.0f);
+	float Dx = Wave * cos(X);
+	return float2(Wave, -Dx);
+}
+
+// Calculates waves by summing octaves of various waves with various parameters
+float GetWaves(float2 Position, int Iterations, float TimeOffset = 0.0f)
+{
+	float Iter = 0.0;
+	float Frequency = 1.0;
+	float TimeMultiplier = 2.0;
+	float Weight = 1.0;
+	float SumOfValues = 0.0;
+	float SumOfWeights = 0.0;
+	for (int Idx = 0; Idx < Iterations; Idx++)
+	{
+		float2 P = float2(sin(Iter), cos(Iter));
+		float2 Res = WaveDx(Position, P, Frequency, TimeMultiplier * (WaterTime + TimeOffset));
+		Position += P * Res.y * Weight * WATER_DRAG_MULTIPLIER;
+		SumOfValues += Res.x * Weight;
+		SumOfWeights += Weight;
+		Weight *= 0.82;
+		Frequency *= 1.18;
+		TimeMultiplier *= 1.07;
+		Iter += 1232.399963;
+	}
+	return SumOfValues / SumOfWeights;
+}
+
+float3 GetNormal(float4 Position, float Err)
+{
+	float2 Ex = float2(Err, 0);
+	float H = GetWaves(Position.xy, NORMAL_ITERATIONS) * 1.0;
+	float3 A = float3(Position.xy, H);
+	return normalize(
+		cross(
+			A - float3(Position.x - Err, GetWaves(Position.xy - Ex, NORMAL_ITERATIONS) * 1.0, Position.z),
+			A - float3(Position.x, GetWaves(Position.xy + Ex, NORMAL_ITERATIONS) * 1.0, Position.z + Err)
+		)
+	);
+}
 
 #if COMPUTESHADER && MANUAL_VERTEX_FETCH
 
@@ -860,13 +851,11 @@ half3x3 CalcTangentToLocal(FVertexFactoryInput Input, inout float TangentSign)
 {
 #if MANUAL_VERTEX_FETCH
 	half3 TangentInputX = LocalVF.VertexFetch_PackedTangentsBuffer[2 * (LocalVF.VertexFetch_Parameters[VF_VertexOffset] + Input.VertexId) + 0].xyz;
-	// half4 TangentInputZ = LocalVF.VertexFetch_PackedTangentsBuffer[2 * (LocalVF.VertexFetch_Parameters[VF_VertexOffset] + Input.VertexId) + 1].xyzw;
+	half4 TangentInputZ = LocalVF.VertexFetch_PackedTangentsBuffer[2 * (LocalVF.VertexFetch_Parameters[VF_VertexOffset] + Input.VertexId) + 1].xyzw;
 #else
 	half3 TangentInputX = Input.TangentX;
-	// half4 TangentInputZ = Input.TangentZ;
+	half4 TangentInputZ = Input.TangentZ;
 #endif
-
-	half4 TangentInputZ = half4(GetNormal(Input.Position, 0.0), 1.0);
 
 	half3 TangentX = TangentInputX;
 	half4 TangentZ = TangentInputZ;
@@ -1047,11 +1036,16 @@ FVertexFactoryIntermediates GetVertexFactoryIntermediates(FVertexFactoryInput In
 	}
 	else
 	{
-		float4 Position = Input.Position;
-		float Height = GetWaves(Position.xy, VERTEX_ITERATIONS) * WaterDepth - WaterDepth;
-		Position.z += Height;
-		Intermediates.PreSkinPosition = Position;
+	Intermediates.PreSkinPosition = Input.Position.xyz;
 	}
+
+#if NUM_MATERIAL_TEXCOORDS_VERTEX > 1
+	FMaterialVertexParameters MaterialParameters = GetMaterialVertexParameters(Input, Intermediates, Input.Position.xyz, Intermediates.TangentToLocal );
+	float2 UV = MaterialParameters.TexCoords[0];
+	Intermediates.TangentToLocal[2] = TangentBias(GetNormal(float4(UV, 0, 1), 0.0f));
+#else
+	Intermediates.TangentToLocal[2] = TangentBias(GetNormal(Input.Position, 0.0f));
+#endif
 
 	return Intermediates;
 }
@@ -1072,6 +1066,7 @@ half3x3 VertexFactoryGetTangentToLocal( FVertexFactoryInput Input, FVertexFactor
 float4 VertexFactoryGetWorldPosition(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates)
 {
 	FLWCMatrix LocalToWorld = GetInstanceData(Intermediates).LocalToWorld;
+	float4 Position = Input.Position;
 
 #if USE_INSTANCING
 	return CalcWorldPosition(Input.Position, GetInstanceTransform(Intermediates), LocalToWorld) * Intermediates.PerInstanceParams.y;
@@ -1079,11 +1074,15 @@ float4 VertexFactoryGetWorldPosition(FVertexFactoryInput Input, FVertexFactoryIn
 	// Scale to zero if not visible, seems a bit wild but whatever
 	return CalcWorldPosition(Input.Position, LocalToWorld) * Intermediates.IsVisible;
 #else
-	float4 Position = Input.Position;
-	float Height = GetWaves(Position.xy, VERTEX_ITERATIONS) * WaterDepth - WaterDepth;
-	Position.z += Height;
+#if NUM_MATERIAL_TEXCOORDS_VERTEX > 1
+	float3x3 TangentToLocal = VertexFactoryGetTangentToLocal(Input, Intermediates);
+	FMaterialVertexParameters MaterialParameters = GetMaterialVertexParameters(Input, Intermediates, Position.xyz, TangentToLocal );
+	float2 UV = MaterialParameters.TexCoords[0];
+	Position.z += GetWaves(UV, VERTEX_ITERATIONS) * WaterDepth - WaterDepth;
+#else
+	Position.z += GetWaves(normalize(Position.xy), VERTEX_ITERATIONS) * WaterDepth - WaterDepth;
+#endif
 	return CalcWorldPosition(Position, LocalToWorld);
-	return CalcWorldPosition(Input.Position, LocalToWorld);
 #endif	// USE_INSTANCING
 }
 
@@ -1196,7 +1195,7 @@ float4 VertexFactoryGetWorldPosition(FPositionOnlyVertexFactoryInput Input)
 {
 	FSceneDataIntermediates SceneData = VF_GPUSCENE_GET_INTERMEDIATES(Input);
 	FLWCMatrix LocalToWorld = SceneData.InstanceData.LocalToWorld;
-
+ 
 #if USE_INSTANCING
     return CalcWorldPosition(Input.Position, GetInstanceTransform(Input), LocalToWorld);
 #else
@@ -1223,13 +1222,7 @@ float3 VertexFactoryGetWorldNormal(FPositionAndNormalOnlyVertexFactoryInput Inpu
 	FLWCMatrix LocalToWorld = SceneData.InstanceData.LocalToWorld;
 	float3 InvScale = SceneData.InstanceData.InvNonUniformScale;
 
-#if 1
-	float4 Position = Input.Position;
-	float3 Normal = GetNormal(Position, 0.0);
-#else
 	float3 Normal = Input.Normal.xyz;
-#endif
-	
 #if USE_INSTANCING
 	const float3 InstanceTransformedNormal = mul(float4(Normal, 0), GetInstanceTransform(Input)).xyz;
 	return RotateLocalToWorld(InstanceTransformedNormal, LocalToWorld, InvScale);
@@ -1240,16 +1233,7 @@ float3 VertexFactoryGetWorldNormal(FPositionAndNormalOnlyVertexFactoryInput Inpu
 
 float3 VertexFactoryGetWorldNormal(FVertexFactoryInput Input, FVertexFactoryIntermediates Intermediates)
 {
-#if 1
-	FSceneDataIntermediates SceneData = VF_GPUSCENE_GET_INTERMEDIATES(Input);
-	FLWCMatrix LocalToWorld = SceneData.InstanceData.LocalToWorld;
-	
-	float4 Position = Input.Position;
-	float3 Normal = GetNormal(Position, 0.0);
-	return RotateLocalToWorld(Normal, LocalToWorld, SceneData.InstanceData.InvNonUniformScale);
-#else
 	return Intermediates.TangentToWorld[2];
-#endif
 }
 
 // @return previous translated world position

@@ -202,6 +202,8 @@ public:
 
 		VertexFactory = new FZenoWaterMeshVertexFactory(GetScene().GetFeatureLevel(), "FZenoWaterMeshSceneProxy",
 		                                                RenderData);
+
+		MaterialInterface = WaterMeshComponent->WaterMaterial;
 	}
 
 	virtual ~FZenoWaterMeshSceneProxy() override
@@ -280,8 +282,8 @@ public:
 
 		const FMaterialRenderProxy* MaterialProxy = bWireframe
 			                                            ? WireframeMaterialInstance
-			                                            : RenderData->MaterialProxy
-			                                            ? RenderData->MaterialProxy
+			                                            : MaterialInterface.IsValid()
+			                                            ? MaterialInterface->GetRenderProxy()
 			                                            : UMaterial::GetDefaultMaterial(MD_Surface)->GetRenderProxy();
 
 
@@ -357,6 +359,8 @@ private:
 	FZenoWaterMeshVertexFactory* VertexFactory = nullptr;
 
 	FMaterialRelevance ViewRelevance;
+	
+	TSoftObjectPtr<UMaterialInterface> MaterialInterface;
 };
 
 FZenoWaterMeshRenderData::FZenoWaterMeshRenderData(bool bInKeepCPUData/* = true*/)
@@ -373,21 +377,17 @@ FZenoWaterMeshRenderData::~FZenoWaterMeshRenderData()
 	{
 		VertexBuffer->ReleaseResource();
 		IndexBuffer->ReleaseResource();
-		if (MaterialProxy) MaterialProxy->ReleaseResource();
 		delete IndexBuffer;
 		delete VertexBuffer;
-		delete MaterialProxy;
 	}
 	else
 	{
-		ENQUEUE_RENDER_COMMAND(FZenoWaterMeshRenderData_UploadData)([IndexBuffer = IndexBuffer, VertexBuffer = VertexBuffer, MaterialProxy = MaterialProxy](FRHICommandListImmediate&)
+		ENQUEUE_RENDER_COMMAND(FZenoWaterMeshRenderData_UploadData)([IndexBuffer = IndexBuffer, VertexBuffer = VertexBuffer](FRHICommandListImmediate&)
 		{
 			VertexBuffer->ReleaseResource();
 			IndexBuffer->ReleaseResource();
-			if (MaterialProxy) MaterialProxy->ReleaseResource();
 			delete IndexBuffer;
 			delete VertexBuffer;
-			delete MaterialProxy;
 		});
 	}
 	delete BufferAllocator;
@@ -401,7 +401,6 @@ void FZenoWaterMeshRenderData::UploadData_AnyThread() const
 		check(IndexBuffer != nullptr);
 		BeginInitResource(VertexBuffer);
 		BeginInitResource(IndexBuffer);
-		BeginInitResourceIfNotNull(MaterialProxy);
 
 		// Release cpu data if needed
 		// if (!bKeepCPUData)
@@ -452,62 +451,39 @@ void UZenoWaterMeshComponent::BuildRiverMesh(const FZenoRiverBuildInfo& InBuildI
 	// Prevent spline from GC
 	FGCObjectScopeGuard SplineGuard(SplineComponent);
 
-	const int32 NumPoints = SplineComponent->GetNumberOfSplinePoints() * Precision;
-	const float SplineLength = SplineComponent->GetSplineLength();
-	const float Delta = SplineLength / static_cast<float>(NumPoints);
-	const int32 NumWidthPoints = FMath::Max(1, InBuildInfo.RiverWidth) * static_cast<float>(Precision) + 1;
-	const float WidthDelta = InBuildInfo.RiverWidth / static_cast<float>(NumWidthPoints);
-
-	FScopedSlowTask SlowTask(NumPoints, LOCTEXT("BuildRiverMesh", "Building River Mesh"));
-	SlowTask.MakeDialogDelayed(3.0f);
-
-	TempRenderData->VertexBuffer->Vertices.Empty();
-	TempRenderData->VertexBuffer->Vertices.Reserve(NumPoints * NumWidthPoints);
-	for (int32 i = 0; i < NumPoints; i++)
+	TArray<FVector> PathPoints;
+	const int32 NumPoints = SplineComponent->GetNumberOfSplinePoints() * InBuildInfo.Precision;
+	const float Step = SplineComponent->Duration / static_cast<float>(NumPoints);
+	PathPoints.Reserve(InBuildInfo.Precision);
+	for (int32 i = 0; i < NumPoints; ++i)
 	{
-		const float Distance = Delta * static_cast<float>(i);
-		const FVector CenterPosition = SplineComponent->GetLocationAtDistanceAlongSpline(
-			Distance, ESplineCoordinateSpace::Local);
-		const FVector CenterTangent = SplineComponent->GetTangentAtDistanceAlongSpline(
-			Distance, ESplineCoordinateSpace::Local);
-		for (int32 j = 0; j < NumWidthPoints; j++)
+		PathPoints.Add(SplineComponent->GetLocationAtTime(i * Step, ESplineCoordinateSpace::Local));
+	}
+
+	for (const FVector& Point : PathPoints)
+	{
+		FVector RightVector = FVector::CrossProduct(Point, FVector::UpVector).GetSafeNormal();
+		for (float Offset = -InBuildInfo.RiverWidth * 0.5f; Offset <= InBuildInfo.RiverWidth * 0.5f; Offset += InBuildInfo.Precision)
 		{
-			const FVector2D TexCoord = FVector2D(static_cast<float>(j) * WidthDelta, Distance / SplineLength);
-			const FVector CurrentPosition = CenterPosition + CenterTangent * FVector(
-				static_cast<float>(j) * WidthDelta - InBuildInfo.RiverWidth * 0.5f);
-			const FVector CurrentTangent = CenterTangent;
-			const FVector CurrentNormal = FVector::CrossProduct(CurrentTangent, FVector::UpVector).GetSafeNormal();
-			FZenoMeshVertex Vertex;
-			Vertex.Normal = CurrentNormal;
-			Vertex.Position = FVector3f(CurrentPosition);
-			Vertex.Tangent = CurrentTangent;
-			Vertex.TextureCoordinate[0] = FVector2f(TexCoord);
-			Vertex.Color = FColor::White; // TODO [darc] : pass other data by color channel :
-			TempRenderData->VertexBuffer->Vertices.Add(Vertex);
-			SlowTask.CompletedWork = i * NumWidthPoints + j;
+			FVector Position = Point + RightVector * Offset;
+			FVector2f UV = FVector2f(Offset / InBuildInfo.RiverWidth + 0.5f, 0.0f);
+			TempRenderData->VertexBuffer->Vertices.Emplace(FVector3f(Position), UV);
 		}
 	}
 
-	FIntPoint NumGirds(NumPoints - 1, NumWidthPoints - 1);
-	TempRenderData->IndexBuffer->Indices.Empty();
-	TempRenderData->IndexBuffer->Indices.Reserve(NumGirds.X * NumGirds.Y * 6);
-	for (int32 i = 0; i < NumGirds.X; i++)
-	{
-		for (int32 j = 0; j < NumGirds.Y; j++)
-		{
-			const int32 Index = i * NumWidthPoints + j;
-			TempRenderData->IndexBuffer->Indices.Add(Index);
-			TempRenderData->IndexBuffer->Indices.Add(Index + NumWidthPoints);
-			TempRenderData->IndexBuffer->Indices.Add(Index + NumWidthPoints + 1);
-			TempRenderData->IndexBuffer->Indices.Add(Index);
-			TempRenderData->IndexBuffer->Indices.Add(Index + NumWidthPoints + 1);
-			TempRenderData->IndexBuffer->Indices.Add(Index + 1);
-		}
-	}
+	const int32 NumVertices = TempRenderData->VertexBuffer->Vertices.Num();
+	const int32 NumColumns = InBuildInfo.RiverWidth / InBuildInfo.Precision + 1;
 
-	if (IsValid(WaterMaterial))
+	for (int32 i = 0; i < NumVertices - NumColumns - 1; i++)
 	{
-		TempRenderData->MaterialProxy = WaterMaterial->GetRenderProxy();
+		if ((i+1) % NumColumns == 0) continue;
+		TempRenderData->IndexBuffer->Indices.Add(i);
+		TempRenderData->IndexBuffer->Indices.Add(i + NumColumns);
+		TempRenderData->IndexBuffer->Indices.Add(i + 1);
+		
+		TempRenderData->IndexBuffer->Indices.Add(i + NumColumns);
+		TempRenderData->IndexBuffer->Indices.Add(i + NumColumns + 1);
+		TempRenderData->IndexBuffer->Indices.Add(i + 1);
 	}
 
 	RenderData = TempRenderData;
@@ -519,9 +495,9 @@ void UZenoWaterMeshComponent::BuildRiverMesh(const FZenoRiverBuildInfo& InBuildI
 
 FPrimitiveSceneProxy* UZenoWaterMeshComponent::CreateSceneProxy()
 {
-	if (RenderData.IsValid())
+	if (RenderData.IsValid() && RenderData->IndexBuffer->Indices.Num() > 0)
 	{
-		return new FZenoWaterMeshSceneProxy(this, NAME_None);
+		return new FZenoWaterMeshSceneProxy(this, TEXT("FZenoWaterMeshSceneProxy"));
 	}
 	return nullptr;
 }

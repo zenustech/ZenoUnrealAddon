@@ -36,6 +36,7 @@ void AZenoRiverActor::OnSplineUpdated()
 	FZenoRiverBuildInfo BuildInfo;
 	BuildInfo.Spline = SplineComponent;
 	BuildInfo.RiverWidth = RiverWidth;
+	BuildInfo.Precision = Precision;
 	WaterMeshComponent->BuildRiverMesh(BuildInfo);
 }
 

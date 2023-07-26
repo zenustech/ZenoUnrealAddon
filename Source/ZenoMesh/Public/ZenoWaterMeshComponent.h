@@ -21,9 +21,6 @@ struct FZenoWaterMeshRenderData
 	FZenoMeshVertexBuffer* VertexBuffer = nullptr;
 	FZenoMeshIndexBuffer* IndexBuffer = nullptr;
 
-	/** Render proxy of the material, nullable */
-	FMaterialRenderProxy* MaterialProxy = nullptr;
-
 	uint16 bKeepCPUData: 1;
 };
 
@@ -37,6 +34,10 @@ struct FZenoRiverBuildInfo
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSoftObjectPtr<UZenoSplineComponent> Spline;
+	
+	/** Precision of the mesh */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (UIMin = 1, ClampMin = 1))
+	int32 Precision = 1;
 };
 
 UCLASS(ClassGroup=(Zeno), meta=(BlueprintSpawnableComponent), DefaultToInstanced)
@@ -59,9 +60,6 @@ protected:
 	UMaterialInterface* WaterMaterial = nullptr;
 
 	// TODO [darc] : try to use mesh shader if supported :
-	/** Precision of the mesh */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Water", DisplayName = "Precision", meta = (UIMin = 1, ClampMin = 1))
-	int32 Precision = 1;
 
 	/** Should keeping uploaded buffers in cpu? */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Water", DisplayName = "Keep Buffer In CPU")

@@ -36,5 +36,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, DisplayName = "River Width")
 	int32 RiverWidth = 10;
 
+	/** Precision of the mesh */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Water", DisplayName = "Precision", meta = (UIMin = 1, ClampMin = 1))
+	int32 Precision = 1;
+
 	friend class UZenoWaterMeshComponent;
 };
