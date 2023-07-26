@@ -23,7 +23,7 @@ void FZenoEditorModule::ShutdownModule()
 {
 	if (!IsRunningCommandlet())
 	{
-		UnregisterDetailPanelCustomization();
+		// UnregisterDetailPanelCustomization();
 		FZenoEditorMenuExtender::Get().Unregister();
 	}
 }

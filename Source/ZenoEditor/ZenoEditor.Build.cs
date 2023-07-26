@@ -49,6 +49,7 @@ public class ZenoEditor : ModuleRules
                 "Landscape",
                 "LandscapeEditor",
                 "RawMesh",
+                "ImageWrapper",
             }
         );
         
