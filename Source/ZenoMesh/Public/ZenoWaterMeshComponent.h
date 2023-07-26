@@ -72,7 +72,7 @@ protected:
 	// We want to build the rendering resources manually
 	//////////////////////////////////////////////
 	/** Render Data, Sharable */
-	TSharedPtr<FZenoWaterMeshRenderData> RenderData = nullptr;
+	TSharedPtr<FZenoWaterMeshRenderData, ESPMode::ThreadSafe> RenderData = nullptr;
 
 protected:
 	/** Return correct boundaries to avoid been culling */

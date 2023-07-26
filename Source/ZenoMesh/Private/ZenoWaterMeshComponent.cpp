@@ -23,15 +23,190 @@ void BeginInitResourceIfNotNull(FRenderResource* Resource)
 	if (Resource != nullptr) BeginInitResource(Resource);
 }
 
-class FZenoWaterMeshSceneProxy : public FPrimitiveSceneProxy {
+class FZenoWaterMeshVertexFactory : public FLocalVertexFactory
+{
+	DECLARE_VERTEX_FACTORY_TYPE(FZenoWaterMeshVertexFactory);
+
+public:
+	FZenoWaterMeshVertexFactory(ERHIFeatureLevel::Type InFeatureLevel, const char* InDebugName,
+	                            const TSharedPtr<FZenoWaterMeshRenderData>& InRenderData)
+		: FLocalVertexFactory(InFeatureLevel, InDebugName)
+		, RenderData(InRenderData)
+	{
+	}
+
+	virtual FString GetFriendlyName() const override { return "Zeno Water Mesh Vertex Factory"; }
+
+	virtual void InitRHI() override
+	{
+		RenderData->UploadData_AnyThread();
+
+		ENQUEUE_RENDER_COMMAND(ZenoWaterMeshInitRHI)(
+			[this](FRHICommandListImmediate&)
+			{
+				auto* VertexBuffer = RenderData->VertexBuffer;
+				auto* IndexBuffer = RenderData->IndexBuffer;
+
+				FDataType Data;
+				Data.PositionComponent = FVertexStreamComponent(
+					&VertexBuffer->PositionBuffer,
+					0,
+					sizeof(FZenoMeshVertexBuffer::FPositionType),
+					VET_Float3
+				);
+
+				Data.NumTexCoords = VertexBuffer->GetNumTexCoords();
+				{
+					Data.LightMapCoordinateIndex = VertexBuffer->GetLightmapCoordinateIndex();
+					Data.PositionComponentSRV = VertexBuffer->PositionBufferSRV;
+					Data.TangentsSRV = VertexBuffer->TangentBufferSRV;
+					Data.TextureCoordinatesSRV = VertexBuffer->TexCoordBufferSRV;
+					Data.ColorComponentsSRV = VertexBuffer->ColorBufferSRV;
+				}
+
+
+				{
+					EVertexElementType UVDoubleWideVertexElementType = VET_None;
+					EVertexElementType UVVertexElementType = VET_None;
+					uint32 UVSizeInBytes = 0;
+					if (VertexBuffer->IsUse16BitTexCoord())
+					{
+						UVSizeInBytes = sizeof(FVector2DHalf);
+						UVDoubleWideVertexElementType = VET_Half4;
+						UVVertexElementType = VET_Half2;
+					}
+					else
+					{
+						UVSizeInBytes = sizeof(FVector2f);
+						UVDoubleWideVertexElementType = VET_Float4;
+						UVVertexElementType = VET_Float2;
+					}
+
+					const int32 NumTexCoord = VertexBuffer->GetNumTexCoords();
+					int32 UVIndex;
+					const uint32 UVStride = UVSizeInBytes * NumTexCoord;
+					for (UVIndex = 0; UVIndex < NumTexCoord - 1; UVIndex += 2)
+					{
+						Data.TextureCoordinates.Add(
+							FVertexStreamComponent(
+								&VertexBuffer->TexCoordBuffer,
+								UVSizeInBytes * UVIndex,
+								UVStride,
+								UVDoubleWideVertexElementType,
+								EVertexStreamUsage::ManualFetch
+							)
+						);
+					}
+
+					if (UVIndex < NumTexCoord)
+					{
+						Data.TextureCoordinates.Add(
+							FVertexStreamComponent(
+								&VertexBuffer->TexCoordBuffer,
+								UVSizeInBytes * UVIndex,
+								UVStride,
+								UVVertexElementType,
+								EVertexStreamUsage::ManualFetch
+							)
+						);
+					}
+
+					Data.TangentBasisComponents[0] = FVertexStreamComponent(
+						&VertexBuffer->TangentBuffer,
+						0,
+						2 * sizeof(FPackedNormal),
+						VET_PackedNormal,
+						EVertexStreamUsage::ManualFetch
+					);
+					Data.TangentBasisComponents[1] = FVertexStreamComponent(
+						&VertexBuffer->TangentBuffer,
+						sizeof(FPackedNormal),
+						2 * sizeof(FPackedNormal),
+						VET_PackedNormal,
+						EVertexStreamUsage::ManualFetch
+					);
+
+					Data.ColorComponent = FVertexStreamComponent(
+						&VertexBuffer->ColorBuffer,
+						0,
+						sizeof(FColor),
+						VET_Color,
+						EVertexStreamUsage::ManualFetch
+					);
+				}
+				SetData(Data);
+			});
+
+		FLocalVertexFactory::InitRHI();
+	}
+
+	virtual void ReleaseRHI() override
+	{
+		FLocalVertexFactory::ReleaseRHI();
+	}
+
+private:
+	TSharedPtr<FZenoWaterMeshRenderData, ESPMode::ThreadSafe> RenderData;
+};
+
+class FZenoWaterMeshVertexFactoryShaderParameters : public FVertexFactoryShaderParameters
+{
+	DECLARE_TYPE_LAYOUT(FZenoWaterMeshVertexFactoryShaderParameters, NonVirtual);
+
+	void Bind(const FShaderParameterMap& InParameterMap)
+	{
+		WaterTime.Bind(InParameterMap, TEXT("WaterTime"));
+	}
+
+	void GetElementShaderBindings(
+		const FSceneInterface* Scene,
+		const FSceneView* View,
+		const FMeshMaterialShader* Shader,
+		const EVertexInputStreamType InputStreamType,
+		ERHIFeatureLevel::Type FeatureLevel,
+		const FVertexFactory* VertexFactory,
+		const FMeshBatchElement& BatchElement,
+		FMeshDrawSingleShaderBindings& ShaderBindings,
+		FVertexInputStreamArray& VertexStreams) const
+	{
+		const FZenoWaterMeshVertexFactory* WaterMeshVertexFactory = static_cast<const FZenoWaterMeshVertexFactory*>(
+			VertexFactory);
+
+		// Bind LocalVertexFactoryUniformBuffer back.
+		const FRHIUniformBuffer* VertexFactoryUniformBuffer = static_cast<FRHIUniformBuffer*>(BatchElement.
+			VertexFactoryUserData);
+		if (WaterMeshVertexFactory->SupportsManualVertexFetch(FeatureLevel) || UseGPUScene(
+			GMaxRHIShaderPlatform, FeatureLevel))
+		{
+			ShaderBindings.Add(Shader->GetUniformBufferParameter<FLocalVertexFactoryUniformShaderParameters>(),
+			                   VertexFactoryUniformBuffer);
+		}
+
+		ShaderBindings.Add(WaterTime, 0.0f);
+	}
+
+private:
+	LAYOUT_FIELD(FShaderParameter, WaterTime);
+};
+
+class FZenoWaterMeshSceneProxy : public FPrimitiveSceneProxy
+{
 public:
 	FZenoWaterMeshSceneProxy(const UPrimitiveComponent* InComponent, const FName& ResourceName)
 		: FPrimitiveSceneProxy(InComponent, ResourceName)
 	{
 		const UZenoWaterMeshComponent* WaterMeshComponent = Cast<UZenoWaterMeshComponent>(InComponent);
 		check(WaterMeshComponent->RenderData.IsValid());
-		
-		RenderData = WaterMeshComponent->RenderData.ToSharedRef();
+
+		RenderData = WaterMeshComponent->RenderData;
+
+		VertexFactory = new FZenoWaterMeshVertexFactory(GetScene().GetFeatureLevel(), "FZenoWaterMeshSceneProxy",
+		                                                RenderData);
+	}
+
+	virtual ~FZenoWaterMeshSceneProxy() override
+	{
+		delete VertexFactory;
 	}
 
 	virtual SIZE_T GetTypeHash() const override
@@ -39,7 +214,7 @@ public:
 		static size_t UniquePointer;
 		return reinterpret_cast<size_t>(&UniquePointer);
 	}
-	
+
 	virtual uint32 GetMemoryFootprint() const override
 	{
 		return sizeof(*this) + GetAllocatedSize();
@@ -47,25 +222,139 @@ public:
 
 	virtual FPrimitiveViewRelevance GetViewRelevance(const FSceneView* View) const override
 	{
-		const bool bValid = true;
-		const bool bIsHiddenInEditor = View->Family->EngineShowFlags.Editor;
-
+		// const bool bValid = true;
+		// const bool bIsHiddenInEditor = View->Family->EngineShowFlags.Editor;
+		//
+		// FPrimitiveViewRelevance Result;
+		// Result.bDrawRelevance = bValid && IsShown(View) && !bIsHiddenInEditor;
+		// Result.bShadowRelevance = bValid && IsShadowCast(View) && ShouldRenderInMainPass() && !bIsHiddenInEditor;
+		// Result.bDynamicRelevance = true;
+		// Result.bStaticRelevance = false;
+		// Result.bRenderInMainPass = ShouldRenderInMainPass();
+		// Result.bUsesLightingChannels = GetLightingChannelMask() != GetDefaultLightingChannelMask();
+		// Result.bRenderCustomDepth = ShouldRenderCustomDepth();
+		// Result.bTranslucentSelfShadow = false;
+		// ViewRelevance.SetPrimitiveViewRelevance(Result);
+		// Result.bVelocityRelevance = DrawsVelocity() && Result.bOpaque && Result.bRenderInMainPass;
+		// return Result;
 		FPrimitiveViewRelevance Result;
-		Result.bDrawRelevance = bValid && IsShown(View) && !bIsHiddenInEditor;
-		Result.bShadowRelevance = bValid && IsShadowCast(View) && ShouldRenderInMainPass() &&!bIsHiddenInEditor;
+		Result.bDrawRelevance = IsShown(View);
+		Result.bShadowRelevance = IsShadowCast(View);
 		Result.bDynamicRelevance = true;
-		Result.bStaticRelevance = false;
 		Result.bRenderInMainPass = ShouldRenderInMainPass();
 		Result.bUsesLightingChannels = GetLightingChannelMask() != GetDefaultLightingChannelMask();
 		Result.bRenderCustomDepth = ShouldRenderCustomDepth();
-		Result.bTranslucentSelfShadow = false;
+		Result.bTranslucentSelfShadow = bCastVolumetricTranslucentShadow;
 		ViewRelevance.SetPrimitiveViewRelevance(Result);
 		Result.bVelocityRelevance = DrawsVelocity() && Result.bOpaque && Result.bRenderInMainPass;
 		return Result;
 	}
 
+	virtual void CreateRenderThreadResources() override
+	{
+		BeginInitResource(VertexFactory);
+	}
+
+	virtual void DestroyRenderThreadResources() override
+	{
+		BeginReleaseResource(VertexFactory);
+	}
+
+	virtual void GetDynamicMeshElements(const TArray<const FSceneView*>& Views, const FSceneViewFamily& ViewFamily,
+	                                    uint32 VisibilityMap, FMeshElementCollector& Collector) const override
+	{
+		TRACE_CPUPROFILER_EVENT_SCOPE(FZenoWaterMeshSceneProxy::GetDynamicMeshElements);
+		// Set up wireframe material (if needed)
+		const bool bWireframe = AllowDebugViewmodes() && ViewFamily.EngineShowFlags.Wireframe;
+
+		FColoredMaterialRenderProxy* WireframeMaterialInstance = nullptr;
+		if (bWireframe)
+		{
+			WireframeMaterialInstance = new FColoredMaterialRenderProxy(
+				GEngine->WireframeMaterial ? GEngine->WireframeMaterial->GetRenderProxy() : nullptr,
+				FLinearColor(0.5f, 0.5f, 1.f)
+			);
+
+			Collector.RegisterOneFrameMaterialProxy(WireframeMaterialInstance);
+		}
+
+		const FMaterialRenderProxy* MaterialProxy = bWireframe
+			                                            ? WireframeMaterialInstance
+			                                            : RenderData->MaterialProxy
+			                                            ? RenderData->MaterialProxy
+			                                            : UMaterial::GetDefaultMaterial(MD_Surface)->GetRenderProxy();
+
+
+		for (int32 ViewIndex = 0; ViewIndex < Views.Num(); ViewIndex++)
+		{
+			if (VisibilityMap & (1 << ViewIndex))
+			{
+				const FSceneView* View = Views[ViewIndex];
+
+				bool bHasPrecomputedVolumetricLightmap;
+				FMatrix PreviousLocalToWorld;
+				int32 SingleCaptureIndex;
+				bool bOutputVelocity;
+				GetScene().GetPrimitiveUniformShaderParameters_RenderThread(
+					GetPrimitiveSceneInfo(), bHasPrecomputedVolumetricLightmap, PreviousLocalToWorld,
+					SingleCaptureIndex,
+					bOutputVelocity);
+				bOutputVelocity |= AlwaysHasVelocity();
+
+				FMeshBatch& MeshBatch = Collector.AllocateMesh();
+				{
+					MeshBatch.VertexFactory = VertexFactory;
+					MeshBatch.MaterialRenderProxy = MaterialProxy;
+
+					MeshBatch.CastShadow = IsShadowCast(View);
+					MeshBatch.bWireframe = bWireframe;
+					MeshBatch.bCanApplyViewModeOverrides = true;
+					MeshBatch.ReverseCulling = IsLocalToWorldDeterminantNegative();
+					MeshBatch.bDisableBackfaceCulling = ViewRelevance.bTwoSided;
+					MeshBatch.Type = PT_TriangleList;
+					MeshBatch.DepthPriorityGroup = SDPG_World;
+					MeshBatch.bUseForDepthPass = true;
+					MeshBatch.bUseAsOccluder = false;
+					MeshBatch.bUseForMaterial = true;
+					MeshBatch.bDitheredLODTransition = true;
+					MeshBatch.bUseSelectionOutline = IsSelected();
+				}
+
+				MeshBatch.Elements.SetNumZeroed(1);
+				{
+					FMeshBatchElement& BatchElement = MeshBatch.Elements[0];
+					BatchElement.IndexBuffer = RenderData->IndexBuffer;
+					BatchElement.FirstIndex = 0;
+					BatchElement.NumPrimitives = RenderData->IndexBuffer->Indices.Num() / 3;
+					BatchElement.MinVertexIndex = 0;
+					BatchElement.MaxVertexIndex = RenderData->VertexBuffer->Vertices.Num() - 1;
+					
+					BatchElement.VertexFactoryUserData = VertexFactory->GetUniformBuffer();
+
+					if (BatchElement.PrimitiveIdMode != PrimID_FromPrimitiveSceneInfo)
+					{
+						FDynamicPrimitiveUniformBuffer& DynamicPrimitiveUniformBuffer = Collector.
+							AllocateOneFrameResource<FDynamicPrimitiveUniformBuffer>();
+						DynamicPrimitiveUniformBuffer.Set(GetLocalToWorld(), PreviousLocalToWorld, GetBounds(),
+						                                  GetLocalBounds(), true, bHasPrecomputedVolumetricLightmap,
+						                                  bOutputVelocity);
+						BatchElement.PrimitiveUniformBufferResource = &DynamicPrimitiveUniformBuffer.UniformBuffer;
+					}
+					else
+					{
+						BatchElement.PrimitiveUniformBuffer = GetUniformBuffer();
+					}
+				}
+
+				Collector.AddMesh(ViewIndex, MeshBatch);
+			}
+		}
+	}
+
 private:
-	TSharedRef<FZenoWaterMeshRenderData> RenderData;
+	TSharedPtr<FZenoWaterMeshRenderData, ESPMode::ThreadSafe> RenderData;
+
+	FZenoWaterMeshVertexFactory* VertexFactory = nullptr;
 
 	FMaterialRelevance ViewRelevance;
 };
@@ -80,8 +369,27 @@ FZenoWaterMeshRenderData::FZenoWaterMeshRenderData(bool bInKeepCPUData/* = true*
 
 FZenoWaterMeshRenderData::~FZenoWaterMeshRenderData()
 {
-	delete IndexBuffer;
-	delete VertexBuffer;
+	if (IsInRenderingThread())
+	{
+		VertexBuffer->ReleaseResource();
+		IndexBuffer->ReleaseResource();
+		if (MaterialProxy) MaterialProxy->ReleaseResource();
+		delete IndexBuffer;
+		delete VertexBuffer;
+		delete MaterialProxy;
+	}
+	else
+	{
+		ENQUEUE_RENDER_COMMAND(FZenoWaterMeshRenderData_UploadData)([IndexBuffer = IndexBuffer, VertexBuffer = VertexBuffer, MaterialProxy = MaterialProxy](FRHICommandListImmediate&)
+		{
+			VertexBuffer->ReleaseResource();
+			IndexBuffer->ReleaseResource();
+			if (MaterialProxy) MaterialProxy->ReleaseResource();
+			delete IndexBuffer;
+			delete VertexBuffer;
+			delete MaterialProxy;
+		});
+	}
 	delete BufferAllocator;
 }
 
@@ -96,20 +404,20 @@ void FZenoWaterMeshRenderData::UploadData_AnyThread() const
 		BeginInitResourceIfNotNull(MaterialProxy);
 
 		// Release cpu data if needed
-		if (!bKeepCPUData)
-		{
-			VertexBuffer->Vertices.Empty();
-			IndexBuffer->Indices.Empty();
-		}
+		// if (!bKeepCPUData)
+		// {
+		// 	VertexBuffer->Vertices.Empty();
+		// 	IndexBuffer->Indices.Empty();
+		// }
 	};
-	
+
 	if (IsInRenderingThread())
 	{
 		UploadOperator();
 	}
 	else
 	{
-		ENQUEUE_RENDER_COMMAND(FZenoWaterMeshRenderData_UploadData)([UploadOperator] (FRHICommandListImmediate&)
+		ENQUEUE_RENDER_COMMAND(FZenoWaterMeshRenderData_UploadData)([UploadOperator](FRHICommandListImmediate&)
 		{
 			UploadOperator();
 		});
@@ -137,7 +445,8 @@ void UZenoWaterMeshComponent::BuildRiverMesh(const FZenoRiverBuildInfo& InBuildI
 		UE_LOG(LogZenoMesh, Error, TEXT("Invalid spline component, aborted building river mesh."));
 		return;
 	}
-	RenderData = MakeShared<FZenoWaterMeshRenderData>(bKeepBufferInCPU);
+	RenderData = nullptr;
+	TSharedRef<FZenoWaterMeshRenderData, ESPMode::ThreadSafe> TempRenderData = MakeShared<FZenoWaterMeshRenderData>(bKeepBufferInCPU);
 
 	UZenoSplineComponent* SplineComponent = InBuildInfo.Spline.Get();
 	// Prevent spline from GC
@@ -148,21 +457,24 @@ void UZenoWaterMeshComponent::BuildRiverMesh(const FZenoRiverBuildInfo& InBuildI
 	const float Delta = SplineLength / static_cast<float>(NumPoints);
 	const int32 NumWidthPoints = FMath::Max(1, InBuildInfo.RiverWidth) * static_cast<float>(Precision) + 1;
 	const float WidthDelta = InBuildInfo.RiverWidth / static_cast<float>(NumWidthPoints);
-	
+
 	FScopedSlowTask SlowTask(NumPoints, LOCTEXT("BuildRiverMesh", "Building River Mesh"));
 	SlowTask.MakeDialogDelayed(3.0f);
 
-	RenderData->VertexBuffer->Vertices.Empty();
-	RenderData->VertexBuffer->Vertices.Reserve(NumPoints * NumWidthPoints);
+	TempRenderData->VertexBuffer->Vertices.Empty();
+	TempRenderData->VertexBuffer->Vertices.Reserve(NumPoints * NumWidthPoints);
 	for (int32 i = 0; i < NumPoints; i++)
 	{
 		const float Distance = Delta * static_cast<float>(i);
-		const FVector CenterPosition = SplineComponent->GetLocationAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::Local);
-		const FVector CenterTangent = SplineComponent->GetTangentAtDistanceAlongSpline(Distance, ESplineCoordinateSpace::Local);
+		const FVector CenterPosition = SplineComponent->GetLocationAtDistanceAlongSpline(
+			Distance, ESplineCoordinateSpace::Local);
+		const FVector CenterTangent = SplineComponent->GetTangentAtDistanceAlongSpline(
+			Distance, ESplineCoordinateSpace::Local);
 		for (int32 j = 0; j < NumWidthPoints; j++)
 		{
 			const FVector2D TexCoord = FVector2D(static_cast<float>(j) * WidthDelta, Distance / SplineLength);
-			const FVector CurrentPosition = CenterPosition + CenterTangent * FVector(static_cast<float>(j) * WidthDelta - InBuildInfo.RiverWidth * 0.5f);
+			const FVector CurrentPosition = CenterPosition + CenterTangent * FVector(
+				static_cast<float>(j) * WidthDelta - InBuildInfo.RiverWidth * 0.5f);
 			const FVector CurrentTangent = CenterTangent;
 			const FVector CurrentNormal = FVector::CrossProduct(CurrentTangent, FVector::UpVector).GetSafeNormal();
 			FZenoMeshVertex Vertex;
@@ -171,33 +483,36 @@ void UZenoWaterMeshComponent::BuildRiverMesh(const FZenoRiverBuildInfo& InBuildI
 			Vertex.Tangent = CurrentTangent;
 			Vertex.TextureCoordinate[0] = FVector2f(TexCoord);
 			Vertex.Color = FColor::White; // TODO [darc] : pass other data by color channel :
-			RenderData->VertexBuffer->Vertices.Add(Vertex);
+			TempRenderData->VertexBuffer->Vertices.Add(Vertex);
 			SlowTask.CompletedWork = i * NumWidthPoints + j;
 		}
 	}
 
 	FIntPoint NumGirds(NumPoints - 1, NumWidthPoints - 1);
-	RenderData->IndexBuffer->Indices.Empty();
-	RenderData->IndexBuffer->Indices.Reserve(NumGirds.X * NumGirds.Y * 6);
+	TempRenderData->IndexBuffer->Indices.Empty();
+	TempRenderData->IndexBuffer->Indices.Reserve(NumGirds.X * NumGirds.Y * 6);
 	for (int32 i = 0; i < NumGirds.X; i++)
 	{
 		for (int32 j = 0; j < NumGirds.Y; j++)
 		{
 			const int32 Index = i * NumWidthPoints + j;
-			RenderData->IndexBuffer->Indices.Add(Index);
-			RenderData->IndexBuffer->Indices.Add(Index + NumWidthPoints);
-			RenderData->IndexBuffer->Indices.Add(Index + NumWidthPoints + 1);
-			RenderData->IndexBuffer->Indices.Add(Index);
-			RenderData->IndexBuffer->Indices.Add(Index + NumWidthPoints + 1);
-			RenderData->IndexBuffer->Indices.Add(Index + 1);
+			TempRenderData->IndexBuffer->Indices.Add(Index);
+			TempRenderData->IndexBuffer->Indices.Add(Index + NumWidthPoints);
+			TempRenderData->IndexBuffer->Indices.Add(Index + NumWidthPoints + 1);
+			TempRenderData->IndexBuffer->Indices.Add(Index);
+			TempRenderData->IndexBuffer->Indices.Add(Index + NumWidthPoints + 1);
+			TempRenderData->IndexBuffer->Indices.Add(Index + 1);
 		}
 	}
-	
+
 	if (IsValid(WaterMaterial))
 	{
-		RenderData->MaterialProxy = WaterMaterial->GetRenderProxy();
+		TempRenderData->MaterialProxy = WaterMaterial->GetRenderProxy();
 	}
 
+	RenderData = TempRenderData;
+
+	MarkRenderStateDirty();
 	// call this in scene proxy
 	// RenderData->UploadData_AnyThread();
 }
@@ -206,7 +521,7 @@ FPrimitiveSceneProxy* UZenoWaterMeshComponent::CreateSceneProxy()
 {
 	if (RenderData.IsValid())
 	{
-		return new FZenoWaterMeshSceneProxy(this, TEXT("UZenoWaterMeshComponent"));
+		return new FZenoWaterMeshSceneProxy(this, NAME_None);
 	}
 	return nullptr;
 }
@@ -227,8 +542,9 @@ FBoxSphereBounds UZenoWaterMeshComponent::CalcBounds(const FTransform& LocalToWo
 #if 1
 	if (AZenoRiverActor* RiverActor = Cast<AZenoRiverActor>(GetAttachParentActor()); IsValid(RiverActor))
 	{
-		const float LengthMax = FMath::Max(RiverActor->SplineComponent->GetSplineLength(), static_cast<float>(RiverActor->RiverWidth));
-		FVector Extent(LengthMax, LengthMax, 10.f );
+		const float LengthMax = FMath::Max(RiverActor->SplineComponent->GetSplineLength(),
+		                                   static_cast<float>(RiverActor->RiverWidth));
+		FVector Extent(LengthMax, LengthMax, 10.f);
 		Extent *= FVector(BoundsScale);
 		return FBoxSphereBounds(FVector::Zero(), Extent, Extent.GetMax()).TransformBy(LocalToWorld);
 	}
@@ -239,3 +555,15 @@ FBoxSphereBounds UZenoWaterMeshComponent::CalcBounds(const FTransform& LocalToWo
 }
 
 #undef LOCTEXT_NAMESPACE
+
+IMPLEMENT_TYPE_LAYOUT(FZenoWaterMeshVertexFactoryShaderParameters);
+
+IMPLEMENT_VERTEX_FACTORY_PARAMETER_TYPE(FZenoWaterMeshVertexFactory, SF_Vertex,
+                                        FZenoWaterMeshVertexFactoryShaderParameters);
+
+IMPLEMENT_VERTEX_FACTORY_TYPE(
+	FZenoWaterMeshVertexFactory,
+	"/Engine/Private/LocalVertexFactory.ush",
+	EVertexFactoryFlags::UsedWithMaterials
+	// | EVertexFactoryFlags::SupportsComputeShading
+);

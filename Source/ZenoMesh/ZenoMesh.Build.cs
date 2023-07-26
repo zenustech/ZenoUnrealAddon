@@ -47,5 +47,10 @@ public class ZenoMesh : ModuleRules
             "UE_5_2_OR_LATER=1",
         });
         #endif
+
+        if (!Target.bDisableDebugInfo)
+        {
+            OptimizeCode = CodeOptimization.Never;
+        }
     }
 }
