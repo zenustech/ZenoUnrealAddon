@@ -60,8 +60,9 @@ UObject* UZenoLandscapeAssetFactory::FactoryCreateBinary(UClass* InClass, UObjec
 		}
 		else if (std::holds_alternative<zeno::unreal::LandscapeData>(Value))
 		{
-			const auto& [HeightField, Transform, BaseColorTextureRef, _Flags] = std::get<zeno::unreal::LandscapeData>(Value);
+			const auto& [Nx, Ny, HeightField, Transform, BaseColorTextureRef, _Flags] = std::get<zeno::unreal::LandscapeData>(Value);
 			UZenoLandscapeAsset* LandscapeAsset = NewObject<UZenoLandscapeAsset>(AssetBundle, UZenoLandscapeAsset::StaticClass(), FName(Name.c_str()), Flags);
+			LandscapeAsset->Extent = FIntPoint { static_cast<int32>(Nx), static_cast<int32>(Ny) };
 			LandscapeAsset->HeightData.Reserve(HeightField.size());
 			for (const auto& Height : HeightField)
 			{

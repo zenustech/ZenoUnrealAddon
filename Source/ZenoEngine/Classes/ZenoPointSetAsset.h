@@ -20,7 +20,7 @@ class ZENOENGINE_API UZenoPointSetAsset : public UZenoAssetBase
 {
 	GENERATED_BODY()
 
-protected:
+public:
 	UPROPERTY(VisibleAnywhere)
 	TArray<FVector> Points;
 

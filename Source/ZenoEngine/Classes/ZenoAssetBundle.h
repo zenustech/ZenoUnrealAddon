@@ -16,7 +16,7 @@ class ZENOENGINE_API UZenoAssetBundle : public UZenoAssetBase
 public:
 	explicit UZenoAssetBundle(const FObjectInitializer& ObjectInitializer);
 
-protected:
+public:
 	UPROPERTY(VisibleAnywhere)
 	TArray<UZenoPointSetAsset*> PointSet;
 

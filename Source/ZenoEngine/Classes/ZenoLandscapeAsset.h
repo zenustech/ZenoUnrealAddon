@@ -11,9 +11,12 @@ class ZENOENGINE_API UZenoLandscapeAsset : public UZenoAssetBase
 {
 	GENERATED_BODY()
 
-protected:
+public:
 	UPROPERTY()
 	TArray<uint16> HeightData;
+
+	UPROPERTY(VisibleAnywhere)
+	FIntPoint Extent = { 1, 1 };
 
 	UPROPERTY(VisibleAnywhere)
 	FZenoTransformInfo Transform;
