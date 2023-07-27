@@ -16,7 +16,7 @@
 
 #define LOCTEXT_NAMESPACE "ZenoLandscapeActorFactory"
 
-UZenoLandscapeActorFactory::UZenoLandscapeActorFactory()
+UZenoLandscapeActorFactory::UZenoLandscapeActorFactory(const FObjectInitializer& Initializer)
 {
 	DisplayName = LOCTEXT("Name", "Zeno Landscape");
 	NewActorClass = AZenoLandscapeBundleActor::StaticClass();
@@ -31,7 +31,10 @@ AActor* UZenoLandscapeActorFactory::SpawnActor(UObject* InAsset, ULevel* InLevel
 	if (Asset->Landscapes.IsEmpty()) { return nullptr; }
 	
 	AZenoLandscapeBundleActor* NewActor = Cast<AZenoLandscapeBundleActor>(Super::SpawnActor(InAsset, InLevel, InTransform, InSpawnParams));
-	
+
+	GetWorld()->AddToWorld(InLevel);
+	NewActor->SetActorScale3D({ 128.f, 128.f, 256.f });
+
 	return NewActor;
 }
 
@@ -57,7 +60,11 @@ void UZenoLandscapeActorFactory::PostSpawnActor(UObject* Asset, AActor* NewActor
 
 bool UZenoLandscapeActorFactory::CanCreateActorFrom(const FAssetData& AssetData, FText& OutErrorMsg)
 {
-	return Super::CanCreateActorFrom(AssetData, OutErrorMsg);
+#ifdef UE_5_2_OR_LATER
+	return AssetData.GetClass(EResolveClass::Yes) == UZenoAssetBundle::StaticClass();
+#else
+	return AssetData.GetClass() == UZenoAssetBundle::StaticClass();
+#endif
 }
 
 ALandscapeProxy* UZenoLandscapeActorFactory::AddLandscape(AZenoLandscapeBundleActor* NewActor,
@@ -91,7 +98,7 @@ ALandscapeProxy* UZenoLandscapeActorFactory::AddLandscape(AZenoLandscapeBundleAc
 	ALandscape* Landscape = NewActor->GetWorld()->SpawnActor<ALandscape>();
 	Landscape->bCanHaveLayersContent = true;
 	// Use uniform scale of the parent
-	// Landscape->SetActorRelativeScale3D(FVector {50.f, 50.f, 50.f});
+	Landscape->SetActorScale3D(FVector {1.f, 1.f, 1.f});
 	Landscape->StaticLightingLOD = FMath::DivideAndRoundUp(
 		 FMath::CeilLogTwo((SizeX * SizeY) / (2048 * 2048) + 1),
 		 static_cast<uint32>(2));
@@ -107,7 +114,7 @@ ALandscapeProxy* UZenoLandscapeActorFactory::AddLandscape(AZenoLandscapeBundleAc
 
 	LandscapeInfo->UpdateLayerInfoMap(Landscape);
 
-	Landscape->AttachToActor(NewActor, FAttachmentTransformRules::KeepRelativeTransform);
+	Landscape->AttachToActor(NewActor, FAttachmentTransformRules::KeepWorldTransform);
 	
 	return Landscape;
 }
@@ -129,7 +136,7 @@ AZenoFoliageActor* UZenoLandscapeActorFactory::AddFoliage(AZenoLandscapeBundleAc
 	FoliageActor->FoliageMeshComponent->AddInstances(Transforms, false);
 
 	NewActor->AddOwned(FoliageActor);
-	FoliageActor->AttachToActor(NewActor, FAttachmentTransformRules::KeepRelativeTransform);
+	FoliageActor->AttachToActor(NewActor, FAttachmentTransformRules::KeepWorldTransform);
 
 	return FoliageActor;
 }

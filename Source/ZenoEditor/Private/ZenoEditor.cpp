@@ -1,6 +1,7 @@
 ﻿#include "ZenoEditor.h"
 
 #include "ZenoEditorCommand.h"
+#include "Factory/ZenoLandscapeActorFactory.h"
 #include "Factory/Actor/ZenoGraphAssetActorFactory.h"
 #include "UI/DetailPanel/ZenoDetailPanelService.h"
 #include "UI/Menu/ZenoEditorMenuExtender.h"
@@ -33,6 +34,8 @@ void FZenoEditorModule::RegisterActorFactory() const
 #if WITH_EDITORONLY_DATA
 	auto ZenoGraphActorFactory = NewObject<UZenoGraphAssetActorFactory>();
 	GEditor->ActorFactories.Add(ZenoGraphActorFactory);
+	auto ZenoLandscapeActorFactory = NewObject<UZenoLandscapeActorFactory>();
+	GEditor->ActorFactories.Add(ZenoLandscapeActorFactory);
 #endif
 }
 

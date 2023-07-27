@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "ActorFactories/ActorFactory.h"
 #include "ZenoLandscapeActorFactory.generated.h"
 
@@ -17,9 +16,7 @@ class AZenoLandscapeBundleActor;
 UCLASS()
 class ZENOEDITOR_API UZenoLandscapeActorFactory : public UActorFactory
 {
-	GENERATED_BODY()
-
-	UZenoLandscapeActorFactory();
+	GENERATED_UCLASS_BODY()
 
 	virtual AActor* SpawnActor(UObject* InAsset, ULevel* InLevel, const FTransform& InTransform, const FActorSpawnParameters& InSpawnParams) override;
 
@@ -31,3 +28,8 @@ class ZENOEDITOR_API UZenoLandscapeActorFactory : public UActorFactory
 
 	static AZenoFoliageActor* AddFoliage(AZenoLandscapeBundleActor* NewActor, const UZenoPointSetAsset* InPointSetData);
 };
+
+#if UE_ENABLE_INCLUDE_ORDER_DEPRECATED_IN_5_2
+#include "CoreMinimal.h"
+#include "UObject/ObjectMacros.h"
+#endif
