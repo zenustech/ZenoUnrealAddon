@@ -22,21 +22,20 @@ UZenoLandscapeActorFactory::UZenoLandscapeActorFactory(const FObjectInitializer&
 	NewActorClass = AZenoLandscapeBundleActor::StaticClass();
 }
 
-AActor* UZenoLandscapeActorFactory::SpawnActor(UObject* InAsset, ULevel* InLevel, const FTransform& InTransform,
-	const FActorSpawnParameters& InSpawnParams)
-{
-	const UZenoAssetBundle* Asset = Cast<UZenoAssetBundle>(InAsset);
-	if (!IsValid(Asset)) { return nullptr; }
-
-	if (Asset->Landscapes.IsEmpty()) { return nullptr; }
-	
-	AZenoLandscapeBundleActor* NewActor = Cast<AZenoLandscapeBundleActor>(Super::SpawnActor(InAsset, InLevel, InTransform, InSpawnParams));
-
-	GetWorld()->AddToWorld(InLevel);
-	NewActor->SetActorScale3D({ 128.f, 128.f, 256.f });
-
-	return NewActor;
-}
+// AActor* UZenoLandscapeActorFactory::SpawnActor(UObject* InAsset, ULevel* InLevel, const FTransform& InTransform,
+// 	const FActorSpawnParameters& InSpawnParams)
+// {
+// 	const UZenoAssetBundle* Asset = Cast<UZenoAssetBundle>(InAsset);
+// 	if (!IsValid(Asset)) { return nullptr; }
+//
+// 	if (Asset->Landscapes.IsEmpty()) { return nullptr; }
+// 	
+// 	AZenoLandscapeBundleActor* NewActor = Cast<AZenoLandscapeBundleActor>(Super::SpawnActor(InAsset, InLevel, InTransform, InSpawnParams));
+//
+// 	NewActor->SetActorScale3D({ 128.f, 128.f, 256.f });
+//
+// 	return NewActor;
+// }
 
 void UZenoLandscapeActorFactory::PostSpawnActor(UObject* Asset, AActor* NewActor)
 {
@@ -45,26 +44,25 @@ void UZenoLandscapeActorFactory::PostSpawnActor(UObject* Asset, AActor* NewActor
 	AZenoLandscapeBundleActor* LandscapeActor = Cast<AZenoLandscapeBundleActor>(NewActor);
 	if (IsValid(AssetBundle) && IsValid(LandscapeActor))
 	{
+		// NewActor->SetActorScale3D({ 128.f, 128.f, 256.f });
 		for (const auto& Landscape : AssetBundle->Landscapes)
 		{
-			AddLandscape(LandscapeActor, Landscape);
+			AActor* Actor = AddLandscape(LandscapeActor, Landscape);
+			Actor->SetActorScale3D({ 128.f, 128.f, 256.f });
 			// TODO [darc] : Generating the material :
 		}
 
 		for (const auto& PointSet : AssetBundle->PointSet)
 		{
-			AddFoliage(LandscapeActor, PointSet);
+			AActor* Actor = AddFoliage(LandscapeActor, PointSet);
+			Actor->SetActorScale3D({ 128.f, 128.f, 256.f });
 		}
 	}
 }
 
 bool UZenoLandscapeActorFactory::CanCreateActorFrom(const FAssetData& AssetData, FText& OutErrorMsg)
 {
-#ifdef UE_5_2_OR_LATER
-	return AssetData.GetClass(EResolveClass::Yes) == UZenoAssetBundle::StaticClass();
-#else
-	return AssetData.GetClass() == UZenoAssetBundle::StaticClass();
-#endif
+	return AssetData.IsInstanceOf(UZenoAssetBundle::StaticClass());
 }
 
 ALandscapeProxy* UZenoLandscapeActorFactory::AddLandscape(AZenoLandscapeBundleActor* NewActor,
@@ -73,8 +71,8 @@ ALandscapeProxy* UZenoLandscapeActorFactory::AddLandscape(AZenoLandscapeBundleAc
 	check(IsValid(InLandscapeData));
 
 	const FIntPoint Extent = InLandscapeData->Extent;
-	int32 QuadsPerSection;
-	int32 SectionsPerComponent;
+	int32 QuadsPerSection = 31;
+	int32 SectionsPerComponent = 7;
 	FIntPoint ComponentCount;
 	FLandscapeImportHelper::ChooseBestComponentSizeForImport(Extent.X, Extent.Y, QuadsPerSection, SectionsPerComponent,
 	                                                         ComponentCount);

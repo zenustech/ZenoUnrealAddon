@@ -18,7 +18,7 @@ class ZENOEDITOR_API UZenoLandscapeActorFactory : public UActorFactory
 {
 	GENERATED_UCLASS_BODY()
 
-	virtual AActor* SpawnActor(UObject* InAsset, ULevel* InLevel, const FTransform& InTransform, const FActorSpawnParameters& InSpawnParams) override;
+	// virtual AActor* SpawnActor(UObject* InAsset, ULevel* InLevel, const FTransform& InTransform, const FActorSpawnParameters& InSpawnParams) override;
 
 	virtual void PostSpawnActor(UObject* Asset, AActor* NewActor) override;
 	

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "LandscapeProxy.h"
+#include "Editor/GroupActor.h"
 #include "GameFramework/Actor.h"
 #include "ZenoLandscapeBundleActor.generated.h"
 
@@ -17,10 +18,7 @@ const static FString LandscapeLabelName = TEXT("Zeno Landscape");
 UCLASS()
 class ZENOENGINE_API AZenoLandscapeBundleActor : public AActor
 {
-	GENERATED_BODY()
-
-public:
-	AZenoLandscapeBundleActor();
+	GENERATED_UCLASS_BODY()
 
 protected:
 	virtual void BeginPlay() override;

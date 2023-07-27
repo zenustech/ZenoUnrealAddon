@@ -13,8 +13,9 @@
 
 #define LOCTEXT_NAMESPACE "ZenoLandscapeBundleActor"
 
-AZenoLandscapeBundleActor::AZenoLandscapeBundleActor()
+AZenoLandscapeBundleActor::AZenoLandscapeBundleActor(const FObjectInitializer& ObjectInitializer)
 {
+	RootComponent = Cast<USceneComponent>(ObjectInitializer.CreateDefaultSubobject(this, TEXT("RootComponent"), USceneComponent::StaticClass(), USceneComponent::StaticClass(), true, true));
 }
 
 void AZenoLandscapeBundleActor::BeginPlay()
