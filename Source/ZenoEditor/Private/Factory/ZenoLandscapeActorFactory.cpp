@@ -40,23 +40,48 @@ UZenoLandscapeActorFactory::UZenoLandscapeActorFactory(const FObjectInitializer&
 void UZenoLandscapeActorFactory::PostSpawnActor(UObject* Asset, AActor* NewActor)
 {
 	Super::PostSpawnActor(Asset, NewActor);
+
+	// UE using this function to generate a preview actor, so we need to check if the actor is transient
+	if (NewActor->HasAllFlags(RF_Transient))
+	{
+		return;
+	}
+
+	const FName FolderPath = FName(FString::Printf(TEXT("/Game/Zeno/%s"), *FGuid::NewGuid().ToString()));
+	
 	UZenoAssetBundle* AssetBundle = Cast<UZenoAssetBundle>(Asset);
 	AZenoLandscapeBundleActor* LandscapeActor = Cast<AZenoLandscapeBundleActor>(NewActor);
 	if (IsValid(AssetBundle) && IsValid(LandscapeActor))
 	{
-		// NewActor->SetActorScale3D({ 128.f, 128.f, 256.f });
+		LandscapeActor->SetActorScale3D({ 128.f, 128.f, 256.f });
+		ALandscapeProxy* LandscapeProxy = nullptr;
 		for (const auto& Landscape : AssetBundle->Landscapes)
 		{
-			AActor* Actor = AddLandscape(LandscapeActor, Landscape);
+			ALandscapeProxy* Actor = AddLandscape(LandscapeActor, Landscape);
 			Actor->SetActorScale3D({ 128.f, 128.f, 256.f });
 			// TODO [darc] : Generating the material :
+			Actor->UpdateAllComponentMaterialInstances();
+			LandscapeProxy = Actor;
+			Actor->SetFolderPath(FolderPath);
 		}
+
+		// TODO [darc] : support multiple landscape :
+		check(IsValid(LandscapeProxy));
+		FVector LandscapeOrigin = FVector::Zero();
+		FVector LandscapeExtent = FVector::Zero();
+		LandscapeProxy->GetActorBounds(false, LandscapeOrigin, LandscapeExtent, true);
+		const FVector LandscapePosition = LandscapeProxy->GetActorLocation();
+		LandscapeOrigin.Z = LandscapePosition.Z;
+		LandscapeActor->SetActorLocation(LandscapeOrigin);
 
 		for (const auto& PointSet : AssetBundle->PointSet)
 		{
 			AActor* Actor = AddFoliage(LandscapeActor, PointSet);
-			Actor->SetActorScale3D({ 128.f, 128.f, 256.f });
 		}
+		
+		NewActor->SetFolderPath_Recursively(FolderPath);
+
+		FEditorDelegates::RefreshEditor.Broadcast();
 	}
 }
 
@@ -112,7 +137,7 @@ ALandscapeProxy* UZenoLandscapeActorFactory::AddLandscape(AZenoLandscapeBundleAc
 
 	LandscapeInfo->UpdateLayerInfoMap(Landscape);
 
-	Landscape->AttachToActor(NewActor, FAttachmentTransformRules::KeepWorldTransform);
+	Landscape->AttachToActor(NewActor, FAttachmentTransformRules::SnapToTargetIncludingScale);
 	
 	return Landscape;
 }
@@ -134,7 +159,7 @@ AZenoFoliageActor* UZenoLandscapeActorFactory::AddFoliage(AZenoLandscapeBundleAc
 	FoliageActor->FoliageMeshComponent->AddInstances(Transforms, false);
 
 	NewActor->AddOwned(FoliageActor);
-	FoliageActor->AttachToActor(NewActor, FAttachmentTransformRules::KeepWorldTransform);
+	FoliageActor->AttachToActor(NewActor, FAttachmentTransformRules::SnapToTargetIncludingScale);
 
 	return FoliageActor;
 }

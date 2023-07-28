@@ -38,11 +38,15 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
+#if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif // WITH_EDITOR
 
 public:
+#if WITH_EDITOR
 	std::shared_ptr<zeno::remote::HeightField> GetLandscapeHeightData() const;
 	std::shared_ptr<zeno::remote::PointSet> GetScatteredPoints() const;
+#endif // WITH_EDITOR
 	
 	FBox GetActorBounds() const;
 

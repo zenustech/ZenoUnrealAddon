@@ -3,9 +3,10 @@
 
 #include "PCG/ZenoPCGVolume.h"
 
-#include "EditorSupportDelegates.h"
 #include "RawMesh.h"
+#if WITH_EDITOR
 #include "Builders/CubeBuilder.h"
+#endif // WITH_EDITOR
 #include "Client/ZenoLiveLinkClientSubsystem.h"
 #include "Components/BrushComponent.h"
 #include "Engine/Polys.h"
@@ -19,7 +20,9 @@ AZenoPCGVolume::AZenoPCGVolume(const FObjectInitializer& ObjectInitializer)
 	, SubjectName("ReservedName_Landscape")
 {
 	PCGComponent = ObjectInitializer.CreateDefaultSubobject<UZenoPCGVolumeComponent>(this, TEXT("PCG Component"));
+#if WITH_EDITOR
 	PCGComponent->ParameterChangedEvent.AddUObject(this, &AZenoPCGVolume::ExecutePCGGraph);
+#endif // WITH_EDITOR
 
 	PolyFlags = 0;
 
@@ -53,7 +56,6 @@ void AZenoPCGVolume::PostEditChangeProperty(FPropertyChangedEvent& PropertyChang
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 	BuildBrush();
 }
-#endif // WITH_EDITOR
 
 bool AZenoPCGVolume::GetReferencedContentObjects(TArray<UObject*>& Objects) const
 {
@@ -66,7 +68,6 @@ bool AZenoPCGVolume::GetReferencedContentObjects(TArray<UObject*>& Objects) cons
 	return true;
 }
 
-#if WITH_EDITOR
 void AZenoPCGVolume::OnGeneratedNewMesh(FRawMesh& RawMesh, const FVector4f& InBoundDiff)
 {
 	if (RawMesh.WedgeIndices.IsEmpty())

@@ -3,12 +3,7 @@
 
 #include "ZenoLandscapeBundleActor.h"
 
-#include "Landscape.h"
 #include "LandscapeProxy.h"
-#include "ScopedTransaction.h"
-#include "ZenoLandscapeAsset.h"
-#include "ZenoPointSetAsset.h"
-#include "Components/InstancedStaticMeshComponent.h"
 #include "ZenoFoliageActor.h"
 
 #define LOCTEXT_NAMESPACE "ZenoLandscapeBundleActor"
@@ -31,6 +26,18 @@ void AZenoLandscapeBundleActor::AddOwned(const ALandscapeProxy* InLandscapeData)
 void AZenoLandscapeBundleActor::AddOwned(const AZenoFoliageActor* InPointSetData)
 {
 	OwnedFoliage.Add(InPointSetData);
+}
+
+ALandscapeProxy* AZenoLandscapeBundleActor::GetFirstLandscape()
+{
+	for (const auto& Landscape : OwnedLandscapes)
+	{
+		if (!Landscape.IsNull())
+		{
+			return Landscape.LoadSynchronous();
+		}
+	}
+	return nullptr;
 }
 
 #undef LOCTEXT_NAMESPACE

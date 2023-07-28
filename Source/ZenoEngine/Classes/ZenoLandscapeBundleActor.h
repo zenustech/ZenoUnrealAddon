@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "LandscapeProxy.h"
-#include "Editor/GroupActor.h"
 #include "GameFramework/Actor.h"
 #include "ZenoLandscapeBundleActor.generated.h"
 
@@ -33,4 +32,7 @@ public:
 	void AddOwned(const ALandscapeProxy* InLandscapeData);
 
 	void AddOwned(const AZenoFoliageActor* InPointSetData);
+
+	/** Return the first valid landscape proxy, nullable */
+	ALandscapeProxy* GetFirstLandscape();
 };

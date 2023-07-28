@@ -19,6 +19,7 @@ void UZenoPCGVolumeComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
+#if WITH_EDITOR
 void UZenoPCGVolumeComponent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	if (PropertyChangedEvent.Property && PropertyChangedEvent.Property->GetFName() == GET_MEMBER_NAME_CHECKED(UZenoPCGVolumeComponent, ZenoGraph))
@@ -188,6 +189,7 @@ std::shared_ptr<zeno::remote::PointSet> UZenoPCGVolumeComponent::GetScatteredPoi
 
 	return Result;
 }
+#endif // WITH_EDITOR
 
 FBox UZenoPCGVolumeComponent::GetActorBounds() const
 {

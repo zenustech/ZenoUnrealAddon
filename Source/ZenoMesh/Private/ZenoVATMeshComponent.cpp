@@ -273,6 +273,16 @@ void UZenoVATMeshComponent::GetUsedMaterials(TArray<UMaterialInterface*>& OutMat
 	OutMaterials.Add(MeshMaterial);
 }
 
+void UZenoVATInstanceComponent::PostEditComponentMove(bool bFinished)
+{
+	Super::PostEditComponentMove(bFinished);
+	if (bFinished)
+	{
+		NotifyParentToRebuildData();
+	}
+}
+#endif // WITH_EDITOR
+
 void UZenoVATMeshComponent::OnChildAttached(USceneComponent* ChildComponent)
 {
 	Super::OnChildAttached(ChildComponent);
@@ -314,14 +324,6 @@ void UZenoVATMeshComponent::PostInterpChange(FProperty* PropertyThatChanged)
 	}
 }
 
-void UZenoVATInstanceComponent::NotifyParentToRebuildData() const
-{
-	if (const UZenoVATMeshComponent* MeshComponent = Cast<UZenoVATMeshComponent>(GetAttachParent()))
-	{
-		MeshComponent->UpdateInstanceTransformsToRenderThread();
-	}
-}
-
 void UZenoVATInstanceComponent::OnUpdateTransform(EUpdateTransformFlags UpdateTransformFlags, ETeleportType Teleport)
 {
 	Super::OnUpdateTransform(UpdateTransformFlags, Teleport);
@@ -334,12 +336,11 @@ void UZenoVATInstanceComponent::CreateRenderState_Concurrent(FRegisterComponentC
 	NotifyParentToRebuildData();
 }
 
-void UZenoVATInstanceComponent::PostEditComponentMove(bool bFinished)
+void UZenoVATInstanceComponent::NotifyParentToRebuildData() const
 {
-	Super::PostEditComponentMove(bFinished);
-	if (bFinished)
+	if (const UZenoVATMeshComponent* MeshComponent = Cast<UZenoVATMeshComponent>(GetAttachParent()))
 	{
-		NotifyParentToRebuildData();
+		MeshComponent->UpdateInstanceTransformsToRenderThread();
 	}
 }
-#endif // WITH_EDITOR
+

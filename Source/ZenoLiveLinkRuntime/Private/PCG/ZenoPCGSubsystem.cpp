@@ -25,8 +25,10 @@ TStatId UZenoPCGSubsystem::GetStatId() const
 	return TStatId();
 }
 
+#if WITH_EDITOR
 void UZenoPCGSubsystem::BeginCacheForCookedPlatformData(const ITargetPlatform* TargetPlatform)
 {
 	Super::BeginCacheForCookedPlatformData(TargetPlatform);
 	LandscapeCacheObject->AdvanceCache();
 }
+#endif // WITH_EDITOR

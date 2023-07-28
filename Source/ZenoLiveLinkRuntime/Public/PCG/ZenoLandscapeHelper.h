@@ -25,15 +25,6 @@ namespace Zeno::Helper
 	ZENOLIVELINKRUNTIME_API TArray<TWeakObjectPtr<ALandscapeProxy>> GetLandscapeProxies(const UWorld* InWorld, const FBox& InBounds);
 
 	/**
-	 * Get the height data of the landscape in the given bound
-	 * @param Landscape: The landscape to get height data from
-	 * @param InOutBound: The bound to get height data in **World Space**
-	 * @param OutSize: The XY size of the height data
-	 * @param OutSuccess: Whether the operation is successful
-	 **/
-	ZENOLIVELINKRUNTIME_API TArray<uint16> GetHeightDataInBound(const ALandscapeProxy* Landscape, FBox& InOutBound, FIntPoint& OutSize, bool& OutSuccess);
-
-	/**
 	 * Generate random points on the landscape with given seed and bounds
 	 * @param InBound: The bound of generate points in
 	 * @param Landscape: The landscape to generate points on
@@ -42,7 +33,18 @@ namespace Zeno::Helper
 	 **/
 	ZENOLIVELINKRUNTIME_API TArray<FVector> ScatterPoints(ALandscapeProxy* Landscape, uint32 NumPoints, int32 Seed = 0, const FBox& InBound = FBox{ForceInit});
 
+#if WITH_EDITOR
+	/**
+	 * Get the height data of the landscape in the given bound
+	 * @param Landscape: The landscape to get height data from
+	 * @param InOutBound: The bound to get height data in **World Space**
+	 * @param OutSize: The XY size of the height data
+	 * @param OutSuccess: Whether the operation is successful
+	 **/
+	ZENOLIVELINKRUNTIME_API TArray<uint16> GetHeightDataInBound(const ALandscapeProxy* Landscape, FBox& InOutBound, FIntPoint& OutSize, bool& OutSuccess);
+	
 	ZENOLIVELINKRUNTIME_API TArray<uint16> GetHeightDataInBound(ALandscapeProxy* Landscape, FBox& InOutBound, FIntPoint& OutSize);
+#endif // WITH_EDITOR
 
 	FORCEINLINE int32 ComputeSeed(const int32 A)
 	{

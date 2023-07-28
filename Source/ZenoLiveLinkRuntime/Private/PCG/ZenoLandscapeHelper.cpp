@@ -5,15 +5,10 @@
 #endif // WITH_EDITOR
 
 #include "Landscape.h"
-#include "LandscapeDataAccess.h"
 #include "LandscapeEdit.h"
 #include "LandscapeProxy.h"
-#include "Engine/SplineMeshActor.h"
-#include "Engine/StaticMeshActor.h"
-#include "PCG/ZenoPCGSubsystem.h"
 #include "PCG/Grid/ZenoPCGLandscapeCache.h"
 #include "PCG/DataSource/ZenoPCGLandscapeData.h"
-#include "UObject/ConstructorHelpers.h"
 
 bool Zeno::Helper::IsRuntimeOrPIE()
 {
@@ -108,6 +103,33 @@ TArray<TWeakObjectPtr<ALandscapeProxy>> Zeno::Helper::GetLandscapeProxies(const 
 	return LandscapeProxies;
 }
 
+TArray<FVector> Zeno::Helper::ScatterPoints(ALandscapeProxy* Landscape, const uint32 NumPoints, const int32 Seed, const FBox& InBound)
+{
+	UZenoPCGLandscapeData* Data = NewObject<UZenoPCGLandscapeData>();
+	Data->Initialize({ Landscape }, GetLandscapeBounds(Landscape), true, false);
+	TArray<FVector> Points;
+
+	if (!IsValid(Landscape))
+	{
+		return Points;
+	}
+
+	Points.Reserve(NumPoints);
+	const FRandomStream RandomStream { Seed };
+
+	for (uint32 PointIdx = 0; PointIdx < NumPoints; ++PointIdx)
+	{
+		FVector RandomPoint = RandomStream.RandPointInBox(InBound);
+		FZenoPCGPoint OutPoint;
+		Data->SamplePoint(FTransform {RandomPoint}, InBound, OutPoint, nullptr);
+		const FVector Point = OutPoint.Transform.GetLocation();
+		Points.Add(Point);
+	}
+	
+	return Points;
+}
+
+#if WITH_EDITOR
 TArray<uint16> Zeno::Helper::GetHeightDataInBound(const ALandscapeProxy* Landscape, FBox& InOutBound, FIntPoint& OutSize, bool& OutSuccess)
 {
 	TRACE_CPUPROFILER_EVENT_SCOPE(Zeno::Helper::GetHeightDataInBound);
@@ -153,32 +175,6 @@ TArray<uint16> Zeno::Helper::GetHeightDataInBound(const ALandscapeProxy* Landsca
 	InOutBound = InOutBound.TransformBy(Landscape->LandscapeActorToWorld());
 
 	return HeightData;
-}
-
-TArray<FVector> Zeno::Helper::ScatterPoints(ALandscapeProxy* Landscape, const uint32 NumPoints, const int32 Seed, const FBox& InBound)
-{
-	UZenoPCGLandscapeData* Data = NewObject<UZenoPCGLandscapeData>();
-	Data->Initialize({ Landscape }, GetLandscapeBounds(Landscape), true, false);
-	TArray<FVector> Points;
-
-	if (!IsValid(Landscape))
-	{
-		return Points;
-	}
-
-	Points.Reserve(NumPoints);
-	const FRandomStream RandomStream { Seed };
-
-	for (uint32 PointIdx = 0; PointIdx < NumPoints; ++PointIdx)
-	{
-		FVector RandomPoint = RandomStream.RandPointInBox(InBound);
-		FZenoPCGPoint OutPoint;
-		Data->SamplePoint(FTransform {RandomPoint}, InBound, OutPoint, nullptr);
-		const FVector Point = OutPoint.Transform.GetLocation();
-		Points.Add(Point);
-	}
-	
-	return Points;
 }
 
 TArray<uint16> Zeno::Helper::GetHeightDataInBound(ALandscapeProxy* Landscape, FBox& InOutBound, FIntPoint& OutSize)
@@ -285,3 +281,4 @@ TArray<uint16> Zeno::Helper::GetHeightDataInBound(ALandscapeProxy* Landscape, FB
 
 	return HeightData;
 }
+#endif // WITH_EDITOR
