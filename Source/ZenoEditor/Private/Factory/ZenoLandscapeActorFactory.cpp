@@ -83,6 +83,7 @@ void UZenoLandscapeActorFactory::PostSpawnActor(UObject* Asset, AActor* NewActor
 	
 	UZenoAssetBundle* AssetBundle = Cast<UZenoAssetBundle>(Asset);
 	AZenoLandscapeBundleActor* LandscapeActor = Cast<AZenoLandscapeBundleActor>(NewActor);
+
 	if (IsValid(AssetBundle) && IsValid(LandscapeActor))
 	{
 		LandscapeActor->SetActorScale3D({ 128.f, 128.f, 256.f });
@@ -151,6 +152,7 @@ ALandscapeProxy* UZenoLandscapeActorFactory::AddLandscape(AZenoLandscapeBundleAc
 	FScopedTransaction Transaction(LOCTEXT("Undo", "Creating New Landscape"));
 
 	ALandscape* Landscape = NewActor->GetWorld()->SpawnActor<ALandscape>();
+	
 	Landscape->bCanHaveLayersContent = true;
 	// Use uniform scale of the parent
 	Landscape->SetActorScale3D(FVector {1.f, 1.f, 1.f});
@@ -171,6 +173,10 @@ ALandscapeProxy* UZenoLandscapeActorFactory::AddLandscape(AZenoLandscapeBundleAc
 	
 	constexpr int32 WorldPartitionGridSize = 2;
 	Landscape->GetWorld()->GetSubsystem<ULandscapeSubsystem>()->ChangeGridSize(LandscapeInfo, WorldPartitionGridSize);
+
+	LandscapeInfo->FixupProxiesTransform(true);
+	LandscapeInfo->UpdateAllAddCollisions();
+	Landscape->RequestLayersContentUpdate(ELandscapeLayerUpdateMode::Update_All);
 
 	Landscape->AttachToActor(NewActor, FAttachmentTransformRules::SnapToTargetIncludingScale);
 	

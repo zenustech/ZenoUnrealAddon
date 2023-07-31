@@ -11,6 +11,7 @@
 AZenoLandscapeBundleActor::AZenoLandscapeBundleActor(const FObjectInitializer& ObjectInitializer)
 {
 	RootComponent = Cast<USceneComponent>(ObjectInitializer.CreateDefaultSubobject(this, TEXT("RootComponent"), USceneComponent::StaticClass(), USceneComponent::StaticClass(), true, true));
+	RootComponent->SetMobility(EComponentMobility::Static);
 }
 
 void AZenoLandscapeBundleActor::BeginPlay()
