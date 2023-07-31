@@ -6,6 +6,7 @@
 #include "Landscape.h"
 #include "LandscapeImportHelper.h"
 #include "LandscapeProxy.h"
+#include "LandscapeSubsystem.h"
 #include "ZenoAssetBundle.h"
 #include "ZenoLandscapeAsset.h"
 #include "ZenoLandscapeBundleActor.h"
@@ -13,6 +14,9 @@
 #include "Blueprint/ZenoEditorLandscapeLibrary.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "ZenoFoliageActor.h"
+#include "Elements/Framework/TypedElementRegistry.h"
+#include "Elements/Interfaces/TypedElementObjectInterface.h"
+#include "Subsystems/PlacementSubsystem.h"
 
 #define LOCTEXT_NAMESPACE "ZenoLandscapeActorFactory"
 
@@ -37,9 +41,37 @@ UZenoLandscapeActorFactory::UZenoLandscapeActorFactory(const FObjectInitializer&
 // 	return NewActor;
 // }
 
+void UZenoLandscapeActorFactory::PostPlaceAsset(TArrayView<const FTypedElementHandle> InElementHandles,
+	const FAssetPlacementInfo& InPlacementInfo, const FPlacementOptions& InPlacementOptions)
+{
+	
+	for (const FTypedElementHandle& PlacedElement : InElementHandles)
+	{
+		if (TTypedElement<ITypedElementObjectInterface> ObjectInterface = UTypedElementRegistry::GetInstance()->GetElement<ITypedElementObjectInterface>(PlacedElement))
+		{
+			if (AActor* CreatedActor = ObjectInterface.GetObjectAs<AActor>())
+			{
+				UObject* Asset = InPlacementInfo.AssetToPlace.GetAsset();
+
+				// Only do this if the actor wasn't already given a name
+				if (InPlacementInfo.NameOverride.IsNone())
+				{
+					FActorLabelUtilities::SetActorLabelUnique(CreatedActor, GetDefaultActorLabel(Asset));
+				}
+
+				// ???????? y u bully me, call this twice?
+				// PostSpawnActor(Asset, CreatedActor);
+
+				CreatedActor->PostEditChange();
+				CreatedActor->PostEditMove(true);
+			}
+		}
+	}
+}
+
 void UZenoLandscapeActorFactory::PostSpawnActor(UObject* Asset, AActor* NewActor)
 {
-	Super::PostSpawnActor(Asset, NewActor);
+	// Super::PostSpawnActor(Asset, NewActor);
 
 	// UE using this function to generate a preview actor, so we need to check if the actor is transient
 	if (NewActor->HasAllFlags(RF_Transient))
@@ -47,7 +79,7 @@ void UZenoLandscapeActorFactory::PostSpawnActor(UObject* Asset, AActor* NewActor
 		return;
 	}
 
-	const FName FolderPath = FName(FString::Printf(TEXT("/Game/Zeno/%s"), *FGuid::NewGuid().ToString()));
+	const FName FolderPath = FName(FString::Printf(TEXT("/Zeno/%s"), *FGuid::NewGuid().ToString()));
 	
 	UZenoAssetBundle* AssetBundle = Cast<UZenoAssetBundle>(Asset);
 	AZenoLandscapeBundleActor* LandscapeActor = Cast<AZenoLandscapeBundleActor>(NewActor);
@@ -136,6 +168,9 @@ ALandscapeProxy* UZenoLandscapeActorFactory::AddLandscape(AZenoLandscapeBundleAc
 	FActorLabelUtilities::SetActorLabelUnique(Landscape, ALandscape::StaticClass()->GetName());
 
 	LandscapeInfo->UpdateLayerInfoMap(Landscape);
+	
+	constexpr int32 WorldPartitionGridSize = 2;
+	Landscape->GetWorld()->GetSubsystem<ULandscapeSubsystem>()->ChangeGridSize(LandscapeInfo, WorldPartitionGridSize);
 
 	Landscape->AttachToActor(NewActor, FAttachmentTransformRules::SnapToTargetIncludingScale);
 	

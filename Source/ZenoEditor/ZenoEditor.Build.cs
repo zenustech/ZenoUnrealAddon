@@ -50,6 +50,8 @@ public class ZenoEditor : ModuleRules
                 "LandscapeEditor",
                 "RawMesh",
                 "ImageWrapper",
+                "TypedElementFramework",
+                "TypedElementRuntime",
             }
         );
         

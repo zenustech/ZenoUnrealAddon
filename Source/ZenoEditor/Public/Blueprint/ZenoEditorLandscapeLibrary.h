@@ -5,6 +5,8 @@
 #include "Client/ZenoHttpClient.h"
 #include "ZenoEditorLandscapeLibrary.generated.h"
 
+class ALandscape;
+
 UCLASS()
 class ZENOEDITOR_API UZenoEditorLandscapeLibrary : public UObject
 {
@@ -15,4 +17,6 @@ public:
 	                                TArray<uint16>& OutHeightMap);
 
 	static TSharedPromise<TTuple<int32, int32, FIntPoint>> ChooseBestComponentSizeForSubject(const FLiveLinkSubjectKey& Key, const int32 InQuadsPerSection, const int32 InSectionsPerComponent);
+
+	static void MakeLandscapeActorStreamable(ALandscape* LandscapeTarget);
 };
