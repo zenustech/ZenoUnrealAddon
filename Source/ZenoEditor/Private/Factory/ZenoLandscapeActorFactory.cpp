@@ -91,7 +91,7 @@ void UZenoLandscapeActorFactory::PostSpawnActor(UObject* Asset, AActor* NewActor
 		for (const auto& Landscape : AssetBundle->Landscapes)
 		{
 			ALandscapeProxy* Actor = AddLandscape(LandscapeActor, Landscape);
-			Actor->SetActorScale3D({ 128.f, 128.f, 256.f });
+			// Actor->SetActorScale3D({ 128.f, 128.f, 256.f });
 			// TODO [darc] : Generating the material :
 			Actor->UpdateAllComponentMaterialInstances();
 			LandscapeProxy = Actor;
@@ -173,12 +173,12 @@ ALandscapeProxy* UZenoLandscapeActorFactory::AddLandscape(AZenoLandscapeBundleAc
 	
 	constexpr int32 WorldPartitionGridSize = 2;
 	Landscape->GetWorld()->GetSubsystem<ULandscapeSubsystem>()->ChangeGridSize(LandscapeInfo, WorldPartitionGridSize);
+	
+	Landscape->AttachToActor(NewActor, FAttachmentTransformRules::SnapToTargetIncludingScale);
 
 	LandscapeInfo->FixupProxiesTransform(true);
 	LandscapeInfo->UpdateAllAddCollisions();
 	Landscape->RequestLayersContentUpdate(ELandscapeLayerUpdateMode::Update_All);
-
-	Landscape->AttachToActor(NewActor, FAttachmentTransformRules::SnapToTargetIncludingScale);
 	
 	return Landscape;
 }
