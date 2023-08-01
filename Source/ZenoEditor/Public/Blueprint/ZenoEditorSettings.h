@@ -23,7 +23,9 @@ public:
 	/* Wavefront obj file import scale, apply while reading obj file. Set to smaller value to get high precious. */
 	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "VAT")
 	FVector3f VATImportScale;
-	
+
+	/* Default Imported Landscape Material Path */
+	TSoftObjectPtr<UMaterialInterface> DefaultImportedLandscapeMaterialParent;
 
 public:
 	UZenoEditorSettings();
