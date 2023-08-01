@@ -25,6 +25,7 @@ public:
 	FVector3f VATImportScale;
 
 	/* Default Imported Landscape Material Path */
+	UPROPERTY(Config, EditAnywhere, BlueprintReadOnly, Category = "Asset")
 	TSoftObjectPtr<UMaterialInterface> DefaultImportedLandscapeMaterialParent;
 
 public:
