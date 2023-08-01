@@ -4,6 +4,7 @@
 #include "Factory/ZenoLandscapeActorFactory.h"
 
 #include "Landscape.h"
+#include "LandscapeInfo.h"
 #include "LandscapeImportHelper.h"
 #include "LandscapeProxy.h"
 #include "LandscapeSubsystem.h"
@@ -86,10 +87,10 @@ void UZenoLandscapeActorFactory::PostSpawnActor(UObject* Asset, AActor* NewActor
 
 	if (IsValid(AssetBundle) && IsValid(LandscapeActor))
 	{
-		LandscapeActor->SetActorScale3D({ 128.f, 128.f, 256.f });
 		ALandscapeProxy* LandscapeProxy = nullptr;
 		for (const auto& Landscape : AssetBundle->Landscapes)
 		{
+			NewActor->SetActorScale3D({ 128.f, 128.f, 256.f });
 			ALandscapeProxy* Actor = AddLandscape(LandscapeActor, Landscape);
 			// Actor->SetActorScale3D({ 128.f, 128.f, 256.f });
 			// TODO [darc] : Generating the material :
@@ -100,16 +101,14 @@ void UZenoLandscapeActorFactory::PostSpawnActor(UObject* Asset, AActor* NewActor
 
 		// TODO [darc] : support multiple landscape :
 		check(IsValid(LandscapeProxy));
-		FVector LandscapeOrigin = FVector::Zero();
-		FVector LandscapeExtent = FVector::Zero();
-		LandscapeProxy->GetActorBounds(false, LandscapeOrigin, LandscapeExtent, true);
-		const FVector LandscapePosition = LandscapeProxy->GetActorLocation();
-		LandscapeOrigin.Z = LandscapePosition.Z;
-		LandscapeActor->SetActorLocation(LandscapeOrigin);
+		FIntRect Extent;
+		LandscapeProxy->GetLandscapeInfo()->GetLandscapeExtent(Extent.Min.X, Extent.Min.Y, Extent.Max.X, Extent.Max.Y);
+		FIntPoint LandscapeSize = Extent.Size() + 1;
 
 		for (const auto& PointSet : AssetBundle->PointSet)
 		{
 			AActor* Actor = AddFoliage(LandscapeActor, PointSet);
+			Actor->SetActorRelativeLocation(FVector(LandscapeSize.X * 0.5f, LandscapeSize.Y * 0.5f, 0));
 		}
 		
 		NewActor->SetFolderPath_Recursively(FolderPath);
