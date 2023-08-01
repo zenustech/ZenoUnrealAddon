@@ -6,6 +6,7 @@
 #include "Landscape.h"
 #include "LandscapeInfo.h"
 #include "LandscapeImportHelper.h"
+#include "LandscapeMaterialInstanceConstant.h"
 #include "LandscapeProxy.h"
 #include "LandscapeSubsystem.h"
 #include "ZenoAssetBundle.h"
@@ -15,8 +16,10 @@
 #include "Blueprint/ZenoEditorLandscapeLibrary.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "ZenoFoliageActor.h"
+#include "Blueprint/ZenoEditorSettings.h"
 #include "Elements/Framework/TypedElementRegistry.h"
 #include "Elements/Interfaces/TypedElementObjectInterface.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "Subsystems/PlacementSubsystem.h"
 
 #define LOCTEXT_NAMESPACE "ZenoLandscapeActorFactory"
@@ -87,14 +90,11 @@ void UZenoLandscapeActorFactory::PostSpawnActor(UObject* Asset, AActor* NewActor
 
 	if (IsValid(AssetBundle) && IsValid(LandscapeActor))
 	{
+		NewActor->SetActorScale3D({ 128.f, 128.f, 256.f });
 		ALandscapeProxy* LandscapeProxy = nullptr;
 		for (const auto& Landscape : AssetBundle->Landscapes)
 		{
-			NewActor->SetActorScale3D({ 128.f, 128.f, 256.f });
 			ALandscapeProxy* Actor = AddLandscape(LandscapeActor, Landscape);
-			// Actor->SetActorScale3D({ 128.f, 128.f, 256.f });
-			// TODO [darc] : Generating the material :
-			Actor->UpdateAllComponentMaterialInstances();
 			LandscapeProxy = Actor;
 			Actor->SetFolderPath(FolderPath);
 		}
@@ -178,6 +178,21 @@ ALandscapeProxy* UZenoLandscapeActorFactory::AddLandscape(AZenoLandscapeBundleAc
 	LandscapeInfo->FixupProxiesTransform(true);
 	LandscapeInfo->UpdateAllAddCollisions();
 	Landscape->RequestLayersContentUpdate(ELandscapeLayerUpdateMode::Update_All);
+
+	if (UMaterialInterface* ParentMaterial = UZenoEditorSettings::Get()->DefaultImportedLandscapeMaterialParent.LoadSynchronous())
+	{
+		ULandscapeMaterialInstanceConstant* NewMaterial = NewObject<ULandscapeMaterialInstanceConstant>(Landscape, MakeUniqueObjectName(Landscape, ULandscapeMaterialInstanceConstant::StaticClass()));
+		NewMaterial->SetParentEditorOnly(ParentMaterial);
+		FIntRect Resolution;
+		LandscapeInfo->GetLandscapeExtent(Resolution.Min.X, Resolution.Min.Y, Resolution.Max.X, Resolution.Max.Y);
+		const FIntPoint LandscapeSize = Extent.Size() + 1;
+		NewMaterial->SetScalarParameterValueEditorOnly(FMaterialParameterInfo(TEXT("MappingScale")), LandscapeSize.X);
+		NewMaterial->SetTextureParameterValueEditorOnly(FMaterialParameterInfo(TEXT("BaseColorTexture")), InLandscapeData->BaseColorTexture);
+		Landscape->LandscapeMaterial = NewMaterial;
+		FPropertyChangedEvent PropertyChangedEvent(FindFieldChecked<FProperty>(Landscape->GetClass(), FName("LandscapeMaterial")));
+		Landscape->PostEditChangeProperty(PropertyChangedEvent);
+		LandscapeInfo->UpdateAllComponentMaterialInstances();
+	}
 	
 	return Landscape;
 }
