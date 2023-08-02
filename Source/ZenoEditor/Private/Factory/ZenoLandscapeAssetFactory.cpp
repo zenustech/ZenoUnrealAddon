@@ -53,7 +53,7 @@ UObject* UZenoLandscapeAssetFactory::FactoryCreateBinary(UClass* InClass, UObjec
 			PointSetAsset->Points.Reserve(PointSet.Points.size());
 			for (const auto& Point : PointSet.Points)
 			{
-				PointSetAsset->Points.Emplace(Point[0], Point[2], Point[1]);
+				PointSetAsset->Points.Emplace(FRotator { Point.Rotation[0], Point.Rotation[2], Point.Rotation[1] }, FVector { Point.Position[0], Point.Position[2], Point.Position[1] }, FVector { Point.Scale[0], Point.Scale[2], Point.Scale[1] });
 			}
 			AssetBundle->NameToAssetMap.Add(FString(Name.c_str()), PointSetAsset);
 			AssetBundle->PointSet.Add(PointSetAsset);

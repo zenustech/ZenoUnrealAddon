@@ -22,6 +22,8 @@ class ZENOENGINE_API AZenoLandscapeBundleActor : public AActor
 protected:
 	virtual void BeginPlay() override;
 
+	virtual void PostLoad() override;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TArray<TSoftObjectPtr<ALandscapeProxy>> OwnedLandscapes;
 	

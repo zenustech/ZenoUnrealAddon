@@ -17,6 +17,7 @@
 #include "Components/InstancedStaticMeshComponent.h"
 #include "ZenoFoliageActor.h"
 #include "Blueprint/ZenoEditorSettings.h"
+#include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "Elements/Framework/TypedElementRegistry.h"
 #include "Elements/Interfaces/TypedElementObjectInterface.h"
 #include "Materials/MaterialInstanceDynamic.h"
@@ -206,9 +207,9 @@ AZenoFoliageActor* UZenoLandscapeActorFactory::AddFoliage(AZenoLandscapeBundleAc
 
 	TArray<FTransform> Transforms;
 	Transforms.Reserve(InPointSetData->Points.Num());
-	for (const FVector& Point : InPointSetData->Points)
+	for (const FTransform& Point : InPointSetData->Points)
 	{
-		Transforms.Add(FTransform {Point});
+		Transforms.Add(Point);
 	}
 	
 	FoliageActor->FoliageMeshComponent->AddInstances(Transforms, false);

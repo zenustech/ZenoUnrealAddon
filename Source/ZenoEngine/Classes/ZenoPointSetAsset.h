@@ -22,7 +22,7 @@ class ZENOENGINE_API UZenoPointSetAsset : public UZenoAssetBase
 
 public:
 	UPROPERTY(VisibleAnywhere)
-	TArray<FVector> Points;
+	TArray<FTransform> Points;
 
 	UPROPERTY(VisibleAnywhere)
 	EZenoPointType PointType = EZenoPointType::Misc;
