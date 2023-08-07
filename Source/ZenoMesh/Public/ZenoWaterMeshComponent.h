@@ -30,7 +30,7 @@ struct FZenoRiverBuildInfo
 	GENERATED_BODY()
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (UIMin = 1, ClampMin = 1))
-	int32 RiverWidth;
+	int32 RiverWidth = 1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSoftObjectPtr<UZenoSplineComponent> Spline;
