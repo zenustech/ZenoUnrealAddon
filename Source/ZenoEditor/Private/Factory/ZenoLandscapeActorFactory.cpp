@@ -213,6 +213,7 @@ AZenoFoliageActor* UZenoLandscapeActorFactory::AddFoliage(AZenoLandscapeBundleAc
 	}
 	
 	FoliageActor->FoliageMeshComponent->AddInstances(Transforms, false);
+	FoliageActor->FoliageTransforms = MoveTemp(Transforms);
 
 	NewActor->AddOwned(FoliageActor);
 	FoliageActor->AttachToActor(NewActor, FAttachmentTransformRules::SnapToTargetIncludingScale);

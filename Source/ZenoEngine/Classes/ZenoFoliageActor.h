@@ -20,5 +20,8 @@ public:
 	int32 TypeId = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, DisplayName = "Foliage Mesh")
-	UHierarchicalInstancedStaticMeshComponent* FoliageMeshComponent = nullptr;
+	UInstancedStaticMeshComponent* FoliageMeshComponent = nullptr;
+
+	UPROPERTY()
+	TArray<FTransform> FoliageTransforms;
 };

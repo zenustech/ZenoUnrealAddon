@@ -69,7 +69,7 @@ UObject* UZenoLandscapeAssetFactory::FactoryCreateBinary(UClass* InClass, UObjec
 				LandscapeAsset->HeightData.Emplace(Height);
 			}
 			LandscapeAsset->Transform.Position = FVector(Transform.Position[0], Transform.Position[2], Transform.Position[1]);
-			LandscapeAsset->Transform.Rotation = FVector(Transform.Rotation[0], Transform.Rotation[2], Transform.Rotation[1]);
+			LandscapeAsset->Transform.Rotation = FRotator(Transform.Rotation[0], Transform.Rotation[2], Transform.Rotation[1]);
 			LandscapeAsset->Transform.Scale = FVector(Transform.Scale[0], Transform.Scale[2], Transform.Scale[1]);
 			if (!BaseColorTextureRef.Guid.empty())
 			{

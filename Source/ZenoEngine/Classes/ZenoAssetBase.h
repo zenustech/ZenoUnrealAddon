@@ -16,9 +16,9 @@ struct FZenoTransformInfo
 	GENERATED_BODY()
 
 	UPROPERTY(VisibleAnywhere)
-	FVector Position;
+	FVector Position = FVector::Zero();
 	UPROPERTY(VisibleAnywhere)
-	FVector Rotation;
+	FRotator Rotation = FRotator::ZeroRotator;
 	UPROPERTY(VisibleAnywhere)
-	FVector Scale;
+	FVector Scale = FVector(1.0f);
 };

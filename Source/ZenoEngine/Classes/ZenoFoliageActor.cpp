@@ -9,12 +9,14 @@
 
 AZenoFoliageActor::AZenoFoliageActor(const FObjectInitializer& InInitializer)
 {
-	FoliageMeshComponent = Cast<UHierarchicalInstancedStaticMeshComponent>(InInitializer.CreateDefaultSubobject(this, TEXT("FoliageMeshComponent"), UHierarchicalInstancedStaticMeshComponent::StaticClass(), UHierarchicalInstancedStaticMeshComponent::StaticClass()));
+	FoliageMeshComponent = Cast<UInstancedStaticMeshComponent>(InInitializer.CreateDefaultSubobject(this, TEXT("FoliageMeshComponent"), UInstancedStaticMeshComponent::StaticClass(), UInstancedStaticMeshComponent::StaticClass()));
 }
 
 void AZenoFoliageActor::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
+	FoliageMeshComponent->ClearInstances();
+	FoliageMeshComponent->AddInstances(FoliageTransforms, false, false);
 }
 
