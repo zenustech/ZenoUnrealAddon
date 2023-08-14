@@ -49,8 +49,12 @@ public class ZenoRemote : ModuleRules
             Path.Combine(ProtobufStaticLinkFolder, "libprotobuf-lite.lib"),
             Path.Combine(ProtobufStaticLinkFolder, "libprotoc.lib"),
         });
+        
+        RuntimeDependencies.Add(Path.Combine(BinaryFolder, "libprotobuf.dll"), Path.Combine(ProtobufDynamicLinkFolder, "libprotobuf.dll"));
+        // RuntimeDependencies.Add("libprotobuf-lite.dll", Path.Combine(ProtobufDynamicLinkFolder, "libprotobuf-lite.dll"));
+        // RuntimeDependencies.Add("libprotoc.dll", Path.Combine(ProtobufDynamicLinkFolder, "libprotoc.dll"));
 
-        PrivateDefinitions.Add("GOOGLE_PROTOBUF_INTERNAL_DONATE_STEAL_INLINE=1");
+        PrivateDefinitions.Add("GOOGLE_PROTOBUF_INTERNAL_DONATE_STEAL_INLINE=0");
         
         GenerateProtoFiles();
     }
@@ -58,7 +62,7 @@ public class ZenoRemote : ModuleRules
     protected string PluginPath => Path.GetFullPath(Path.GetDirectoryName(Path.Combine(ModuleDirectory, "../../"))!);
 
     protected string ThirdPartyRoot => Path.GetFullPath(Path.Combine(ModuleDirectory, "../ThirdParty"));
-
+    
     protected string GRpcResourcePath => Path.GetFullPath(Path.Combine(PluginPath, "Resources/gRPC"));
     
     protected string ProtoCExePath => Path.GetFullPath(Path.Combine(GRpcResourcePath, "protoc.exe"));
@@ -79,7 +83,11 @@ public class ZenoRemote : ModuleRules
     
     protected string ProtobufStaticLinkFolder => Path.GetFullPath(Path.Combine(ThirdPartyRoot, "protobuf/lib"));
     
+    protected string ProtobufDynamicLinkFolder => Path.GetFullPath(Path.Combine(ThirdPartyRoot, "protobuf/bin"));
+    
     protected string GRpcStaticLinkFolder => Path.GetFullPath(Path.Combine(ThirdPartyRoot, "grpc/lib"));
+
+    protected string BinaryFolder => Path.GetFullPath(Path.Combine(PluginPath, "Binaries/Win64"));
     
     protected void GenerateProtoFiles()
     {
