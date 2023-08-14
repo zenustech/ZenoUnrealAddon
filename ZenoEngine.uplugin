@@ -39,11 +39,11 @@
 			"Name": "ZenoMesh",
 			"Type": "Runtime",
 			"LoadingPhase": "PostConfigInit"
-		},
-		{
+		}
+		,{
 			"Name": "ZenoRemote",
 			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "None"
 		}
 	]
 }
