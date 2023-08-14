@@ -9,6 +9,7 @@ public class ZenoRemote : ModuleRules
 {
     public ZenoRemote(ReadOnlyTargetRules Target) : base(Target)
     {
+        DefaultBuildSettings = BuildSettingsVersion.Latest;
         PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
         PublicDependencyModuleNames.AddRange(
@@ -28,16 +29,43 @@ public class ZenoRemote : ModuleRules
             }
         );
         
+        AddEngineThirdPartyPrivateStaticDependencies(Target, "OpenSSL");
+        AddEngineThirdPartyPrivateStaticDependencies(Target, "zlib");
+        
+        PrivateIncludePaths.AddRange(new string[]
+        {
+            Path.Combine(ModuleDirectory, "Private/Generated"),
+            Path.Combine(ThirdPartyRoot, "protobuf/include"),
+            Path.Combine(ThirdPartyRoot, "grpc/include")
+        });
+        
+        PublicAdditionalLibraries.AddRange(new string[]
+        {
+            Path.Combine(GRpcStaticLinkFolder, "grpc.lib"),
+            Path.Combine(GRpcStaticLinkFolder, "grpc++.lib"),
+            Path.Combine(GRpcStaticLinkFolder, "gpr.lib"),
+            Path.Combine(GRpcStaticLinkFolder, "address_sorting.lib"),
+            Path.Combine(ProtobufStaticLinkFolder, "libprotobuf.lib"),
+            Path.Combine(ProtobufStaticLinkFolder, "libprotobuf-lite.lib"),
+            Path.Combine(ProtobufStaticLinkFolder, "libprotoc.lib"),
+        });
+
+        PrivateDefinitions.Add("GOOGLE_PROTOBUF_INTERNAL_DONATE_STEAL_INLINE=1");
+        
         GenerateProtoFiles();
     }
 
     protected string PluginPath => Path.GetFullPath(Path.GetDirectoryName(Path.Combine(ModuleDirectory, "../../"))!);
+
+    protected string ThirdPartyRoot => Path.GetFullPath(Path.Combine(ModuleDirectory, "../ThirdParty"));
 
     protected string GRpcResourcePath => Path.GetFullPath(Path.Combine(PluginPath, "Resources/gRPC"));
     
     protected string ProtoCExePath => Path.GetFullPath(Path.Combine(GRpcResourcePath, "protoc.exe"));
     
     protected string ProtoCppExePath => Path.GetFullPath(Path.Combine(GRpcResourcePath, "grpc_cpp_plugin.exe"));
+    
+    protected string ProtoTurboLinkExePath => Path.GetFullPath(Path.Combine(GRpcResourcePath, "protoc-gen-turbolink.exe"));
 
     protected string DismissHeaderFile => File.ReadAllText(Path.GetFullPath(Path.Combine(GRpcResourcePath, "DismissWarning.h")));
     
@@ -47,7 +75,11 @@ public class ZenoRemote : ModuleRules
     
     protected string ProtoFilesPath => Path.GetFullPath(Path.Combine(GRpcResourcePath, "proto"));
     
-    protected string ExternalProtoFilesFolder => Path.GetFullPath(Path.Combine(ModuleDirectory, "../ThirdParty/protobuf/include"));
+    protected string ExternalProtoFilesFolder => Path.GetFullPath(Path.Combine(ThirdPartyRoot, "protobuf/include"));
+    
+    protected string ProtobufStaticLinkFolder => Path.GetFullPath(Path.Combine(ThirdPartyRoot, "protobuf/lib"));
+    
+    protected string GRpcStaticLinkFolder => Path.GetFullPath(Path.Combine(ThirdPartyRoot, "grpc/lib"));
     
     protected void GenerateProtoFiles()
     {
@@ -72,6 +104,7 @@ public class ZenoRemote : ModuleRules
             pProcess.StartInfo.ArgumentList.Add($"--proto_path={ProtoFilesPath}");
             pProcess.StartInfo.ArgumentList.Add($"--cpp_out={GenerateCppTargetFolder}");
             pProcess.StartInfo.ArgumentList.Add($"--plugin={ProtoCppExePath} --grpc_out={GenerateCppTargetFolder}");
+            // pProcess.StartInfo.ArgumentList.Add($"--plugin={ProtoTurboLinkExePath} --grpc_out={GenerateCppTargetFolder}");
             pProcess.StartInfo.ArgumentList.Add($"{fileInfo.FullName}");
             pProcess.StartInfo.UseShellExecute = false;
             pProcess.StartInfo.RedirectStandardOutput = true;
