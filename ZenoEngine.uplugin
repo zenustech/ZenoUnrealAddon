@@ -13,12 +13,12 @@
 	"CanContainContent": true,
 	"IsBetaVersion": true,
 	"IsExperimentalVersion": false,
-	"Installed": false,
+	"Installed": true,
 	"Modules": [
 		{
 			"Name": "ZenoEngine",
 			"Type": "Runtime",
-			"LoadingPhase": "PostConfigInit",
+			"LoadingPhase": "PostConfigInit"
 		},
 		{
 			"Name": "ZenoEditor",
